@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import { formatMonthKey } from '@moneylens/shared';
 import { Card } from '../../components/Card';
 import { FullPageSpinner } from '../../components/FullPageSpinner';
@@ -72,9 +73,15 @@ export function DashboardPage() {
       {!hasData ? (
         <Card className="mt-8" title="No transactions yet">
           <p className="text-sm text-ink-500">
-            Your dashboard fills in once transactions are added. Statement import (CSV, XLSX and
-            Google Pay PDF) is being built next. To explore now, sign in with the demo account.
+            Your dashboard fills in once transactions are added. Import a CSV statement from your
+            bank to get started; Google Pay PDF and Excel statements are coming next.
           </p>
+          <Link
+            to="/imports"
+            className="mt-4 inline-flex h-11 items-center rounded-lg bg-brand-700 px-4 text-sm font-medium text-white hover:bg-brand-600"
+          >
+            Import a statement
+          </Link>
         </Card>
       ) : (
         <div className={`mt-6 space-y-6 transition-opacity ${isFetching ? 'opacity-60' : ''}`}>

@@ -42,15 +42,12 @@ function fileExtension(filename: string): string {
   return dot === -1 ? '' : filename.slice(dot + 1).toLowerCase();
 }
 
+// eslint-disable-next-line no-control-regex
+const CONTROL_CHARS = /[\u0000-\u001f\u007f]/g;
+
 /** Strip any client-supplied path and control characters from a filename. */
 export function safeFilename(name: string): string {
-  // eslint-disable-next-line no-control-regex
-  const base =
-    name
-      .split(/[\\/]/)
-      .pop()
-      ?.replace(/[\u0000-\u001f\u007f]/g, '')
-      .trim() ?? '';
+  const base = name.split(/[\\/]/).pop()?.replace(CONTROL_CHARS, '').trim() ?? '';
   return (base || 'statement').slice(0, 200);
 }
 

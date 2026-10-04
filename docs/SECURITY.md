@@ -3,7 +3,7 @@
 Financial data is sensitive. MoneyLens stores as little as it can and keeps
 every user's data isolated.
 
-## What is implemented (Phase 1)
+## What is implemented (Phases 1–2)
 
 ### Authentication
 
@@ -23,19 +23,32 @@ Path=/api/auth` cookie (`Secure` in production). Only its SHA-256 hash is
 
 ### Authorisation
 
-- Every financial query goes through `AnalyticsDataSource` (and, from phase
-  2, the transaction repositories), which filters by the authenticated
-  `userId` taken from the token. It is never taken from request parameters.
-  Tests check that a second user sees none of the demo user's data, and that a
-  `userId` query parameter is ignored.
+- Every financial query filters by the authenticated `userId` taken from the
+  token, never from request parameters. Looking up another user's
+  transaction, import, import row or category returns `404`, so ids cannot be
+  probed. Category ids supplied by a client are checked to be visible to that
+  user before they are attached to anything. Tests cover each of these.
+
+### Uploads
+
+- One file per request, held in memory (multer), limited to `MAX_UPLOAD_MB`.
+- Extension allowlist plus content sniffing: a `.csv` whose bytes are a PDF,
+  ZIP/XLSX, legacy Office (OLE) file or contain NUL bytes is rejected.
+- Filenames are reduced to a base name without control characters before
+  being stored or shown.
+- **Raw files are never written to disk or kept.** Only metadata and the
+  SHA-256 are stored, and staged rows are committed only after the user
+  confirms. A row cap (20,000) bounds the work per upload.
 
 ### Transport and request hardening
 
 - `helmet` security headers. `x-powered-by` is disabled.
 - CORS allowlist from `CORS_ORIGINS`, with credentials only for listed origins.
 - JSON bodies are limited to 100 kB. Malformed JSON returns a 400 envelope.
-- Rate limits: `API_RATE_LIMIT` per minute per IP across the API, and
-  `AUTH_RATE_LIMIT` per 15 minutes on register, login and refresh.
+- Rate limits: `API_RATE_LIMIT` per minute per IP across the API,
+  `AUTH_RATE_LIMIT` per 15 minutes on register, login and account deletion,
+  and a separate budget of 5 × `AUTH_RATE_LIMIT` for session refresh (it runs
+  on every page load and carries a 256-bit token, not a password).
 - All input is validated with Zod schemas shared with the clients.
 - SQL injection: Prisma's parameterised queries. The one raw query uses tagged
   template parameters.
@@ -55,26 +68,29 @@ Path=/api/auth` cookie (`Secure` in production). Only its SHA-256 hash is
 
 - MoneyLens never asks for or stores a UPI PIN, bank passwords, CVV or full
   authentication secrets. The schema has no fields for them.
-- UPI IDs and transaction references are kept for duplicate detection only and
-  will be masked in API responses by default (helpers in `@moneylens/shared`).
-- Raw statement files are processed into normalised rows. The file itself can
-  be deleted after the import is confirmed (`Import.storageKey` is nullable for
-  this).
+- UPI IDs and transaction references are kept for duplicate detection only
+  and are masked in every API response, including inside statement
+  narrations shown as descriptions.
+- Raw statement files are processed into normalised rows in memory and then
+  discarded.
 - The AI pipeline (phase 6) is `document → parser → normalised data → sanitised
 aggregates → AI`. Raw documents and raw transaction lists are not sent to an
   AI provider.
-- Deletion: every user-owned table cascades from `User`. Endpoints for deleting
-  a transaction, an import, all transactions, and the account arrive in phase 2.
+- Deletion: every user-owned table cascades from `User`. Users can delete a
+  transaction, an import (with the transactions it added), all transactions
+  (typed `DELETE` confirmation), and their account (password re-check).
+  After account deletion an already-issued access token can live up to its
+  15-minute expiry but finds no data; refresh tokens are deleted with the
+  account.
 
 ## Planned hardening
 
-| Phase | Item                                                                                                                                                  |
-| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2     | Upload validation: extension + magic-byte sniffing, size limit (`MAX_UPLOAD_MB`), files stored outside the web root under random keys, never executed |
-| 2     | Masked identifiers in transaction responses; data deletion endpoints                                                                                  |
-| 2     | Origin check on cookie-authenticated auth routes, in addition to SameSite                                                                             |
-| 7     | Mobile refresh tokens in the body, stored in `expo-secure-store`                                                                                      |
-| 8     | Account lockout/backoff per email, audit log of auth events, CSP review for the web build, dependency scanning in CI, threat-model review             |
+| Phase | Item                                                                                                                                      |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| 3     | PDF upload hardening: encrypted/oversized PDFs, page caps, parser time limits                                                             |
+| 3     | Origin check on cookie-authenticated auth routes, in addition to SameSite                                                                 |
+| 7     | Mobile refresh tokens in the body, stored in `expo-secure-store`                                                                          |
+| 8     | Account lockout/backoff per email, audit log of auth events, CSP review for the web build, dependency scanning in CI, threat-model review |
 
 ## Known advisories
 

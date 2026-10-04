@@ -15,7 +15,20 @@ export function extractUpiId(description: string): string | null {
 }
 
 export function extractReference(description: string): string | null {
-  return REFERENCE.exec(description)?.[1] ?? null;
+  return normalizeReference(REFERENCE.exec(description)?.[1]);
+}
+
+/**
+ * Canonical form of a reference number for duplicate matching. Banks pad the
+ * same UPI RRN with leading zeros differently ("0000424612345678" in one
+ * column, "424612345678" in the narration), and placeholder values such as
+ * "0000000000" are not references at all.
+ */
+export function normalizeReference(raw: string | null | undefined): string | null {
+  const compact = (raw ?? '').replace(/\s+/g, '').toUpperCase();
+  if (!/^[A-Z0-9]+$/.test(compact)) return null;
+  const stripped = compact.replace(/^0+/, '');
+  return stripped.length >= 6 ? stripped : null;
 }
 
 /**

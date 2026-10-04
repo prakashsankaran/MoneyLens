@@ -5,9 +5,13 @@ PostgreSQL 16 through Prisma 6. The schema is
 migrations are in `apps/api/prisma/migrations/`.
 
 The full schema for every planned entity was created in Phase 1, so later
-phases add behaviour rather than restructure tables. Phase 1 code reads and
-writes `User`, `Session`, `Category`, `Merchant`, `MerchantAlias` and
-`Transaction`. The remaining tables exist but are unused until their phase.
+phases add behaviour rather than restructure tables. As of Phase 2 the code
+reads and writes `User`, `Session`, `Category`, `Merchant`, `MerchantAlias`,
+`UserCategoryRule`, `Transaction`, `Import` and `ImportTransaction`. The
+remaining tables exist but are unused until their phase.
+
+Phase 2 added one column, `Import.warnings` (JSON, file-level parser notes),
+in migration `20261004205827_import_warnings`.
 
 ## Conventions
 
@@ -19,12 +23,17 @@ writes `User`, `Session`, `Category`, `Merchant`, `MerchantAlias` and
   it to integer paise at the boundary. A check constraint keeps
   `Transaction.amount` and `ImportTransaction.amount` positive, and direction
   lives in `flow`.
-- Timestamps are `timestamptz`. Statement dates without a time are stored at a
-  fixed IST time by the importers (phase 2). `Budget.month` and statement
-  periods are `date`.
+- Timestamps are `timestamptz`. Statement dates without a time are stored at
+  12:00 IST by the importers. `Budget.month` and statement periods
+  (`Import.statementStart/End`) are `date`.
 - Sensitive identifiers (`upiId`, `transactionReference`) are stored because
-  duplicate detection needs them. API responses will mask them by default
-  (`maskUpiId`, `maskTail` in `@moneylens/shared`).
+  duplicate detection needs them. API responses always mask them, including
+  inside free-text descriptions (`maskUpiId`, `maskTail`,
+  `maskIdentifiersInText` in `@moneylens/shared`). References are stored
+  normalised (leading zeros removed) so the same UPI RRN matches across
+  statement formats.
+- `Import.storageKey` stays `NULL`: raw statement files are parsed in memory
+  and never written to disk.
 
 ## Entities
 
@@ -37,7 +46,7 @@ writes `User`, `Session`, `Category`, `Merchant`, `MerchantAlias` and
 | `MerchantAlias`                | Raw statement strings (e.g. `SWIGGY*FOOD`) mapped to a merchant                          | unique `(merchantId, aliasKey)`; index `aliasKey`                                                                                                                  |
 | `UserCategoryRule`             | User corrections promoted to rules (merchant / description / UPI match)                  | unique `(userId, matchField, pattern)`                                                                                                                             |
 | `Transaction`                  | Normalised transaction                                                                   | indexes `(userId, transactionDate)`, `(userId, categoryId)`, `(userId, merchantId)`, `(userId, transactionType)`, `sourceFileId`, `(userId, transactionReference)` |
-| `Import`                       | An uploaded statement file and its processing state                                      | `(userId, createdAt)`, `(userId, sha256)` to detect re-uploads                                                                                                     |
+| `Import`                       | An uploaded statement (metadata and hash only) and its processing state                  | `(userId, createdAt)`, `(userId, sha256)` to detect re-uploads                                                                                                     |
 | `ImportTransaction`            | Parsed row awaiting review; `decision`, `duplicateOfId`, `warnings`                      | unique `(importId, rowIndex)`                                                                                                                                      |
 | `RecurringPayment`             | Detected recurring series (frequency, typical amount, next expected)                     | `userId`                                                                                                                                                           |
 | `Insight`                      | Persisted insight with `kind` (provenance), metric JSON, supporting ids                  | unique `(userId, key)`                                                                                                                                             |

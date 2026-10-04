@@ -2,7 +2,12 @@ import { parse } from 'csv-parse/sync';
 import type { TransactionFlow } from '@moneylens/types';
 import { parseStatementAmount } from './amounts';
 import { detectDayOrder, parseStatementDate } from './dates';
-import { extractReference, extractUpiId, inferTransactionType } from './normalize';
+import {
+  extractReference,
+  extractUpiId,
+  inferTransactionType,
+  normalizeReference,
+} from './normalize';
 import {
   StatementParseError,
   type ParseResult,
@@ -292,7 +297,7 @@ export class CsvTransactionParser implements TransactionParser {
         type: inferTransactionType(description, flow),
         description: description || '(no description)',
         upiId: upiFromColumn ?? extractUpiId(description),
-        reference: cell(record, 'reference') || extractReference(description),
+        reference: normalizeReference(cell(record, 'reference')) ?? extractReference(description),
         warnings: rowWarnings,
       });
     });

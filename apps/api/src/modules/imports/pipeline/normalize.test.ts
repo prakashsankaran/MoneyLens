@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { extractReference, extractUpiId, inferTransactionType } from './normalize';
+import {
+  extractReference,
+  extractUpiId,
+  inferTransactionType,
+  normalizeReference,
+} from './normalize';
 
 describe('extractUpiId', () => {
   it('finds UPI handles in narrations', () => {
@@ -31,5 +36,13 @@ describe('inferTransactionType', () => {
     ['Refund to customer', 'OUT', 'DEBIT'],
   ] as const)('%s (%s) -> %s', (description, flow, expected) => {
     expect(inferTransactionType(description, flow)).toBe(expected);
+  });
+
+  it('normalises references and drops placeholders', () => {
+    expect(normalizeReference('0000424612345678')).toBe('424612345678');
+    expect(normalizeReference(' N244260012345 ')).toBe('N244260012345');
+    expect(normalizeReference('0000000000')).toBeNull();
+    expect(normalizeReference('12-34')).toBeNull();
+    expect(normalizeReference(undefined)).toBeNull();
   });
 });

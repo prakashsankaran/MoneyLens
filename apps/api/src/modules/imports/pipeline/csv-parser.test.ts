@@ -37,7 +37,7 @@ describe('bank export with separate debit/credit columns and a preamble', () => 
       flow: 'OUT',
       upiId: 'landlord.demo@okaxis',
     });
-    expect(swiggy).toMatchObject({ amountPaise: 45_200, reference: '0000424698765432' });
+    expect(swiggy).toMatchObject({ amountPaise: 45_200, reference: '424698765432' });
     expect(coffee).toMatchObject({ amountPaise: 31_050 });
     expect(refund).toMatchObject({ amountPaise: 129_900, flow: 'IN', type: 'REFUND' });
     expect(sip).toMatchObject({ amountPaise: 1_000_000, flow: 'OUT' });

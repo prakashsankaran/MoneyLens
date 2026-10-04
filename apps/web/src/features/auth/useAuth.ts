@@ -10,6 +10,8 @@ export interface AuthContextValue {
   login(input: LoginInput): Promise<void>;
   register(input: RegisterInput): Promise<void>;
   logout(): Promise<void>;
+  /** Permanently delete the account after re-checking the password. */
+  deleteAccount(password: string): Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);

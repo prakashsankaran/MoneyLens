@@ -196,4 +196,18 @@ describe('rate limiting', () => {
     expect(blocked.body.error.code).toBe('RATE_LIMITED');
     await limited.prisma.$disconnect();
   });
+
+  it('gives session refresh its own budget so page reloads do not lock out sign-in', async () => {
+    const limited = createTestContext({ AUTH_RATE_LIMIT: '2' });
+    const refresh = () => request(limited.app).post('/api/auth/refresh');
+    for (let i = 0; i < 4; i++) expect((await refresh()).status).toBe(401);
+    // Login still has its full budget.
+    const login = await request(limited.app)
+      .post('/api/auth/login')
+      .send({ email: 'nobody@example.test', password: 'whatever-password' });
+    expect(login.status).toBe(401);
+    for (let i = 0; i < 6; i++) await refresh();
+    expect((await refresh()).status).toBe(429);
+    await limited.prisma.$disconnect();
+  });
 });

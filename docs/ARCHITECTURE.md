@@ -71,7 +71,8 @@ apps/api/src/
   config/env.ts           zod-validated environment, refuses weak secrets
   lib/                    errors (AppError), response envelope, money, analytics data source
   middleware/             authenticate, validate (zod), rate limits, error handler
-  modules/<domain>/       routes + service per domain (auth, dashboard, categories, health)
+  modules/<domain>/       routes + service per domain: auth, dashboard, transactions,
+                          imports (with pipeline/), categories, merchants, analytics, health
 prisma/
   schema.prisma           full relational schema (all 16 entities, see DATABASE.md)
   migrations/             SQL migrations, including hand-written constraints
@@ -117,7 +118,7 @@ Implemented in `classifyTransaction` (`packages/analytics/src/classify.ts`):
 | UNKNOWN               | OUT/IN | spending/income, so money is never silently dropped       |
 | DEBIT IN / CREDIT OUT | –      | excluded as contradictory (flagged for review in phase 3) |
 
-## Analytics engine (Phase 1 scope)
+## Analytics engine
 
 `packages/analytics` currently provides:
 
@@ -128,6 +129,7 @@ Implemented in `classifyTransaction` (`packages/analytics/src/classify.ts`):
 - `monthlyTrend`, `groupByMonth`, `comparePeriods`: month series and
   month-over-month change.
 - `topMerchants`.
+- `importStats`: the review summary for a staged import (Phase 2).
 - Observations (deterministic, labelled `OBSERVATION`, each with metric and
   supporting transaction ids):
   - `categoriesAboveAverage`: a subcategory (or, failing that, its parent)
@@ -151,8 +153,16 @@ never from the model's output.
 
 - React 19, React Router 7, TanStack Query 5, React Hook Form + Zod
   (schemas from `@moneylens/validation`), Tailwind CSS 4, Recharts 3, lucide icons.
-- `features/` holds feature folders (auth, dashboard); `components/` holds the
-  shared UI and layout.
+- `features/` holds feature folders (auth, dashboard, transactions, imports,
+  analytics, categories); `components/` holds the shared UI and layout
+  (`Dialog`, `PageHeader`, `Card`, …).
+- **Transactions:** filters live in the URL query string, so a filtered view
+  can be bookmarked and the Analytics page links straight into it. A table on
+  desktop, cards on phones; selecting a row opens a side panel (a bottom sheet
+  on phones) for edits.
+- **Imports:** upload, then a review screen with calculated totals, file
+  warnings, a "Needs a look" filter and per-row include and category. Row
+  edits update optimistically; totals always come from the server.
 - **Layout:** sidebar at `lg` (1024px) and above. Below that, a sticky header
   and a bottom tab bar (Home, Transactions, Insights, Plan, More), where More
   opens a sheet with the remaining sections.
@@ -176,7 +186,7 @@ never from the model's output.
 | New statement source | `TransactionParser` implementations + `TransactionSource` enum      | 2–3   |
 | OCR for scanned PDFs | `OcrEngine` interface behind the PDF parser                         | later |
 | LLM vendor           | `AIProvider` interface, chosen by env var                           | 6     |
-| File storage         | `FileStorage` interface (local disk → S3-compatible)                | 2     |
+| File storage         | Not needed yet: files are parsed in memory and discarded            | 3     |
 | Mobile auth          | Refresh token returned in body when the client identifies as mobile | 7     |
 
 ## Key decisions
@@ -193,3 +203,5 @@ never from the model's output.
 | Added `flow` column                            | A `TRANSFER` can be in or out. Type alone cannot give direction                                                         |
 | Added Housing and Income system categories     | Rent is the largest expense for many Indian households, and salary needs a home                                         |
 | Mobile excluded from workspaces until phase 7  | Keeps Expo/Metro tooling from destabilising web and API now                                                             |
+| Raw statement files are not stored             | Less sensitive data at rest. The SHA-256 is enough to catch re-uploads, and staged rows hold everything review needs    |
+| Corrections become rules                       | "Apply to merchant" updates the merchant, stores a `MERCHANT` rule and recategorises past transactions in one step      |
