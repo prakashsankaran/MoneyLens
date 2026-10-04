@@ -1,0 +1,50 @@
+{
+  "name": "moneylens",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MoneyLens: understand where your money goes.",
+  "type": "module",
+  "workspaces": [
+    "apps/api",
+    "apps/web",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,magenta \"npm run dev -w @moneylens/api\" \"npm run dev -w @moneylens/web\"",
+    "dev:api": "npm run dev -w @moneylens/api",
+    "dev:web": "npm run dev -w @moneylens/web",
+    "build": "npm run build -w @moneylens/api && npm run build -w @moneylens/web",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "npm run test:e2e -w @moneylens/web",
+    "lint": "eslint .",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test",
+    "db:generate": "npm run db:generate -w @moneylens/api",
+    "db:migrate": "npm run db:migrate -w @moneylens/api",
+    "db:deploy": "npm run db:deploy -w @moneylens/api",
+    "db:seed": "npm run db:seed -w @moneylens/api",
+    "db:reset": "npm run db:reset -w @moneylens/api",
+    "docker:up": "docker compose -f infrastructure/docker/docker-compose.yml up -d",
+    "docker:down": "docker compose -f infrastructure/docker/docker-compose.yml down"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.36.0",
+    "@types/node": "^22.18.0",
+    "concurrently": "^9.2.1",
+    "eslint": "^9.36.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.0.0",
+    "eslint-plugin-react-refresh": "^0.4.22",
+    "globals": "^16.4.0",
+    "prettier": "^3.6.2",
+    "typescript": "~5.9.2",
+    "typescript-eslint": "^8.44.0",
+    "vitest": "^5.0.3"
+  }
+}
