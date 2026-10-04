@@ -1,0 +1,19 @@
+{
+  "name": "@moneylens/validation",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Zod schemas shared by the API and clients.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@moneylens/types": "*",
+    "zod": "^4.1.0"
+  }
+}

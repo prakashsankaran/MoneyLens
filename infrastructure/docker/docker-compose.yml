@@ -1,0 +1,75 @@
+# Local development stack.
+#
+#   docker compose -f infrastructure/docker/docker-compose.yml up -d            # postgres + api
+#   docker compose -f infrastructure/docker/docker-compose.yml --profile web up -d   # + web on :8080
+#   docker compose -f infrastructure/docker/docker-compose.yml --profile seed run --rm seed
+#
+# Only Postgres is needed if you run the API and web with `npm run dev`.
+name: moneylens
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: moneylens
+      POSTGRES_PASSWORD: moneylens
+      POSTGRES_DB: moneylens
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U moneylens -d moneylens']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/api.Dockerfile
+    environment:
+      # Runs with production settings inside the container; these values are
+      # for local use only. Never reuse them in a deployed environment.
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://moneylens:moneylens@postgres:5432/moneylens?schema=public
+      CORS_ORIGINS: http://localhost:8080,http://localhost:5173
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-local-docker-secret-local-docker-secret-0123}
+      TRUST_PROXY: 1
+      LOG_LEVEL: info
+    ports:
+      - '4000:4000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    profiles: [web]
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/web.Dockerfile
+    ports:
+      - '8080:80'
+    depends_on:
+      - api
+
+  # One-off: load demo data. Uses the build stage, which has dev tooling.
+  seed:
+    profiles: [seed]
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/api.Dockerfile
+      target: build
+    working_dir: /app/apps/api
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://moneylens:moneylens@postgres:5432/moneylens?schema=public
+    command: ['sh', '-c', 'npx prisma migrate deploy && npx tsx prisma/seed.ts']
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
