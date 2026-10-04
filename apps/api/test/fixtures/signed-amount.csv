@@ -1,0 +1,6 @@
+Transaction Date;Description;Amount (INR);UPI ID
+2026-09-02 08:15;Third Wave Coffee;-245.00;twc.demo@ybl
+2026-09-02 19:40;ZOMATO ORDER;-612.40;zomato.demo@hdfcbank
+2026-09-10;Cashback from Google Pay;25.00;
+2026-09-15;Self transfer to savings;-20000;
+2026-09-31;Bad date row;-10;

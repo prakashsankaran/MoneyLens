@@ -9,6 +9,9 @@ import {
   monthRangeUtc,
   monthsEnding,
   parseMonthKey,
+  dayRangeUtc,
+  isValidCalendarDate,
+  parseDayKey,
 } from './dates';
 
 describe('IST month bucketing', () => {
@@ -55,5 +58,20 @@ describe('month arithmetic', () => {
   it('formats month names', () => {
     expect(formatMonthKey('2026-09')).toBe('September 2026');
     expect(formatMonthKey('2026-09', { short: true })).toBe('Sep');
+  });
+});
+
+describe('day ranges', () => {
+  it('bounds an IST day in UTC', () => {
+    const { start, end } = dayRangeUtc('2026-10-01');
+    expect(start.toISOString()).toBe('2026-09-30T18:30:00.000Z');
+    expect(end.toISOString()).toBe('2026-10-01T18:30:00.000Z');
+  });
+
+  it('rejects impossible dates', () => {
+    expect(() => parseDayKey('2026-04-31')).toThrow();
+    expect(() => parseDayKey('2026-02-29')).toThrow();
+    expect(parseDayKey('2028-02-29')).toEqual({ year: 2028, month: 2, day: 29 });
+    expect(isValidCalendarDate(2026, 13, 1)).toBe(false);
   });
 });

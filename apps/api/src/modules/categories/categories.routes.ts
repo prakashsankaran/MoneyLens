@@ -1,22 +1,31 @@
 import { Router } from 'express';
-import type { CategoryRef } from '@moneylens/types';
-import type { AnalyticsDataSource } from '../../lib/analytics-data';
+import { createCategorySchema, updateCategorySchema } from '@moneylens/validation';
 import { ok } from '../../lib/respond';
 import { requireUserId } from '../../middleware/authenticate';
+import { parseInput } from '../../middleware/validate';
+import type { CategoriesService } from './categories.service';
 
-export interface CategoryNode extends CategoryRef {
-  children: CategoryRef[];
-}
-
-/** Read-only category tree. Custom category CRUD arrives in Phase 2. */
-export function categoryRoutes(data: AnalyticsDataSource): Router {
+export function categoryRoutes(service: CategoriesService): Router {
   const router = Router();
+
   router.get('/', async (req, res) => {
-    const all = await data.categories(requireUserId(req));
-    const tree: CategoryNode[] = all
-      .filter((c) => c.parentId === null)
-      .map((parent) => ({ ...parent, children: all.filter((c) => c.parentId === parent.id) }));
-    ok(res, tree);
+    ok(res, await service.tree(requireUserId(req)));
   });
+
+  router.post('/', async (req, res) => {
+    const input = parseInput(createCategorySchema, req.body);
+    ok(res, await service.create(requireUserId(req), input), 201);
+  });
+
+  router.patch('/:id', async (req, res) => {
+    const input = parseInput(updateCategorySchema, req.body);
+    await service.rename(requireUserId(req), req.params.id, input);
+    ok(res, { updated: true });
+  });
+
+  router.delete('/:id', async (req, res) => {
+    ok(res, { deleted: true, ...(await service.remove(requireUserId(req), req.params.id)) });
+  });
+
   return router;
 }

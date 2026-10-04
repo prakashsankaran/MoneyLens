@@ -205,3 +205,183 @@ export interface DashboardData {
   topMerchants: MerchantSummaryItem[];
   observations: Observation[];
 }
+
+// ---------------------------------------------------------------------------
+// Categories and merchants
+// ---------------------------------------------------------------------------
+
+export interface CategoryNode extends CategoryRef {
+  isSystem: boolean;
+  children: (CategoryRef & { isSystem: boolean })[];
+}
+
+export interface MerchantOption {
+  id: string;
+  name: string;
+  transactionCount: number;
+}
+
+// ---------------------------------------------------------------------------
+// Transactions
+// ---------------------------------------------------------------------------
+
+export interface CategoryLabel {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface TransactionItem {
+  id: string;
+  /** ISO 8601 instant. */
+  date: string;
+  amountPaise: number;
+  currency: string;
+  type: TransactionType;
+  flow: TransactionFlow;
+  merchantId: string | null;
+  merchantName: string | null;
+  description: string | null;
+  category: CategoryLabel | null;
+  subcategory: CategoryLabel | null;
+  paymentMethod: PaymentMethod | null;
+  source: TransactionSource;
+  status: TransactionStatus;
+  isRecurring: boolean;
+  notes: string | null;
+  /** Masked by default, e.g. "sw•••••@icici". */
+  upiIdMasked: string | null;
+  /** Masked by default, e.g. "••••3456". */
+  referenceMasked: string | null;
+  categoryConfidence: number | null;
+}
+
+export interface TransactionDetail extends TransactionItem {
+  sourceFile: { id: string; filename: string } | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TransactionList {
+  items: TransactionItem[];
+  page: number;
+  pageSize: number;
+  total: number;
+  /** Totals over every transaction matching the filters (not just this page). */
+  summary: PeriodTotals;
+}
+
+export interface TransactionUpdateResult {
+  transaction: TransactionDetail;
+  /** Other transactions recategorised because the change was applied to the merchant. */
+  alsoUpdated: number;
+}
+
+// ---------------------------------------------------------------------------
+// Imports
+// ---------------------------------------------------------------------------
+
+export const IMPORT_STATUSES = [
+  'UPLOADED',
+  'PARSING',
+  'READY_FOR_REVIEW',
+  'CONFIRMED',
+  'FAILED',
+  'CANCELLED',
+] as const;
+export type ImportStatus = (typeof IMPORT_STATUSES)[number];
+
+export const IMPORT_ROW_DECISIONS = ['INCLUDE', 'EXCLUDE', 'DUPLICATE'] as const;
+export type ImportRowDecision = (typeof IMPORT_ROW_DECISIONS)[number];
+
+export interface ImportRecord {
+  id: string;
+  filename: string;
+  source: TransactionSource;
+  parserName: string | null;
+  status: ImportStatus;
+  createdAt: string;
+  confirmedAt: string | null;
+  /** "YYYY-MM-DD" in IST. */
+  statementStart: string | null;
+  statementEnd: string | null;
+  detectedCount: number;
+  duplicateCount: number;
+  committedCount: number;
+  errorMessage: string | null;
+}
+
+export interface ImportRow {
+  id: string;
+  rowIndex: number;
+  date: string;
+  amountPaise: number;
+  type: TransactionType;
+  flow: TransactionFlow;
+  rawDescription: string | null;
+  merchantName: string | null;
+  category: CategoryLabel | null;
+  categoryConfidence: number | null;
+  decision: ImportRowDecision;
+  duplicateReason: string | null;
+  warnings: string[];
+}
+
+export interface ImportStats {
+  detected: number;
+  included: number;
+  excluded: number;
+  possibleDuplicates: number;
+  uncategorized: number;
+  /** "YYYY-MM-DD" in IST. */
+  firstDate: string | null;
+  lastDate: string | null;
+  totalDebitsPaise: number;
+  totalCreditsPaise: number;
+}
+
+export interface ImportReview {
+  import: ImportRecord;
+  stats: ImportStats;
+  rows: ImportRow[];
+  /** File-level parser warnings (skipped lines, assumed date format, ...). */
+  warnings: string[];
+}
+
+export interface ImportRowUpdateResult {
+  row: ImportRow;
+  stats: ImportStats;
+}
+
+export interface ImportConfirmResult {
+  import: ImportRecord;
+  committed: number;
+}
+
+// ---------------------------------------------------------------------------
+// Analytics endpoints
+// ---------------------------------------------------------------------------
+
+export interface MonthlyAnalytics {
+  month: string;
+  /** IST months ("YYYY-MM") that have confirmed transactions. */
+  availableMonths: string[];
+  totals: PeriodTotals;
+  comparison: PeriodComparison | null;
+}
+
+export interface CategoryAnalytics {
+  month: string;
+  /** Set when drilling into one top-level category's subcategories. */
+  parent: CategoryLabel | null;
+  items: CategoryBreakdownItem[];
+}
+
+export interface MerchantAnalytics {
+  month: string;
+  items: MerchantSummaryItem[];
+}
+
+export interface TrendAnalytics {
+  points: MonthlyTrendPoint[];
+}

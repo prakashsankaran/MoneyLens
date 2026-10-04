@@ -13,10 +13,18 @@ import { apiRateLimit } from './middleware/rate-limit';
 import { AuthService } from './modules/auth/auth.service';
 import { authRoutes } from './modules/auth/auth.routes';
 import { createTokenService } from './modules/auth/tokens';
+import { AnalyticsService } from './modules/analytics/analytics.service';
+import { analyticsRoutes } from './modules/analytics/analytics.routes';
+import { CategoriesService } from './modules/categories/categories.service';
 import { categoryRoutes } from './modules/categories/categories.routes';
 import { DashboardService } from './modules/dashboard/dashboard.service';
 import { dashboardRoutes } from './modules/dashboard/dashboard.routes';
 import { healthRoutes } from './modules/health/health.routes';
+import { ImportsService } from './modules/imports/imports.service';
+import { importRoutes } from './modules/imports/imports.routes';
+import { merchantRoutes } from './modules/merchants/merchants.routes';
+import { TransactionsService } from './modules/transactions/transactions.service';
+import { transactionRoutes } from './modules/transactions/transactions.routes';
 
 export interface AppDeps {
   env: Env;
@@ -65,7 +73,15 @@ export function createApp({ env, prisma, logger }: AppDeps): Express {
   // Everything below requires an authenticated user.
   const requireAuth = authenticate(tokens);
   api.use('/dashboard', requireAuth, dashboardRoutes(new DashboardService(analyticsData)));
-  api.use('/categories', requireAuth, categoryRoutes(analyticsData));
+  api.use('/categories', requireAuth, categoryRoutes(new CategoriesService(prisma)));
+  api.use('/transactions', requireAuth, transactionRoutes(new TransactionsService(prisma)));
+  api.use(
+    '/imports',
+    requireAuth,
+    importRoutes(new ImportsService(prisma), { maxUploadMb: env.MAX_UPLOAD_MB }),
+  );
+  api.use('/merchants', requireAuth, merchantRoutes(prisma));
+  api.use('/analytics', requireAuth, analyticsRoutes(new AnalyticsService(analyticsData)));
 
   app.use('/api', api);
   app.use(notFoundHandler);

@@ -39,3 +39,156 @@ export const dashboardQuerySchema = z.object({
   month: monthKeySchema.optional(),
 });
 export type DashboardQuery = z.infer<typeof dashboardQuerySchema>;
+
+// ---------------------------------------------------------------------------
+// Transactions
+// ---------------------------------------------------------------------------
+
+/** "YYYY-MM-DD" calendar date (interpreted in IST by the API). */
+export const dayKeySchema = z
+  .string()
+  .regex(/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/, 'Expected a date in YYYY-MM-DD format');
+
+const idSchema = z.string().trim().min(1).max(64);
+
+/** Rupee amount as typed by a user, e.g. "1,250.50". */
+export const rupeeAmountSchema = z
+  .string()
+  .trim()
+  .transform((v) => v.replace(/[,₹\s]/g, ''))
+  .pipe(z.string().regex(/^\d{1,12}(\.\d{1,2})?$/, 'Enter an amount like 1250 or 1250.50'));
+
+const csvEnum = <T extends readonly [string, ...string[]]>(values: T) =>
+  z
+    .union([z.string(), z.array(z.string())])
+    .transform((v) => (Array.isArray(v) ? v : v.split(',')).map((s) => s.trim()).filter(Boolean))
+    .pipe(z.array(z.enum(values)).max(values.length));
+
+export const TRANSACTION_SORTS = ['date_desc', 'date_asc', 'amount_desc', 'amount_asc'] as const;
+export type TransactionSort = (typeof TRANSACTION_SORTS)[number];
+
+export const transactionQuerySchema = z
+  .object({
+    q: z.string().trim().max(100).optional(),
+    from: dayKeySchema.optional(),
+    to: dayKeySchema.optional(),
+    categoryId: idSchema.optional(),
+    merchantId: idSchema.optional(),
+    minAmount: rupeeAmountSchema.optional(),
+    maxAmount: rupeeAmountSchema.optional(),
+    type: csvEnum([
+      'DEBIT',
+      'CREDIT',
+      'REFUND',
+      'CASHBACK',
+      'TRANSFER',
+      'SELF_TRANSFER',
+      'UNKNOWN',
+    ] as const).optional(),
+    flow: z.enum(['IN', 'OUT']).optional(),
+    recurring: z.enum(['true', 'false']).optional(),
+    source: csvEnum(['GOOGLE_PAY', 'CSV', 'XLSX', 'MANUAL', 'OTHER'] as const).optional(),
+    status: z.enum(['CONFIRMED', 'EXCLUDED']).default('CONFIRMED'),
+    sort: z.enum(TRANSACTION_SORTS).default('date_desc'),
+    page: z.coerce.number().int().min(1).max(10_000).default(1),
+    pageSize: z.coerce.number().int().min(1).max(100).default(25),
+  })
+  .refine((v) => !v.from || !v.to || v.from <= v.to, {
+    message: 'Start date must be on or before the end date',
+    path: ['to'],
+  })
+  .refine((v) => !v.minAmount || !v.maxAmount || Number(v.minAmount) <= Number(v.maxAmount), {
+    message: 'Minimum must not exceed maximum',
+    path: ['maxAmount'],
+  });
+export type TransactionQuery = z.infer<typeof transactionQuerySchema>;
+export type TransactionQueryInput = z.input<typeof transactionQuerySchema>;
+
+export const updateTransactionSchema = z
+  .object({
+    /** A top-level or subcategory id; null clears the category. */
+    categoryId: idSchema.nullable().optional(),
+    merchantName: z.string().trim().min(1).max(80).optional(),
+    notes: z.string().trim().max(500).nullable().optional(),
+    transactionType: z
+      .enum(['DEBIT', 'CREDIT', 'REFUND', 'CASHBACK', 'TRANSFER', 'SELF_TRANSFER', 'UNKNOWN'])
+      .optional(),
+    status: z.enum(['CONFIRMED', 'EXCLUDED']).optional(),
+    /**
+     * Also use this category for the merchant's other transactions and for
+     * future imports from the same merchant.
+     */
+    applyToMerchant: z.boolean().optional(),
+  })
+  .refine((v) => Object.keys(v).some((k) => k !== 'applyToMerchant'), {
+    message: 'Nothing to update',
+  })
+  .refine((v) => !v.applyToMerchant || v.categoryId !== undefined, {
+    message: 'Choose a category to apply to the merchant',
+    path: ['applyToMerchant'],
+  });
+export type UpdateTransactionInput = z.infer<typeof updateTransactionSchema>;
+
+/** Typed confirmation for destructive bulk actions. */
+export const confirmDeleteAllSchema = z.object({
+  confirm: z.literal('DELETE', { message: 'Type DELETE to confirm' }),
+});
+
+export const deleteAccountSchema = z.object({
+  password: z.string().min(1, 'Enter your password').max(128),
+});
+export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;
+
+// ---------------------------------------------------------------------------
+// Categories
+// ---------------------------------------------------------------------------
+
+export const createCategorySchema = z.object({
+  name: z.string().trim().min(1, 'Enter a name').max(40, 'Use at most 40 characters'),
+  parentId: idSchema.nullable().optional(),
+});
+export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
+
+export const updateCategorySchema = z.object({
+  name: z.string().trim().min(1, 'Enter a name').max(40, 'Use at most 40 characters'),
+});
+export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>;
+
+// ---------------------------------------------------------------------------
+// Imports
+// ---------------------------------------------------------------------------
+
+export const updateImportRowSchema = z
+  .object({
+    decision: z.enum(['INCLUDE', 'EXCLUDE', 'DUPLICATE']).optional(),
+    categoryId: idSchema.nullable().optional(),
+    merchantName: z.string().trim().min(1).max(80).optional(),
+    transactionType: z
+      .enum(['DEBIT', 'CREDIT', 'REFUND', 'CASHBACK', 'TRANSFER', 'SELF_TRANSFER', 'UNKNOWN'])
+      .optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0, { message: 'Nothing to update' });
+export type UpdateImportRowInput = z.infer<typeof updateImportRowSchema>;
+
+// ---------------------------------------------------------------------------
+// Analytics
+// ---------------------------------------------------------------------------
+
+export const analyticsMonthQuerySchema = z.object({ month: monthKeySchema.optional() });
+
+export const categoryAnalyticsQuerySchema = z.object({
+  month: monthKeySchema.optional(),
+  level: z.enum(['top', 'leaf']).default('top'),
+  /** Drill into one top-level category: its subcategories only. */
+  parentId: idSchema.optional(),
+});
+
+export const merchantAnalyticsQuerySchema = z.object({
+  month: monthKeySchema.optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(10),
+});
+
+export const trendQuerySchema = z.object({
+  end: monthKeySchema.optional(),
+  months: z.coerce.number().int().min(1).max(24).default(6),
+});

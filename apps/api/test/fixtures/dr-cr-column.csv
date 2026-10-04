@@ -1,0 +1,4 @@
+Date,Details,Amount,Dr/Cr,Reference
+"Sep 3, 2026",UBER INDIA TRIP,"₹ 389.00",DR,UTR1234567890
+"Sep 4, 2026",Refund - Flipkart order,"₹ 1,050.00",CR,UTR1234567891
+"Sep 6, 2026",BESCOM ELECTRICITY BILL,"₹ 1,640.00",Dr,UTR1234567892

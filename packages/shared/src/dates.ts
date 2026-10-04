@@ -86,3 +86,24 @@ export function formatMonthKey(key: string, opts: { short?: boolean } = {}): str
   const name = MONTH_NAMES[month - 1] ?? '';
   return opts.short ? name.slice(0, 3) : `${name} ${year}`;
 }
+
+export function parseDayKey(key: string): { year: number; month: number; day: number } {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key);
+  if (!match) throw new Error(`Invalid date: "${key}"`);
+  const [year, month, day] = [Number(match[1]), Number(match[2]), Number(match[3])];
+  if (!isValidCalendarDate(year, month, day)) throw new Error(`Invalid date: "${key}"`);
+  return { year, month, day };
+}
+
+/** True when the year/month/day combination exists (e.g. rejects 31 April). */
+export function isValidCalendarDate(year: number, month: number, day: number): boolean {
+  if (!Number.isInteger(year) || month < 1 || month > 12 || day < 1) return false;
+  return day <= new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
+/** UTC instants bounding an IST calendar day: [start, end). */
+export function dayRangeUtc(key: string): { start: Date; end: Date } {
+  const { year, month, day } = parseDayKey(key);
+  const start = istDate(year, month, day);
+  return { start, end: new Date(start.getTime() + 24 * 60 * 60 * 1000) };
+}
