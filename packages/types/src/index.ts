@@ -566,6 +566,186 @@ export interface SimulationResult {
 }
 
 // ---------------------------------------------------------------------------
+// MoneyLens AI (Phase 6)
+// ---------------------------------------------------------------------------
+
+/** Whether spending in a category moved because of more payments or bigger ones. */
+export type SpendingDriver = 'frequency' | 'size' | 'both' | 'neither';
+
+export interface AssistantCategoryChange {
+  categoryId: string | null;
+  name: string;
+  slug: string;
+  /** False for subcategories (Food Delivery under Food). */
+  topLevel: boolean;
+  currentPaise: number;
+  previousPaise: number;
+  average3Paise: number;
+  /** current - previous. */
+  changePaise: number;
+  changeVsPreviousPct: number | null;
+  /** current - 3-month average. */
+  changeVsAverage3Paise: number;
+  changeVsAverage3Pct: number | null;
+  currentCount: number;
+  previousCount: number;
+  /** Average per payment, this month and the month before (0 with no payments). */
+  currentAveragePaise: number;
+  previousAveragePaise: number;
+  countChangePct: number | null;
+  averageChangePct: number | null;
+  /** null when there is nothing to compare with. */
+  driver: SpendingDriver | null;
+}
+
+/**
+ * Everything MoneyLens AI may know about one month: aggregated, calculated by
+ * the analytics engine, and free of identifiers. Every number the assistant
+ * writes must come from here (or from the user's own question).
+ */
+export interface AssistantContext {
+  month: string;
+  monthsAvailable: string[];
+  /** True when the month is the one in progress. */
+  monthInProgress: boolean;
+  totals: PeriodTotals;
+  previousMonth: string;
+  previousTotals: PeriodTotals | null;
+  /** Spending change against the previous month (current - previous). */
+  spendingChangePaise: number | null;
+  spendingChangePct: number | null;
+  incomeChangePct: number | null;
+  comparisons: PeriodComparisonRow[];
+  categories: CategoryBreakdownItem[];
+  categoryChanges: AssistantCategoryChange[];
+  topMerchants: MerchantSummaryItem[];
+  trend: MonthlyTrendPoint[];
+  recurring: {
+    label: string;
+    frequency: RecurringFrequencyKind;
+    typicalAmountPaise: number;
+    monthlyEquivalentPaise: number;
+    annualEquivalentPaise: number;
+    subscriptionLike: boolean;
+    nextExpectedDate: string;
+  }[];
+  recurringMonthlyPaise: number;
+  recurringAnnualPaise: number;
+  /** Potential saving opportunities, largest first, with a running total. */
+  savingOpportunities: {
+    title: string;
+    potentialMonthlySavingPaise: number;
+    cumulativeMonthlySavingPaise: number;
+    assumption: string | null;
+  }[];
+  savingOpportunitiesTotalPaise: number;
+  insights: { group: InsightGroup; title: string; explanation: string }[];
+  health: {
+    score: number | null;
+    components: { label: string; score: number | null; measured: string | null }[];
+  };
+  patterns: {
+    weekdayDailyAveragePaise: number;
+    weekendDailyAveragePaise: number;
+    weekendRatio: number | null;
+    largest: { date: string; merchantName: string | null; amountPaise: number }[];
+  };
+  /** The saved money plan, when there is one. */
+  plan: {
+    status: MoneyPlanResult['status'];
+    surplusPaise: number;
+    afterGoalsPaise: number;
+  } | null;
+  /** Things the data cannot support, stated plainly. */
+  dataLimitations: string[];
+}
+
+export type AssistantTopic =
+  | 'overview'
+  | 'change'
+  | 'merchants'
+  | 'categories'
+  | 'increasing'
+  | 'savings'
+  | 'driver'
+  | 'recurring'
+  | 'compare'
+  | 'health'
+  | 'plan';
+
+export type AssistantAnswerStatus =
+  /** The provider answered and every figure matched the context. */
+  | 'answered'
+  /** No AI provider is configured; only the calculated figures are shown. */
+  | 'not-configured'
+  /** The answer used figures that are not in the context, twice; figures only. */
+  | 'fallback'
+  /** The provider failed; figures only. */
+  | 'unavailable'
+  /** The question asked for something MoneyLens AI will not do. */
+  | 'refused';
+
+export interface AssistantAnswer {
+  status: AssistantAnswerStatus;
+  month: string;
+  topics: AssistantTopic[];
+  /** Calculated statements from the analytics engine, shown beside the AI text. */
+  facts: ReportStatement[];
+  /** Model text, labelled AI_INTERPRETATION; null when there is none. */
+  interpretation: string | null;
+  dataLimitations: string[];
+  /** Which provider and model wrote the interpretation. */
+  provider: string | null;
+  /** True when the first answer failed the figure check and was regenerated. */
+  regenerated: boolean;
+}
+
+export interface AssistantMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  /** The question, or the answer's text (interpretation, refusal or fallback note). */
+  content: string;
+  createdAt: string;
+  answer: AssistantAnswer | null;
+}
+
+export interface AssistantConversationSummary {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AssistantConversation extends AssistantConversationSummary {
+  messages: AssistantMessage[];
+}
+
+export interface ChatResponse {
+  conversation: AssistantConversationSummary;
+  question: AssistantMessage;
+  reply: AssistantMessage;
+}
+
+export interface AssistantStatus {
+  configured: boolean;
+  provider: string;
+  model: string | null;
+  dailyMessageLimit: number;
+  messagesToday: number;
+}
+
+export interface MoneyBrief {
+  month: string;
+  status: AssistantAnswerStatus;
+  /** Calculated statements the brief is written from. */
+  facts: ReportStatement[];
+  /** AI_INTERPRETATION text, or null. */
+  text: string | null;
+  provider: string | null;
+  generatedAt: string;
+}
+
+// ---------------------------------------------------------------------------
 // Categories and merchants
 // ---------------------------------------------------------------------------
 

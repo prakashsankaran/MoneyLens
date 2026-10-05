@@ -238,8 +238,9 @@ export class TransactionsService {
   }
 
   /**
-   * Delete every transaction and every import record. Merchants and the
-   * user's category rules are kept so a fresh import is categorised the same way.
+   * Delete every transaction and every import record, and MoneyLens AI
+   * conversations, which quote figures from them. Merchants and the user's
+   * category rules are kept so a fresh import is categorised the same way.
    */
   async removeAll(userId: string): Promise<{ transactions: number; imports: number }> {
     return this.prisma.$transaction(async (tx) => {
@@ -247,6 +248,7 @@ export class TransactionsService {
       const imports = await tx.import.deleteMany({ where: { userId } });
       await tx.recurringPayment.deleteMany({ where: { userId } });
       await tx.insight.deleteMany({ where: { userId } });
+      await tx.aIConversation.deleteMany({ where: { userId } });
       return { transactions: transactions.count, imports: imports.count };
     });
   }

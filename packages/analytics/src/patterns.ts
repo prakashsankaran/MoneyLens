@@ -18,7 +18,7 @@ import type {
 } from '@moneylens/types';
 import { classifyTransaction } from './classify';
 import { mean } from './stats';
-import { categoryBreakdown, groupByMonth, summarizePeriod } from './summary';
+import { categoryBreakdown, groupByMonth, summarizePeriod, type CategoryLevel } from './summary';
 
 const WEEKDAY_LABELS = [
   'Monday',
@@ -128,12 +128,15 @@ export function categoryComparisons(
   month: string,
   categories: readonly CategoryRef[],
   compareMonth: string = addMonths(month, -1),
+  level: CategoryLevel = 'top',
 ): CategoryComparisonRow[] {
   const byMonth = groupByMonth(txs);
-  const now = categoryBreakdown(byMonth.get(month) ?? [], categories);
-  const before = categoryBreakdown(byMonth.get(compareMonth) ?? [], categories);
+  const now = categoryBreakdown(byMonth.get(month) ?? [], categories, level);
+  const before = categoryBreakdown(byMonth.get(compareMonth) ?? [], categories, level);
   const avgMonths = withData(monthsEnding(addMonths(month, -1), 3), byMonth);
-  const avgBreakdowns = avgMonths.map((m) => categoryBreakdown(byMonth.get(m) ?? [], categories));
+  const avgBreakdowns = avgMonths.map((m) =>
+    categoryBreakdown(byMonth.get(m) ?? [], categories, level),
+  );
 
   const keys = new Map<string, (typeof now)[number]>();
   for (const r of [...now, ...before])
