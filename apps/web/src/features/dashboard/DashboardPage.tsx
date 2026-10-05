@@ -4,6 +4,7 @@ import { formatMonthKey } from '@moneylens/shared';
 import { Card } from '../../components/Card';
 import { FullPageSpinner } from '../../components/FullPageSpinner';
 import { useAuth } from '../auth/useAuth';
+import { HealthScoreSummary } from './components/HealthScoreSummary';
 import { MoneyBriefCard } from './components/MoneyBriefCard';
 import { OverviewTiles } from './components/OverviewTiles';
 import { SavingsOpportunities } from './components/SavingsOpportunities';
@@ -104,9 +105,10 @@ export function DashboardPage() {
             <Card
               className="lg:col-span-2"
               title="Where can I potentially save?"
-              description="Patterns compared with your recent months"
+              description="Potential saving opportunities and patterns from your recent months"
             >
               <SavingsOpportunities
+                opportunities={data.savingOpportunities}
                 observations={data.observations}
                 historyMonths={data.historyMonths}
               />
@@ -129,6 +131,13 @@ export function DashboardPage() {
               <TopMerchants merchants={data.topMerchants} />
             </Card>
           </div>
+
+          <Card
+            title="How healthy are my finances?"
+            description={`Financial health score for ${monthName}`}
+          >
+            <HealthScoreSummary health={data.health} />
+          </Card>
 
           <MoneyBriefCard />
         </div>

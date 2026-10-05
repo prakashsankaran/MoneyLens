@@ -1,6 +1,7 @@
 import {
   ArrowLeftRight,
   ChartColumn,
+  FileText,
   FileUp,
   House,
   Lightbulb,
@@ -26,6 +27,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/analytics', label: 'Analytics', icon: ChartColumn },
   { to: '/plan', label: 'Money Plan', shortLabel: 'Plan', icon: Target, mobilePrimary: true },
   { to: '/insights', label: 'Insights', icon: Lightbulb, mobilePrimary: true },
+  { to: '/reports', label: 'Monthly report', shortLabel: 'Report', icon: FileText },
   { to: '/assistant', label: 'AI Assistant', icon: Sparkles },
   { to: '/imports', label: 'Imports', icon: FileUp },
   { to: '/settings', label: 'Settings', icon: Settings },

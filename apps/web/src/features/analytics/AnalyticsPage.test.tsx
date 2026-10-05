@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CategoryAnalytics, MonthlyAnalytics } from '@moneylens/types';
 import { dashboardFixture } from '../../test/fixtures';
+import { comparisonsFixture } from '../../test/fixtures-phase4';
 import { mockApi, renderRoute } from '../../test/render';
 import { AnalyticsPage } from './AnalyticsPage';
 
@@ -46,12 +47,20 @@ describe('AnalyticsPage', () => {
         return { data: url.includes('parentId=food') ? sub : top };
       if (url.includes('/analytics/merchants')) return { data: { month: '2026-09', items: [] } };
       if (url.includes('/analytics/trends')) return { data: { points: dashboardFixture.trend } };
+      if (url.includes('/analytics/comparisons')) return { data: comparisonsFixture };
       return undefined;
     });
     renderRoute(<AnalyticsPage />);
     expect(
       await screen.findByRole('heading', { name: 'Where did my money go in September 2026?' }),
     ).toBeInTheDocument();
+    // Period comparisons and weekday patterns.
+    expect(await screen.findByText('Up 13%')).toBeInTheDocument();
+    expect(screen.getByText('No earlier data')).toBeInTheDocument();
+    expect(
+      screen.getByText(/weekends averaged ₹1,800 and weekdays ₹1,000 \(1.8x\)/),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Croma')).toBeInTheDocument();
     await userEvent.click(
       await screen.findByRole('button', { name: /Food: .*Show subcategories/ }),
     );

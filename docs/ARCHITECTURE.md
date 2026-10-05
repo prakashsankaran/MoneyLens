@@ -138,8 +138,44 @@ Implemented in `classifyTransaction` (`packages/analytics/src/classify.ts`):
     category.
   - `smallTransactionAccumulation`: eight or more payments under ₹300.
 
-Later phases add recurring detection, behavioural insights, money-leakage
-scoring and the explainable health score in the same package.
+Phase 4 added, all pure and deterministic:
+
+- `detectRecurring` (`recurring.ts`): groups payments and income by merchant
+  and direction, takes the median gap between payment days and matches it to
+  a weekly (6–8 days), monthly (25–35), quarterly (84–98) or yearly (350–380)
+  band. A series needs three occurrences (two for yearly) with at least 75% of
+  gaps within the band's tolerance. Confidence weighs regularity (50%), amount
+  stability (30%) and history length (20%). A merchant with mixed payments is
+  split into amount bands so a ₹649 subscription is found among one-off
+  orders. Subscription-like means a near-fixed amount of ₹5,000 or less,
+  outside housing, financial, transfers, income, transport, healthcare,
+  utilities and groceries. Monthly and longer series step the next due date
+  by calendar month.
+- `periodComparisons`, `categoryComparisons`, `spendingPatterns`
+  (`patterns.ts`): previous month, 3- and 6-month averages, quarter and
+  year to date; weekday vs weekend, weekly totals, volatility, largest
+  payments, refunds, cashback and transfers.
+- `generateInsights` (`insights.ts`): 15 rules covering the spec's 17
+  patterns, each returning title, severity, metric, supporting transaction
+  ids, explanation, confidence and an optional recommendation, or a reason it
+  was skipped.
+- `findSavingOpportunities` (`leakage.ts`): potential saving opportunities
+  (small purchases, food delivery, rising discretionary spending, overlapping
+  subscriptions, merchant surges), each with an estimated monthly saving and
+  the assumption behind it.
+- `healthScore` (`health.ts`): five weighted components, each a straight
+  line between two stated limits, averaged over the components that could be
+  measured. Budget adherence is listed with weight 0 until Phase 5.
+- `monthlyReport` (`report.ts`): assembles all of the above for one month
+  against a comparison month, with labelled template sentences.
+
+In the API, `RecurringService` stores one `RecurringPayment` row per series
+(keyed so dismissals survive re-detection) and flags its transactions. It
+re-runs after an import is confirmed or deleted, a transaction is edited or
+deleted, a merchant is renamed or merged, and after seeding. `InsightsService`
+recomputes insights, reports and the health score on each request from up to
+21 months of transactions; nothing is cached, so results always match the
+current data.
 
 ## Provenance: fact vs interpretation
 

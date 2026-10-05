@@ -11,6 +11,7 @@ import {
 import { monthKeyOf, monthRangeUtc, monthsEnding } from '@moneylens/shared';
 import type { DashboardData } from '@moneylens/types';
 import type { AnalyticsDataSource } from '../../lib/analytics-data';
+import type { InsightsService } from '../insights/insights.service';
 
 /** Number of months shown in the spending trend. */
 export const TREND_MONTHS = 6;
@@ -18,7 +19,10 @@ export const TREND_MONTHS = 6;
 export const AVERAGE_MONTHS = 3;
 
 export class DashboardService {
-  constructor(private readonly data: AnalyticsDataSource) {}
+  constructor(
+    private readonly data: AnalyticsDataSource,
+    private readonly insights: InsightsService,
+  ) {}
 
   /**
    * Assemble the dashboard for one month. All figures are computed by the
@@ -32,9 +36,10 @@ export class DashboardService {
     const start = monthRangeUtc(months[0] as string).start;
     const end = monthRangeUtc(month).end;
 
-    const [txs, categories] = await Promise.all([
+    const [txs, categories, { health, savingOpportunities }] = await Promise.all([
       this.data.transactionsBetween(userId, start, end),
       this.data.categories(userId),
+      this.insights.summary(userId, month),
     ]);
 
     const byMonth = groupByMonth(txs);
@@ -60,6 +65,8 @@ export class DashboardService {
         ...categoriesAboveAverage(current, history, categories),
         ...smallTransactionAccumulation(current),
       ],
+      savingOpportunities,
+      health,
     };
   }
 }

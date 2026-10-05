@@ -2,9 +2,13 @@ import type { PrismaClient } from '@prisma/client';
 import type { MerchantOption } from '@moneylens/types';
 import { AppError, notFound } from '../../lib/errors';
 import { merchantKey } from '../imports/pipeline/merchants';
+import { ignoreChanges, type TransactionsChanged } from '../../lib/change-hooks';
 
 export class MerchantsService {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(
+    private readonly prisma: PrismaClient,
+    private readonly onChange: TransactionsChanged = ignoreChanges,
+  ) {}
 
   async list(userId: string): Promise<MerchantOption[]> {
     const rows = await this.prisma.merchant.findMany({
@@ -39,7 +43,7 @@ export class MerchantsService {
         { merchantId: clash.id },
       );
     }
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       const updated = await tx.merchant.update({
         where: { id },
         data: { name, normalizedName },
@@ -64,6 +68,8 @@ export class MerchantsService {
       });
       return { id: updated.id, name: updated.name, transactionCount: updated._count.transactions };
     });
+    await this.onChange(userId);
+    return result;
   }
 
   /**
@@ -81,7 +87,7 @@ export class MerchantsService {
       this.findOwned(userId, id),
       this.findOwned(userId, intoId),
     ]);
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       const aliases = await tx.merchantAlias.findMany({
         where: { merchantId: id },
         select: { alias: true, aliasKey: true },
@@ -117,5 +123,7 @@ export class MerchantsService {
       });
       return { id: kept.id, name: kept.name, transactionCount: kept._count.transactions };
     });
+    await this.onChange(userId);
+    return result;
   }
 }

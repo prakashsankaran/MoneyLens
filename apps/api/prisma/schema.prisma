@@ -381,6 +381,11 @@ model ImportTransaction {
 model RecurringPayment {
   id              String             @id @default(cuid())
   userId          String
+  /// Stable identity of the detected series (merchant, direction and, for a
+  /// merchant with mixed payments, amount band). Keeps a dismissal across
+  /// re-detection.
+  key             String
+  flow            TransactionFlow    @default(OUT)
   merchantId      String?
   label           String
   frequency       RecurringFrequency
@@ -390,6 +395,8 @@ model RecurringPayment {
   occurrenceCount Int                @default(0)
   confidence      Float              @default(0)
   isSubscription  Boolean            @default(false)
+  /// False once a payment was missed when the next one was due.
+  isActive        Boolean            @default(true)
   dismissedAt     DateTime?
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
@@ -398,7 +405,7 @@ model RecurringPayment {
   merchant     Merchant?     @relation(fields: [merchantId], references: [id], onDelete: SetNull)
   transactions Transaction[]
 
-  @@index([userId])
+  @@unique([userId, key])
 }
 
 /// A persisted insight produced by the deterministic engine (or, labelled as

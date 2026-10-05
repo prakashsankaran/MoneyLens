@@ -113,4 +113,12 @@ export const dashboardFixture: DashboardData = {
       supportingTransactionIds: ['a', 'b', 'c'],
     },
   ],
+  savingOpportunities: [],
+  health: {
+    month: '2026-09',
+    score: null,
+    components: [],
+    method: 'Weighted average of the components that could be measured.',
+    monthsUsed: [],
+  },
 };

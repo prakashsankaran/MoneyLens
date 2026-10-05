@@ -8,9 +8,10 @@ import {
 import { ok } from '../../lib/respond';
 import { requireUserId } from '../../middleware/authenticate';
 import { parseInput } from '../../middleware/validate';
+import type { InsightsService } from '../insights/insights.service';
 import type { AnalyticsService } from './analytics.service';
 
-export function analyticsRoutes(service: AnalyticsService): Router {
+export function analyticsRoutes(service: AnalyticsService, insights: InsightsService): Router {
   const router = Router();
 
   router.get('/monthly', async (req, res) => {
@@ -31,6 +32,16 @@ export function analyticsRoutes(service: AnalyticsService): Router {
   router.get('/trends', async (req, res) => {
     const q = parseInput(trendQuerySchema, req.query);
     ok(res, await service.trends(requireUserId(req), q));
+  });
+
+  router.get('/health', async (req, res) => {
+    const { month } = parseInput(analyticsMonthQuerySchema, req.query);
+    ok(res, await insights.health(requireUserId(req), month));
+  });
+
+  router.get('/comparisons', async (req, res) => {
+    const { month } = parseInput(analyticsMonthQuerySchema, req.query);
+    ok(res, await insights.comparisons(requireUserId(req), month));
   });
 
   return router;

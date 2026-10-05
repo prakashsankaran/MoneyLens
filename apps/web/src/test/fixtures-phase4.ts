@@ -1,0 +1,250 @@
+import type {
+  ComparisonsResponse,
+  HealthScore,
+  Insight,
+  InsightsResponse,
+  MonthlyReport,
+  RecurringSummary,
+} from '@moneylens/types';
+import { dashboardFixture } from './fixtures';
+
+export const healthFixture: HealthScore = {
+  month: '2026-09',
+  score: 78,
+  components: [
+    {
+      key: 'savings',
+      label: 'Savings behaviour',
+      weight: 0.3,
+      score: 100,
+      measured: '38.0% of income saved (₹1,65,000 of ₹4,35,000, 3 months)',
+      formula: 'Savings rate averaged over up to 3 months. 0% scores 0; 20% or more scores 100.',
+      unavailableReason: null,
+    },
+    {
+      key: 'discretionary',
+      label: 'Discretionary spending',
+      weight: 0.2,
+      score: 60,
+      measured: '39.0% of spending (₹35,100 of ₹90,000)',
+      formula: '25% or less scores 100; 60% or more scores 0.',
+      unavailableReason: null,
+    },
+    {
+      key: 'cashflow',
+      label: 'Cash-flow stability',
+      weight: 0.2,
+      score: null,
+      measured: null,
+      formula: 'Share of months in which income was at least spending.',
+      unavailableReason: 'Needs at least 3 months of data.',
+    },
+    {
+      key: 'budget',
+      label: 'Budget adherence',
+      weight: 0,
+      score: null,
+      measured: null,
+      formula: 'Share of budgets kept this month.',
+      unavailableReason:
+        'Budgets arrive with the money plan in Phase 5, so this is not scored yet.',
+    },
+  ],
+  method: 'The score is the weighted average of the components that could be measured.',
+  monthsUsed: ['2026-08', '2026-09'],
+};
+
+export const savingFixture: Insight = {
+  id: 'leak-food-delivery',
+  rule: 'leak-food-delivery',
+  kind: 'OBSERVATION',
+  group: 'saving',
+  severity: 'medium',
+  title: 'Potential saving opportunity: 12 food delivery orders cost ₹9,000',
+  explanation: 'You ordered food 12 times this month for ₹9,000.',
+  metric: { label: 'Food delivery this month', valuePaise: 900_000 },
+  supportingTransactionIds: ['t1', 't2'],
+  confidence: 0.75,
+  potentialMonthlySavingPaise: 210_000,
+  assumption:
+    'Bringing food delivery back to your 2-month average would save about ₹2,100 a month.',
+  recommendation: 'Choose one or two fixed days for ordering in.',
+};
+
+export const weekendFixture: Insight = {
+  id: 'weekend-spending',
+  rule: 'weekend-spending',
+  kind: 'OBSERVATION',
+  group: 'behaviour',
+  severity: 'low',
+  title: 'Your weekend spending is 1.8x your weekday average',
+  explanation: 'On an average weekend day you spent ₹1,800, against ₹1,000 on an average weekday.',
+  metric: { label: 'Weekend vs weekday, per day', value: 1.8, unit: 'x' },
+  supportingTransactionIds: ['t3'],
+  confidence: 0.75,
+  recommendation: null,
+};
+
+export const insightsFixture: InsightsResponse = {
+  month: '2026-09',
+  availableMonths: ['2026-08', '2026-09'],
+  historyMonths: 1,
+  insights: [savingFixture, weekendFixture],
+  skipped: [{ rule: 'spending-volatility', reason: 'Needs at least 3 months of data.' }],
+};
+
+export const recurringFixture: RecurringSummary = {
+  monthlyOutgoingPaise: 76_800,
+  annualOutgoingPaise: 921_600,
+  items: [
+    {
+      id: 'r1',
+      key: 'netflix|OUT',
+      merchantId: 'm-netflix',
+      label: 'Netflix',
+      flow: 'OUT',
+      categoryId: 'ott',
+      frequency: 'MONTHLY',
+      intervalDays: 30,
+      typicalAmountPaise: 64_900,
+      amountVaries: false,
+      occurrences: 6,
+      firstDate: '2026-04-05',
+      lastDate: '2026-09-05',
+      nextExpectedDate: '2026-10-05',
+      monthlyEquivalentPaise: 64_900,
+      annualEquivalentPaise: 778_800,
+      confidence: 1,
+      subscriptionLike: true,
+      active: true,
+      transactionIds: ['n1', 'n2'],
+      dismissed: false,
+    },
+    {
+      id: 'r2',
+      key: 'spotify|OUT',
+      merchantId: 'm-spotify',
+      label: 'Spotify',
+      flow: 'OUT',
+      categoryId: 'ott',
+      frequency: 'MONTHLY',
+      intervalDays: 30,
+      typicalAmountPaise: 11_900,
+      amountVaries: false,
+      occurrences: 6,
+      firstDate: '2026-04-13',
+      lastDate: '2026-09-13',
+      nextExpectedDate: '2026-10-13',
+      monthlyEquivalentPaise: 11_900,
+      annualEquivalentPaise: 142_800,
+      confidence: 1,
+      subscriptionLike: true,
+      active: true,
+      transactionIds: ['s1'],
+      dismissed: false,
+    },
+  ],
+};
+
+export const comparisonsFixture: ComparisonsResponse = {
+  month: '2026-09',
+  availableMonths: ['2026-08', '2026-09'],
+  totals: [
+    {
+      baseline: 'previous-month',
+      label: 'Previous month',
+      currentPaise: 9_000_000,
+      baselinePaise: 8_000_000,
+      changePaise: 1_000_000,
+      changePct: 12.5,
+      baselineMonths: 1,
+    },
+    {
+      baseline: 'ytd',
+      label: '2026 to date vs 2025 to date',
+      currentPaise: 17_000_000,
+      baselinePaise: 0,
+      changePaise: 17_000_000,
+      changePct: null,
+      baselineMonths: 0,
+    },
+  ],
+  categories: [],
+  patterns: {
+    weekdayDailyAveragePaise: 100_000,
+    weekendDailyAveragePaise: 180_000,
+    weekendRatio: 1.8,
+    byWeekday: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(
+      (label, weekday) => ({ weekday, label, amountPaise: 100_000, transactionCount: 1 }),
+    ),
+    weekly: [{ weekStart: '2026-08-31', amountPaise: 500_000, transactionCount: 4 }],
+    monthlyVolatility: null,
+    volatilityMonths: 2,
+    largest: [
+      {
+        id: 'big',
+        date: '2026-09-02T10:00:00.000Z',
+        merchantName: 'Croma',
+        amountPaise: 2_500_000,
+        flow: 'OUT',
+        categoryId: null,
+      },
+    ],
+    refunds: { count: 1, amountPaise: 50_000 },
+    cashback: { count: 0, amountPaise: 0 },
+    transfersOut: { count: 2, amountPaise: 1_600_000 },
+    transfersIn: { count: 0, amountPaise: 0 },
+  },
+};
+
+export const reportFixture: MonthlyReport = {
+  month: '2026-09',
+  availableMonths: ['2026-08', '2026-09'],
+  compareMonth: '2026-08',
+  executiveSummary: [
+    { kind: 'CALCULATION', text: 'In September 2026 you received ₹1,45,000 and spent ₹90,000.' },
+    { kind: 'OBSERVATION', text: 'Food rose the most, by ₹2,100 from August 2026.' },
+  ],
+  totals: dashboardFixture.totals,
+  compareTotals: { ...dashboardFixture.totals, spendingPaise: 8_000_000, savedPaise: 6_500_000 },
+  incomeSources: [
+    {
+      merchantId: 'emp',
+      name: 'Northwind Technologies',
+      amountPaise: 14_500_000,
+      transactionCount: 1,
+    },
+  ],
+  categories: [
+    {
+      categoryId: 'food',
+      name: 'Food',
+      slug: 'food',
+      currentPaise: 900_000,
+      previousPaise: 690_000,
+      average3Paise: 690_000,
+      changeVsPreviousPct: 30.4,
+      changeVsAverage3Pct: 30.4,
+      currentCount: 12,
+      previousCount: 9,
+    },
+  ],
+  merchants: [
+    {
+      merchantId: 'm1',
+      name: 'Swiggy',
+      amountPaise: 900_000,
+      transactionCount: 12,
+      previousAmountPaise: 690_000,
+    },
+  ],
+  recurring: [recurringFixture.items[0]!],
+  biggestTransactions: comparisonsFixture.patterns.largest,
+  changes: [],
+  behaviour: [weekendFixture],
+  savingOpportunities: [savingFixture],
+  recommendations: [
+    { kind: 'RECOMMENDATION', text: 'Choose one or two fixed days for ordering in.' },
+  ],
+  health: healthFixture,
+};
