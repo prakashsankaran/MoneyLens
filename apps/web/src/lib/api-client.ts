@@ -49,7 +49,10 @@ async function parse<T>(res: Response): Promise<T> {
 
 async function rawRequest(path: string, init: RequestInit = {}): Promise<Response> {
   const headers = new Headers(init.headers);
-  if (init.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
+  // FormData sets its own multipart boundary header.
+  if (init.body && !(init.body instanceof FormData) && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
   if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);
   return fetch(`${API_BASE}${path}`, { ...init, headers, credentials: 'include' });
 }
@@ -93,4 +96,16 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
     }
   }
   return parse<T>(res);
+}
+
+/** JSON request helper for mutations. */
+export function send<T>(method: 'POST' | 'PATCH' | 'DELETE', path: string, body?: unknown) {
+  return api<T>(path, { method, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+}
+
+/** Field errors from a VALIDATION_ERROR response, keyed by field name. */
+export function fieldErrors(error: unknown): Record<string, string> {
+  if (!(error instanceof ApiError)) return {};
+  const fields = error.details?.fields;
+  return fields && typeof fields === 'object' ? (fields as Record<string, string>) : {};
 }

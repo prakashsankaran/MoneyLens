@@ -3,7 +3,11 @@ import { AppShell } from './components/layout/AppShell';
 import { LoginPage } from './features/auth/LoginPage';
 import { RegisterPage } from './features/auth/RegisterPage';
 import { RequireAuth } from './features/auth/RequireAuth';
+import { AnalyticsPage } from './features/analytics/AnalyticsPage';
 import { DashboardPage } from './features/dashboard/DashboardPage';
+import { ImportReviewPage } from './features/imports/ImportReviewPage';
+import { ImportsPage } from './features/imports/ImportsPage';
+import { TransactionsPage } from './features/transactions/TransactionsPage';
 import { PlannedFeaturePage } from './pages/PlannedFeaturePage';
 import { SettingsPage } from './pages/SettingsPage';
 
@@ -15,36 +19,8 @@ export function App() {
       <Route element={<RequireAuth />}>
         <Route element={<AppShell />}>
           <Route index element={<DashboardPage />} />
-          <Route
-            path="transactions"
-            element={
-              <PlannedFeaturePage
-                title="Transactions"
-                phase={2}
-                purpose="Every transaction you have imported, searchable and editable."
-                plannedCapabilities={[
-                  'Search, and filter by date, category, merchant, amount, type, recurring and source',
-                  'Transaction detail with masked UPI ID and reference',
-                  'Edit category, merchant and notes; delete a transaction',
-                ]}
-              />
-            }
-          />
-          <Route
-            path="analytics"
-            element={
-              <PlannedFeaturePage
-                title="Analytics"
-                phase={4}
-                purpose="Explain why your spending changed, not just how much it was."
-                plannedCapabilities={[
-                  'Month vs previous month, 3-month and 6-month averages, quarter and year-to-date',
-                  'Category and merchant trends, weekday vs weekend spending',
-                  'Recurring payments and spending volatility',
-                ]}
-              />
-            }
-          />
+          <Route path="transactions" element={<TransactionsPage />} />
+          <Route path="analytics" element={<AnalyticsPage />} />
           <Route
             path="plan"
             element={
@@ -89,21 +65,8 @@ export function App() {
               />
             }
           />
-          <Route
-            path="imports"
-            element={
-              <PlannedFeaturePage
-                title="Imports"
-                phase={2}
-                purpose="Bring in statements and review every row before anything is saved."
-                plannedCapabilities={[
-                  'CSV and XLSX import (phase 2), Google Pay PDF statements (phase 3)',
-                  'Review screen with duplicate detection and explicit confirmation',
-                  'Import history with delete',
-                ]}
-              />
-            }
-          />
+          <Route path="imports" element={<ImportsPage />} />
+          <Route path="imports/:id" element={<ImportReviewPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
       </Route>

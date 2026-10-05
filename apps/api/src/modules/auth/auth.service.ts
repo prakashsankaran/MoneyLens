@@ -107,6 +107,22 @@ export class AuthService {
     });
   }
 
+  /**
+   * Permanently delete the account. The password is re-checked so a stolen
+   * access token alone cannot erase someone's data. Every user-owned row
+   * cascades from User, including sessions.
+   */
+  async deleteAccount(userId: string, password: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw unauthenticated();
+    if (!(await verifyPassword(user.passwordHash, password))) {
+      throw new AppError('VALIDATION_ERROR', 'Password is incorrect', {
+        fields: { password: 'Password is incorrect' },
+      });
+    }
+    await this.prisma.user.delete({ where: { id: userId } });
+  }
+
   async getUser(userId: string): Promise<PublicUser> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw unauthenticated();

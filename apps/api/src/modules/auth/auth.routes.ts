@@ -1,6 +1,6 @@
 import { Router, type CookieOptions, type Response } from 'express';
 import type { AuthResult } from '@moneylens/types';
-import { loginSchema, registerSchema } from '@moneylens/validation';
+import { deleteAccountSchema, loginSchema, registerSchema } from '@moneylens/validation';
 import { unauthenticated } from '../../lib/errors';
 import { ok } from '../../lib/respond';
 import { authenticate, requireUserId } from '../../middleware/authenticate';
@@ -20,6 +20,9 @@ export function authRoutes(deps: {
   const { auth, tokens } = deps;
   const router = Router();
   const credentialLimiter = authRateLimit(deps.rateLimitPer15Min);
+  // Refresh carries a 256-bit token rather than a guessable password, and runs
+  // on every page load, so it gets its own, looser budget.
+  const refreshLimiter = authRateLimit(deps.rateLimitPer15Min * 5);
 
   // The refresh token lives in an httpOnly cookie scoped to the auth routes, so
   // page scripts can never read it. The short-lived access token is returned in
@@ -52,7 +55,7 @@ export function authRoutes(deps: {
     sendSession(res, await auth.login(input, req.get('user-agent')));
   });
 
-  router.post('/refresh', credentialLimiter, async (req, res) => {
+  router.post('/refresh', refreshLimiter, async (req, res) => {
     const token = readRefreshCookie(req.cookies);
     try {
       if (!token) throw unauthenticated('Your session has ended. Please sign in again.');
@@ -71,6 +74,15 @@ export function authRoutes(deps: {
 
   router.get('/me', authenticate(tokens), async (req, res) => {
     ok(res, await auth.getUser(requireUserId(req)));
+  });
+
+  // Account deletion lives here so the refresh cookie (scoped to /api/auth)
+  // is cleared in the same response. Rate-limited like other password checks.
+  router.delete('/account', authenticate(tokens), credentialLimiter, async (req, res) => {
+    const { password } = parseInput(deleteAccountSchema, req.body);
+    await auth.deleteAccount(requireUserId(req), password);
+    res.clearCookie(REFRESH_COOKIE, cookieOptions());
+    ok(res, { deleted: true });
   });
 
   return router;

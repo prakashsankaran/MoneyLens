@@ -327,6 +327,8 @@ model Import {
   duplicateCount   Int               @default(0)
   committedCount   Int               @default(0)
   errorMessage     String?
+  /// File-level parser warnings shown on the review screen.
+  warnings         Json?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   confirmedAt      DateTime?

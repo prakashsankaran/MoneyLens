@@ -65,6 +65,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           signOutLocally();
         }
       },
+      async deleteAccount(password) {
+        await api('/auth/account', { method: 'DELETE', body: JSON.stringify({ password }) });
+        signOutLocally();
+      },
     }),
     [status, user, accept, signOutLocally],
   );

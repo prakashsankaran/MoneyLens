@@ -9,10 +9,11 @@ tracker. Every number on screen is computed by a deterministic analytics engine,
 and every statement is labelled as a fact, calculation, observation, AI
 interpretation or recommendation.
 
-> **Status: Phase 1 of 8.** Monorepo, API, authentication, database schema,
-> demo data and the first dashboard are working. Imports, the transaction list,
-> deeper analytics, planning, AI and the mobile app follow in later phases. See
-> [docs/PLAN.md](docs/PLAN.md) and [docs/PHASE1_SUMMARY.md](docs/PHASE1_SUMMARY.md).
+> **Status: Phase 2 of 8.** Authentication, the dashboard, CSV statement
+> import with a review step, the transaction list with editing, category
+> management, month analytics and data deletion are working. Google Pay PDF
+> import, deeper insights, planning, AI and the mobile app follow. See
+> [docs/PLAN.md](docs/PLAN.md) and [docs/PHASE2_SUMMARY.md](docs/PHASE2_SUMMARY.md).
 
 ## Repository layout
 
@@ -28,6 +29,7 @@ packages/
   analytics/  Pure, deterministic analytics engine
   ui/         Design tokens shared by web and mobile
 infrastructure/docker/   Dockerfiles, Compose stack, nginx config
+samples/                 Fictional statement for trying the import flow
 docs/                    Architecture and engineering docs
 ```
 
@@ -57,7 +59,9 @@ npm run dev
 ```
 
 Sign in with the demo account **demo@moneylens.app / moneylens-demo**, or
-create your own account (it starts empty until imports arrive in phase 2).
+create your own account and import
+[`samples/sample-bank-statement.csv`](samples/sample-bank-statement.csv), a
+fictional one-month bank statement, from the **Imports** page.
 
 ## Environment variables
 
@@ -77,7 +81,7 @@ They are validated at startup and the API refuses to start if they are invalid.
 | `API_RATE_LIMIT`           | no       | `300`                   | API requests per minute per IP                                                                                              |
 | `TRUST_PROXY`              | no       | `0`                     | Proxy hops to trust for client IPs                                                                                          |
 | `LOG_LEVEL`                | no       | `info`                  | pino log level                                                                                                              |
-| `MAX_UPLOAD_MB`            | no       | `10`                    | Upload size limit (enforced from phase 2)                                                                                   |
+| `MAX_UPLOAD_MB`            | no       | `10`                    | Statement upload size limit                                                                                                 |
 
 Web variables (optional, `apps/web/.env`): `VITE_API_BASE_URL` (default `/api`)
 and `VITE_API_PROXY_TARGET` for the dev proxy (default `http://localhost:4000`).
@@ -114,7 +118,7 @@ drop data. See [docs/DATABASE.md](docs/DATABASE.md).
 
 ```bash
 npm test             # all unit + integration tests (packages, API, web)
-npm run test:e2e     # Playwright end-to-end (needs API running with demo data)
+npm run test:e2e     # Playwright end-to-end (needs the API running with demo data)
 npm run lint         # ESLint
 npm run typecheck    # strict TypeScript, every workspace
 npm run format       # Prettier
@@ -142,7 +146,7 @@ built app with nginx and proxies `/api` to the API.
 - [DATABASE.md](docs/DATABASE.md): schema and conventions
 - [SECURITY.md](docs/SECURITY.md): auth, privacy and threat model
 - [DEVELOPMENT.md](docs/DEVELOPMENT.md): workflow and conventions
-- [IMPORT_PIPELINE.md](docs/IMPORT_PIPELINE.md): statement import design (phases 2–3)
+- [IMPORT_PIPELINE.md](docs/IMPORT_PIPELINE.md): statement import pipeline and CSV format support
 - [AI_ARCHITECTURE.md](docs/AI_ARCHITECTURE.md): AIProvider and guardrails design (phase 6)
 - [PLAN.md](docs/PLAN.md): architecture proposal and phased plan
 
