@@ -26,6 +26,8 @@ import { ImportsService } from './modules/imports/imports.service';
 import { importRoutes } from './modules/imports/imports.routes';
 import { merchantRoutes } from './modules/merchants/merchants.routes';
 import { MerchantsService } from './modules/merchants/merchants.service';
+import { PlanService } from './modules/plan/plan.service';
+import { budgetRoutes, moneyPlanRoutes } from './modules/plan/plan.routes';
 import { RecurringService } from './modules/recurring/recurring.service';
 import { TransactionsService } from './modules/transactions/transactions.service';
 import { transactionRoutes } from './modules/transactions/transactions.routes';
@@ -110,6 +112,9 @@ export function createApp({ env, prisma, logger }: AppDeps): Express {
   api.use('/insights', requireAuth, insightRoutes(insights));
   api.use('/recurring', requireAuth, recurringRoutes(recurring));
   api.use('/reports', requireAuth, reportRoutes(insights));
+  const plan = new PlanService(prisma, analyticsData);
+  api.use('/money-plan', requireAuth, moneyPlanRoutes(plan));
+  api.use('/budgets', requireAuth, budgetRoutes(plan));
 
   app.use('/api', api);
   app.use(notFoundHandler);

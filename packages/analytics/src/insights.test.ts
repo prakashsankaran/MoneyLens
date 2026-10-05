@@ -225,6 +225,6 @@ describe('generateInsights', () => {
       expect(i.confidence).toBeLessThanOrEqual(1);
       expect(i.title).not.toMatch(/waste/i);
     }
-    expect(Object.keys(INSIGHT_RULES)).toHaveLength(15);
+    expect(Object.keys(INSIGHT_RULES)).toHaveLength(16);
   });
 });

@@ -60,9 +60,12 @@ describe('healthScore', () => {
       score: 75,
       measured: '40.0% of income (₹40,000 a month of ₹1,00,000)',
     });
-    expect(component(h, 'budget')).toMatchObject({ score: null, weight: 0 });
-    expect(component(h, 'budget')?.unavailableReason).toContain('Phase 5');
-    // (100×0.3 + 100×0.2 + 100×0.2 + 100×0.15 + 75×0.15) / 1.0 = 96.25
+    expect(component(h, 'budget')).toMatchObject({
+      score: null,
+      weight: 0.1,
+      unavailableReason: 'No budgets set for this month.',
+    });
+    // (100×0.25 + 100×0.2 + 100×0.15 + 100×0.15 + 75×0.15) / 0.9 = 95.8
     expect(h.score).toBe(96);
     expect(h.monthsUsed).toHaveLength(6);
     for (const c of h.components) expect(c.formula.length).toBeGreaterThan(0);
@@ -78,8 +81,8 @@ describe('healthScore', () => {
     expect(component(h, 'cashflow')?.unavailableReason).toBe('Needs at least 3 months of data.');
     expect(component(h, 'stability')?.score).toBeNull();
     // Savings 0% → 0, discretionary 10% → 100, obligations 0% → 100.
-    // (0×0.3 + 100×0.2 + 100×0.15) / 0.65 = 53.8
-    expect(h.score).toBe(54);
+    // (0×0.25 + 100×0.2 + 100×0.15) / 0.6 = 58.3
+    expect(h.score).toBe(58);
   });
 
   it('gives no score when too little can be measured', () => {

@@ -65,3 +65,30 @@ export const series = (o: Partial<RecurringSeries> = {}): RecurringSeries => ({
   transactionIds: [],
   ...o,
 });
+
+const cat = (id: string, name: string, parentId: string | null = null): CategoryRef => ({
+  id,
+  name,
+  slug: id,
+  parentId,
+  color: null,
+  icon: null,
+});
+
+/** A category tree for the planner: ids double as slugs. */
+export const planCategories: CategoryRef[] = [
+  cat('food', 'Food'),
+  cat('groceries', 'Groceries', 'food'),
+  cat('food-delivery', 'Food Delivery', 'food'),
+  cat('housing', 'Housing'),
+  cat('rent', 'Rent', 'housing'),
+  cat('financial', 'Financial'),
+  cat('sip', 'SIP', 'financial'),
+  cat('emi', 'EMI', 'financial'),
+  cat('transport', 'Transport'),
+  cat('cab', 'Cab', 'transport'),
+  cat('fuel', 'Fuel', 'transport'),
+  cat('shopping', 'Shopping'),
+  cat('transfers', 'Transfers'),
+  cat('family-transfer', 'Family Transfer', 'transfers'),
+];

@@ -46,15 +46,16 @@ export class InsightsService {
     const now = new Date();
     const asOf = end < now ? new Date(end.getTime() - 1) : now;
 
-    const [txs, categories, dismissed] = await Promise.all([
+    const [txs, categories, dismissed, budgets] = await Promise.all([
       this.data.transactionsBetween(userId, start, end),
       this.data.categories(userId),
       this.recurring.dismissedKeys(userId),
+      this.data.budgets(userId, month),
     ]);
     const recurring = this.recurring
       .detectIn(txs, categories, month, asOf)
       .filter((s) => !dismissed.has(s.key));
-    return { month, availableMonths, txs, categories, recurring };
+    return { month, availableMonths, txs, categories, recurring, budgets, now };
   }
 
   async insights(userId: string, month?: string): Promise<InsightsResponse> {

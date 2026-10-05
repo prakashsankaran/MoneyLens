@@ -8,6 +8,7 @@ import { DashboardPage } from './features/dashboard/DashboardPage';
 import { ImportReviewPage } from './features/imports/ImportReviewPage';
 import { ImportsPage } from './features/imports/ImportsPage';
 import { InsightsPage } from './features/insights/InsightsPage';
+import { MoneyPlanPage } from './features/plan/MoneyPlanPage';
 import { MonthlyReportPage } from './features/reports/MonthlyReportPage';
 import { TransactionsPage } from './features/transactions/TransactionsPage';
 import { PlannedFeaturePage } from './pages/PlannedFeaturePage';
@@ -23,21 +24,7 @@ export function App() {
           <Route index element={<DashboardPage />} />
           <Route path="transactions" element={<TransactionsPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
-          <Route
-            path="plan"
-            element={
-              <PlannedFeaturePage
-                title="Money Plan"
-                phase={5}
-                purpose="An educational spending plan built from your income and commitments."
-                plannedCapabilities={[
-                  'Income, fixed commitments, essentials, lifestyle and investments',
-                  'Budgets per category',
-                  'What-if simulator with clearly stated assumptions',
-                ]}
-              />
-            }
-          />
+          <Route path="plan" element={<MoneyPlanPage />} />
           <Route path="insights" element={<InsightsPage />} />
           <Route path="reports" element={<MonthlyReportPage />} />
           <Route

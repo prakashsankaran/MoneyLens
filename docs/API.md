@@ -448,6 +448,126 @@ Returns the updated list.
 `recommendations` (labelled `RECOMMENDATION`) and `health`. `compareMonth` is
 null when the compared month has no data.
 
+## Money plan
+
+Amounts in request bodies are rupee strings (`"145000"`, `"2450.50"`); every
+response amount is in paise. The plan is an educational planning suggestion,
+not professional financial advice, and says so in `plan.disclaimer`.
+
+### `GET /api/money-plan` 🔒
+
+→ `{ profile, plan, savedAt }`. `profile` is null until the first save.
+`plan` is always calculated, from the saved figures and the latest three
+complete months of transactions:
+
+```jsonc
+{
+  "ready": true, // false until monthly income is entered
+  "missing": [],
+  "baseline": { "months": ["2026-07", "2026-08", "2026-09"], "incomePaise": 14500000, "…": "…" },
+  "breakdown": [
+    {
+      "key": "income",
+      "label": "Monthly income",
+      "amountPaise": 14500000,
+      "source": "ENTERED",
+      "note": null,
+    },
+    {
+      "key": "essential",
+      "label": "Essential expenses (…)",
+      "amountPaise": 1666100,
+      "source": "OBSERVED",
+      "note": "3-month average from your transactions",
+    },
+    {
+      "key": "surplus",
+      "label": "Available surplus",
+      "amountPaise": 3689400,
+      "source": "CALCULATED",
+      "note": "…",
+    },
+  ],
+  "surplusPaise": 3689400,
+  "goals": [
+    {
+      "key": "savings",
+      "label": "Savings target",
+      "amountPaise": 2500000,
+      "source": "ENTERED",
+      "note": null,
+    },
+  ],
+  "afterGoalsPaise": 1189400,
+  "status": "on-track", // tight | shortfall | incomplete
+  "suggestions": [{ "kind": "RECOMMENDATION", "text": "…" }],
+  "suggestedBudgets": [
+    {
+      "categoryId": "…",
+      "name": "Groceries",
+      "kind": "essential",
+      "averagePaise": 829000,
+      "suggestedPaise": 830000,
+      "reason": "…",
+    },
+  ],
+  "disclaimer": "Educational planning suggestion … not professional financial advice.",
+}
+```
+
+### `POST /api/money-plan` 🔒
+
+Replaces the figures. Body (every field optional, empty or null clears it):
+`monthlyIncome`, `fixedExpenses`, `emis`, `insurance`, `investments`,
+`savingsTarget` (all monthly), `emergencyFundTarget`, `emergencyFundCurrent`
+(totals) and `upcomingExpenses: [{ label, amount, dueMonth: "YYYY-MM" }]`
+(up to 10). → `{ profile, plan, savedAt }`.
+
+### `PATCH /api/money-plan` 🔒
+
+Same fields; only the ones sent change. → `{ profile, plan, savedAt }`.
+
+### `POST /api/money-plan/simulate` 🔒
+
+Nothing is saved. Body:
+
+```jsonc
+{
+  "adjustments": [
+    { "type": "category-percent", "categoryId": "…", "percent": 20 },
+    { "type": "category-amount", "categoryId": "…", "amount": "3000" },
+    { "type": "save-more", "amount": "5000" },
+    { "type": "income-change", "amount": "-10000" }, // signed
+  ], // 1 to 10
+  "annualReturnPct": 6, // 0 to 15, default 0
+}
+```
+
+→ `SimulationResult`: `baseline` (monthly income, spending and saved),
+`adjustments` (each with its monthly impact and a note, for example when a
+reduction is capped at the category's average), `monthlyImpactPaise`,
+`annualImpactPaise`, `newMonthlySavedPaise`, `projections` at 1, 3, 5 and 10
+years (`contributedPaise`, `withReturnPaise`) and `assumptions`. An unknown
+category → `400`.
+
+## Budgets
+
+### `GET /api/budgets?month=YYYY-MM` 🔒
+
+`month` defaults to the current month. → `{ month, availableMonths, items,
+totalBudgetPaise, totalSpentPaise, unbudgetedSpendingPaise, daysElapsed,
+daysInMonth }`. Each item has `categoryId`, `name`, `amountPaise`,
+`spentPaise` (net of refunds, including subcategories), `remainingPaise`,
+`usedPct`, `status` (`under`, `near` from 80%, `over`) and `projectedPaise`
+(the month in progress only; null otherwise).
+
+### `PUT /api/budgets/:month` 🔒
+
+Body: `{ "items": [{ "categoryId": "…", "amount": "8000" }] }` (1 to 100
+items). An `amount` of `null` removes that budget; categories not listed are
+left alone. The category must be a system category or one of the user's own.
+→ the month's `BudgetsResponse`.
+
 ## Health
 
 ### `GET /api/health`
@@ -456,7 +576,6 @@ null when the compared month has no data.
 
 ## Planned endpoints
 
-| Phase | Endpoints                                            |
-| ----- | ---------------------------------------------------- |
-| 5     | `GET/POST/PATCH /api/money-plan`, budgets, simulator |
-| 6     | `POST /api/ai/chat`                                  |
+| Phase | Endpoints           |
+| ----- | ------------------- |
+| 6     | `POST /api/ai/chat` |
