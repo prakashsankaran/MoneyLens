@@ -14,6 +14,7 @@
   },
   "scripts": {
     "dev": "concurrently -n api,web -c blue,magenta \"npm run dev -w @moneylens/api\" \"npm run dev -w @moneylens/web\"",
+    "dev:e2e": "AUTH_RATE_LIMIT=500 npm run dev",
     "dev:api": "npm run dev -w @moneylens/api",
     "dev:web": "npm run dev -w @moneylens/web",
     "build": "npm run build -w @moneylens/api && npm run build -w @moneylens/web",

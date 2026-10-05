@@ -139,7 +139,7 @@ export function DashboardPage() {
             <HealthScoreSummary health={data.health} />
           </Card>
 
-          <MoneyBriefCard />
+          <MoneyBriefCard month={data.month} />
         </div>
       )}
     </div>

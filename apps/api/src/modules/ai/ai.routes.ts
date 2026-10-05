@@ -15,14 +15,18 @@ const limited: ApiFailure = {
 export function aiRoutes(ai: AIService, { chatPerMinute }: { chatPerMinute: number }): Router {
   const router = Router();
   // Per user, on top of the per-IP API limit and the daily question limit.
-  const chatLimit = rateLimit({
-    windowMs: 60_000,
-    limit: chatPerMinute,
-    standardHeaders: 'draft-8',
-    legacyHeaders: false,
-    keyGenerator: (req) => requireUserId(req),
-    message: limited,
-  });
+  // The brief has its own budget: dashboard visits must not use up questions.
+  const perUser = (limit: number) =>
+    rateLimit({
+      windowMs: 60_000,
+      limit,
+      standardHeaders: 'draft-8',
+      legacyHeaders: false,
+      keyGenerator: (req) => requireUserId(req),
+      message: limited,
+    });
+  const chatLimit = perUser(chatPerMinute);
+  const briefLimit = perUser(chatPerMinute * 3);
 
   router.get('/status', async (req, res) => {
     ok(res, await ai.status(requireUserId(req)));
@@ -31,7 +35,7 @@ export function aiRoutes(ai: AIService, { chatPerMinute }: { chatPerMinute: numb
     const input = parseInput(chatSchema, req.body);
     ok(res, await ai.chat(requireUserId(req), input));
   });
-  router.get('/brief', chatLimit, async (req, res) => {
+  router.get('/brief', briefLimit, async (req, res) => {
     const { month } = parseInput(briefQuerySchema, req.query);
     ok(res, await ai.brief(requireUserId(req), month));
   });

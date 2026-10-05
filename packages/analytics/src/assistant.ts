@@ -55,7 +55,7 @@ export function spendingDriver(
   return f > s ? 'frequency' : 'size';
 }
 
-function toChange(row: CategoryComparisonRow, topLevel: boolean): AssistantCategoryChange {
+function toChange(row: CategoryComparisonRow, parentId: string | null): AssistantCategoryChange {
   const currentAveragePaise = row.currentCount
     ? Math.round(row.currentPaise / row.currentCount)
     : 0;
@@ -70,7 +70,8 @@ function toChange(row: CategoryComparisonRow, topLevel: boolean): AssistantCateg
     categoryId: row.categoryId,
     name: row.name,
     slug: row.slug,
-    topLevel,
+    topLevel: parentId === null,
+    parentId,
     currentPaise: row.currentPaise,
     previousPaise: row.previousPaise,
     average3Paise: Math.round(row.average3Paise),
@@ -112,8 +113,10 @@ export function assistantContext(input: AssistantInput): AssistantContext {
     (r) => categories.find((c) => c.id === r.categoryId)?.parentId,
   );
   const categoryChanges = [
-    ...topRows.map((r) => toChange(r, true)),
-    ...leafRows.map((r) => toChange(r, false)),
+    ...topRows.map((r) => toChange(r, null)),
+    ...leafRows.map((r) =>
+      toChange(r, categories.find((c) => c.id === r.categoryId)?.parentId ?? null),
+    ),
   ];
 
   const opportunities = findSavingOpportunities(input)

@@ -41,7 +41,11 @@ named in `apps/api/.env.test`, then isolate themselves with unique emails. They
 never drop data. Set `TEST_DATABASE_URL` to point them elsewhere (the name must
 end in `_test`).
 
-E2E tests expect the API to be running with seeded demo data. If Playwright's
+E2E tests expect the API to be running with seeded demo data. Start the
+servers with `npm run dev:e2e`: every test signs in, so the suite needs more
+than the default 20 sign-ins per 15 minutes, and `dev:e2e` raises
+`AUTH_RATE_LIMIT` for that run only (Playwright starts it for you when nothing
+is running). If Playwright's
 own browser is not installed, set `PLAYWRIGHT_CHROMIUM_PATH` to an existing
 Chromium binary.
 

@@ -578,6 +578,8 @@ export interface AssistantCategoryChange {
   slug: string;
   /** False for subcategories (Food Delivery under Food). */
   topLevel: boolean;
+  /** The top-level category of a subcategory; null for top-level rows. */
+  parentId: string | null;
   currentPaise: number;
   previousPaise: number;
   average3Paise: number;

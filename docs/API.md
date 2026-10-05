@@ -203,7 +203,7 @@ recategorised. → `{ transaction: TransactionDetail, alsoUpdated: number }`.
 ### `DELETE /api/transactions` 🔒
 
 Body: `{ "confirm": "DELETE" }`. Deletes every transaction, import, recurring
-group and insight for the user. Merchants and category rules are kept →
+group, insight and MoneyLens AI conversation for the user. Merchants and category rules are kept →
 `{ deleted: { transactions, imports } }`.
 
 ## Imports
@@ -568,14 +568,63 @@ items). An `amount` of `null` removes that budget; categories not listed are
 left alone. The category must be a system category or one of the user's own.
 → the month's `BudgetsResponse`.
 
+## MoneyLens AI
+
+Answers are built from calculated figures; the model only explains them. See
+[AI_ARCHITECTURE.md](AI_ARCHITECTURE.md).
+
+### `POST /api/ai/chat` 🔒
+
+Body: `{ "message": "Where can I save ₹5,000?", "conversationId"?: "…", "month"?: "2026-09" }`
+(message 1–500 characters; `month` defaults to the latest month with data).
+→ `{ conversation, question, reply }`. `reply.answer`:
+
+```jsonc
+{
+  "status": "answered", // not-configured | fallback | unavailable | refused
+  "month": "2026-09",
+  "topics": ["overview", "savings"],
+  "facts": [
+    {
+      "kind": "CALCULATION",
+      "text": "Together these potential saving opportunities come to about ₹4,482 a month.",
+    },
+  ],
+  "interpretation": "…", // AI_INTERPRETATION text, or null
+  "dataLimitations": [],
+  "provider": "anthropic/claude-sonnet-5-5", // null when there is no AI text
+  "regenerated": false, // true when the first answer failed the figure check
+}
+```
+
+`reply.content` is the AI text, or a note saying why there is none. A
+message with a PIN, password, OTP, CVV or card number, or asking for help
+with illegal activity, gets `status: "refused"` and is not sent to the
+provider. `429` after `AI_CHAT_RATE_LIMIT` questions in a minute or
+`AI_DAILY_MESSAGE_LIMIT` in 24 hours; `404` for another user's conversation.
+
+### `GET /api/ai/status` 🔒
+
+→ `{ configured, provider, model, dailyMessageLimit, messagesToday }`.
+
+### `GET /api/ai/brief?month=` 🔒
+
+→ `MoneyBrief`: `{ month, status, facts, text, provider, generatedAt }`. At
+most five calculated statements and, when a provider is set up, a 3–4
+sentence summary written from them. Cached until the figures change.
+
+### `GET /api/ai/conversations` 🔒 · `GET /api/ai/conversations/:id` 🔒
+
+The 50 most recent conversations (`id`, `title`, `createdAt`, `updatedAt`),
+or one with its `messages` (each assistant message includes its `answer`).
+
+### `DELETE /api/ai/conversations/:id` 🔒 · `DELETE /api/ai/conversations` 🔒
+
+Delete one conversation (→ `{ deleted: true }`) or all of them
+(→ `{ deleted: n }`).
+
 ## Health
 
 ### `GET /api/health`
 
 → `{ status: "ok" }` when the database answers. Used by container health checks.
-
-## Planned endpoints
-
-| Phase | Endpoints           |
-| ----- | ------------------- |
-| 6     | `POST /api/ai/chat` |

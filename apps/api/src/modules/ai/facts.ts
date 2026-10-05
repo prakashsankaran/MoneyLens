@@ -15,12 +15,14 @@ import { matchCategory } from './intent';
  */
 
 const inr = formatINR;
+/** Category changes smaller than ₹500 are not worth a line. */
+const MIN_MOVE_PAISE = 50_000;
 const pct = (p: number) => `${Math.abs(p)}%`;
 const calc = (text: string): ReportStatement => ({ kind: 'CALCULATION', text });
 const obs = (text: string): ReportStatement => ({ kind: 'OBSERVATION', text });
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
-function overview(ctx: AssistantContext): ReportStatement[] {
+function overview(ctx: AssistantContext, withCategories = true): ReportStatement[] {
   const t = ctx.totals;
   const m = formatMonthKey(ctx.month);
   if (t.incomePaise === 0 && t.spendingPaise === 0) return [];
@@ -31,7 +33,7 @@ function overview(ctx: AssistantContext): ReportStatement[] {
   const out = [
     calc(`In ${m} you received ${inr(t.incomePaise)}, spent ${inr(t.spendingPaise)} and ${saved}.`),
   ];
-  const top = ctx.categories.slice(0, 3);
+  const top = withCategories ? ctx.categories.slice(0, 3) : [];
   if (top.length) {
     out.push(
       calc(
@@ -106,6 +108,7 @@ function change(ctx: AssistantContext): ReportStatement[] {
   const movers = ctx.categoryChanges
     .filter((c) => c.topLevel && c.categoryId !== null)
     .filter((c) => (diff >= 0 ? c.changePaise > 0 : c.changePaise < 0))
+    .filter((c) => Math.abs(c.changePaise) >= MIN_MOVE_PAISE)
     .sort((a, b) => Math.abs(b.changePaise) - Math.abs(a.changePaise))
     .slice(0, 3);
   for (const c of movers) {
@@ -288,7 +291,7 @@ export function factsFor(
   for (const topic of topics) {
     switch (topic) {
       case 'overview':
-        out.push(...overview(ctx));
+        out.push(...overview(ctx, !topics.includes('categories')));
         break;
       case 'change':
         out.push(...change(ctx));
@@ -311,7 +314,18 @@ export function factsFor(
           ctx.categoryChanges
             .filter((c) => c.categoryId !== null && c.previousCount > 0)
             .sort((a, b) => Math.abs(b.changePaise) - Math.abs(a.changePaise))[0];
-        if (row) out.push(...driverStatement(row, ctx));
+        if (row) {
+          out.push(...driverStatement(row, ctx));
+          // For a top-level category, also explain its subcategory that moved most.
+          const sub = row.topLevel
+            ? ctx.categoryChanges
+                .filter((c) => c.parentId === row.categoryId && c.previousCount > 0)
+                .sort((a, b) => Math.abs(b.changePaise) - Math.abs(a.changePaise))[0]
+            : undefined;
+          if (sub && Math.abs(sub.changePaise) >= MIN_MOVE_PAISE) {
+            out.push(...driverStatement(sub, ctx));
+          }
+        }
         break;
       }
       case 'recurring':

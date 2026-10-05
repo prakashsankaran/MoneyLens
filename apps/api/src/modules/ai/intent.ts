@@ -57,6 +57,10 @@ export function classifyQuestion(question: string): AssistantTopic[] {
   if (topics.includes('increasing') && topics.includes('categories')) {
     topics.splice(topics.indexOf('categories'), 1);
   }
+  // "Did food increase because of frequency or size?" is about the driver.
+  if (topics.includes('driver') && topics.includes('increasing')) {
+    topics.splice(topics.indexOf('increasing'), 1);
+  }
   return ['overview', ...new Set(topics)];
 }
 
