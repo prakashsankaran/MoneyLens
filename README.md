@@ -41,7 +41,14 @@ docs/                    Architecture and engineering docs
 ## Prerequisites
 
 - Node.js 22.13 or newer (see `.nvmrc`; the PDF reader needs it) and npm 10
-- PostgreSQL 16, either local or via Docker Compose
+- PostgreSQL 16, either local or via Docker Compose. With a local install,
+  create the role and database the template `.env` expects (the role needs
+  `CREATEDB` because `prisma migrate dev` uses a temporary shadow database):
+
+  ```bash
+  psql -U postgres -c "CREATE ROLE moneylens LOGIN PASSWORD 'moneylens' CREATEDB"
+  psql -U postgres -c "CREATE DATABASE moneylens OWNER moneylens"
+  ```
 
 ## Quick start
 
