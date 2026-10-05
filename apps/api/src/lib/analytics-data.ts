@@ -1,4 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
+import type { BudgetInput } from '@moneylens/analytics';
 import type { AnalyticsTransaction, CategoryRef } from '@moneylens/types';
 import { decimalToPaise } from './money';
 
@@ -63,4 +64,22 @@ export class AnalyticsDataSource {
     `;
     return rows.map((r) => r.month);
   }
+
+  /** Budgets set for an IST month ("YYYY-MM"). */
+  async budgets(userId: string, month: string): Promise<BudgetInput[]> {
+    const rows = await this.prisma.budget.findMany({
+      where: { userId, month: budgetMonthDate(month) },
+      select: { id: true, categoryId: true, amount: true },
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      categoryId: r.categoryId,
+      amountPaise: decimalToPaise(r.amount),
+    }));
+  }
+}
+
+/** `Budget.month` is a DATE holding the first day of the month. */
+export function budgetMonthDate(month: string): Date {
+  return new Date(`${month}-01T00:00:00Z`);
 }

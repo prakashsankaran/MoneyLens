@@ -257,3 +257,84 @@ export const trendQuerySchema = z.object({
   end: monthKeySchema.optional(),
   months: z.coerce.number().int().min(1).max(24).default(6),
 });
+
+// ---------------------------------------------------------------------------
+// Money plan, budgets and the what-if simulator (Phase 5)
+// ---------------------------------------------------------------------------
+
+/** An optional rupee amount: blank or null clears it. */
+const optionalRupees = z
+  .union([z.literal(''), z.null(), rupeeAmountSchema])
+  .transform((v) => (v === '' ? null : v))
+  .optional();
+
+export const upcomingExpenseSchema = z.object({
+  label: z.string().trim().min(1, 'Name the expense').max(60),
+  amount: rupeeAmountSchema.refine((v) => Number(v) > 0, 'Enter an amount above zero'),
+  dueMonth: monthKeySchema,
+});
+
+const profileFields = {
+  monthlyIncome: optionalRupees,
+  fixedExpenses: optionalRupees,
+  emis: optionalRupees,
+  insurance: optionalRupees,
+  investments: optionalRupees,
+  savingsTarget: optionalRupees,
+  emergencyFundTarget: optionalRupees,
+  emergencyFundCurrent: optionalRupees,
+  upcomingExpenses: z.array(upcomingExpenseSchema).max(20, 'Up to 20 upcoming expenses').optional(),
+};
+
+/** POST /api/money-plan: the whole profile; fields left out are cleared. */
+export const moneyPlanSchema = z.object(profileFields);
+export type MoneyPlanInput = z.input<typeof moneyPlanSchema>;
+/** PATCH /api/money-plan: only the fields sent change. */
+export const moneyPlanPatchSchema = z.object(profileFields);
+
+/** A signed rupee amount, e.g. "-5,000" for a fall in income. */
+const signedRupees = z
+  .string()
+  .trim()
+  .transform((v) => v.replace(/[,₹\s]/g, ''))
+  .pipe(z.string().regex(/^-?\d{1,12}(\.\d{1,2})?$/, 'Enter an amount like 5000 or -5000'));
+
+const positiveRupees = rupeeAmountSchema.refine((v) => Number(v) > 0, 'Enter an amount above zero');
+
+export const scenarioAdjustmentSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('category-percent'),
+    categoryId: idSchema,
+    percent: z.coerce.number().int().min(1).max(100),
+  }),
+  z.object({ type: z.literal('category-amount'), categoryId: idSchema, amount: positiveRupees }),
+  z.object({ type: z.literal('save-more'), amount: positiveRupees }),
+  z.object({
+    type: z.literal('income-change'),
+    amount: signedRupees.refine((v) => Number(v) !== 0, 'Enter a change other than zero'),
+  }),
+]);
+export type ScenarioAdjustmentInput = z.input<typeof scenarioAdjustmentSchema>;
+
+export const simulationSchema = z.object({
+  adjustments: z.array(scenarioAdjustmentSchema).min(1, 'Add at least one change').max(10),
+  /** Assumed yearly return, in percent. */
+  annualReturnPct: z.coerce.number().min(0).max(15).default(0),
+});
+export type SimulationInput = z.input<typeof simulationSchema>;
+
+export const budgetsQuerySchema = z.object({ month: monthKeySchema.optional() });
+
+export const putBudgetsSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        categoryId: idSchema,
+        /** null removes the budget. */
+        amount: z.union([z.null(), positiveRupees]),
+      }),
+    )
+    .min(1)
+    .max(100),
+});
+export type PutBudgetsInput = z.input<typeof putBudgetsSchema>;

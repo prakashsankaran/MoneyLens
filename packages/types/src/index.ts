@@ -411,6 +411,161 @@ export interface MonthlyReport {
 }
 
 // ---------------------------------------------------------------------------
+// Money plan, budgets and the what-if simulator (Phase 5)
+// ---------------------------------------------------------------------------
+
+/** A planned one-off cost, e.g. a laptop or school fees. */
+export interface UpcomingExpense {
+  label: string;
+  amountPaise: number;
+  /** "YYYY-MM" the money is needed by. */
+  dueMonth: string;
+}
+
+/** What the user told us about their finances. Every amount is monthly unless noted. */
+export interface FinancialProfileData {
+  monthlyIncomePaise: number | null;
+  /** Rent, maintenance, school fees and other fixed bills. */
+  fixedExpensesPaise: number | null;
+  emisPaise: number | null;
+  insurancePaise: number | null;
+  /** SIPs and other regular investments. */
+  investmentsPaise: number | null;
+  /** Amount to set aside each month. */
+  savingsTargetPaise: number | null;
+  /** Total emergency fund wanted (not monthly). */
+  emergencyFundTargetPaise: number | null;
+  /** Emergency fund already saved (not monthly). */
+  emergencyFundCurrentPaise: number | null;
+  upcomingExpenses: UpcomingExpense[];
+  updatedAt: string | null;
+}
+
+/**
+ * How a spending category is treated by the planner: fixed commitments (rent,
+ * EMIs, insurance), investing (SIPs, savings transfers), essentials, lifestyle
+ * spending, and everything else.
+ */
+export type SpendingKind = 'commitment' | 'investing' | 'essential' | 'lifestyle' | 'other';
+
+export interface BaselineCategory {
+  categoryId: string | null;
+  name: string;
+  slug: string;
+  kind: SpendingKind;
+  /** Average per month over the baseline months. */
+  averagePaise: number;
+}
+
+/** CALCULATION: monthly averages from the user's transactions. */
+export interface ObservedBaseline {
+  /** Months averaged, oldest first. Empty when there is no data. */
+  months: string[];
+  incomePaise: number;
+  commitmentsPaise: number;
+  investingPaise: number;
+  essentialPaise: number;
+  lifestylePaise: number;
+  otherPaise: number;
+  spendingPaise: number;
+  categories: BaselineCategory[];
+}
+
+/** Where a figure in the plan came from. */
+export type PlanLineSource = 'ENTERED' | 'OBSERVED' | 'CALCULATED';
+
+export interface PlanLine {
+  key: string;
+  label: string;
+  amountPaise: number;
+  source: PlanLineSource;
+  note: string | null;
+}
+
+export interface SuggestedBudget {
+  categoryId: string;
+  name: string;
+  kind: SpendingKind;
+  averagePaise: number;
+  suggestedPaise: number;
+  reason: string;
+}
+
+export interface MoneyPlanResult {
+  /** False until the monthly income is entered. */
+  ready: boolean;
+  missing: string[];
+  baseline: ObservedBaseline;
+  /** Income, then each deduction, ending with the available surplus. */
+  breakdown: PlanLine[];
+  surplusPaise: number;
+  /** Monthly amounts needed for the user's goals. */
+  goals: PlanLine[];
+  /** Surplus left after the goals. Negative is a shortfall. */
+  afterGoalsPaise: number;
+  status: 'on-track' | 'tight' | 'shortfall' | 'incomplete';
+  /** Educational planning suggestions, labelled RECOMMENDATION. */
+  suggestions: ReportStatement[];
+  suggestedBudgets: SuggestedBudget[];
+  disclaimer: string;
+}
+
+export interface MoneyPlanResponse {
+  profile: FinancialProfileData | null;
+  plan: MoneyPlanResult;
+  /** When the user last saved the plan. */
+  savedAt: string | null;
+}
+
+export interface BudgetItem {
+  id: string;
+  categoryId: string;
+  name: string;
+  slug: string;
+  parentId: string | null;
+  amountPaise: number;
+  /** Net spending in the category (and its subcategories) this month. */
+  spentPaise: number;
+  remainingPaise: number;
+  usedPct: number;
+  status: 'under' | 'near' | 'over';
+  /** Month in progress only: spending so far scaled to the whole month. */
+  projectedPaise: number | null;
+}
+
+export interface BudgetsResponse {
+  month: string;
+  availableMonths: string[];
+  items: BudgetItem[];
+  totalBudgetPaise: number;
+  totalSpentPaise: number;
+  /** Spending this month in categories without a budget. */
+  unbudgetedSpendingPaise: number;
+  /** IST days of the month that have passed (all of them for past months). */
+  daysElapsed: number;
+  daysInMonth: number;
+}
+
+export type ScenarioAdjustment =
+  | { type: 'category-percent'; categoryId: string; percent: number }
+  | { type: 'category-amount'; categoryId: string; amountPaise: number }
+  | { type: 'save-more'; amountPaise: number }
+  | { type: 'income-change'; amountPaise: number };
+
+export interface SimulationResult {
+  /** CALCULATION: monthly averages the scenario starts from. */
+  baseline: { months: string[]; incomePaise: number; spendingPaise: number; savedPaise: number };
+  adjustments: { description: string; monthlyImpactPaise: number; note: string | null }[];
+  /** Extra money kept each month (negative means less). */
+  monthlyImpactPaise: number;
+  annualImpactPaise: number;
+  newMonthlySavedPaise: number;
+  annualReturnPct: number;
+  projections: { years: number; contributedPaise: number; withReturnPaise: number }[];
+  assumptions: string[];
+}
+
+// ---------------------------------------------------------------------------
 // Categories and merchants
 // ---------------------------------------------------------------------------
 

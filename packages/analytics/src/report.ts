@@ -6,6 +6,7 @@ import type {
   RecurringSeries,
   ReportStatement,
 } from '@moneylens/types';
+import type { BudgetInput } from './budgets';
 import { classifyTransaction } from './classify';
 import { healthScore } from './health';
 import { generateInsights } from './insights';
@@ -22,6 +23,9 @@ export interface ReportInput {
   categories: readonly CategoryRef[];
   recurring: readonly RecurringSeries[];
   availableMonths: string[];
+  /** Budgets set for `month`, if any. */
+  budgets?: readonly BudgetInput[];
+  now?: Date;
 }
 
 const pctText = (pct: number | null) =>

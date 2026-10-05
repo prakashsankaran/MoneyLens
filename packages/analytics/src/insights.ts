@@ -15,6 +15,7 @@ import type {
   RecurringSeries,
   Severity,
 } from '@moneylens/types';
+import { budgetStatus, type BudgetInput } from './budgets';
 import { classifyTransaction } from './classify';
 import { categoriesAboveAverage, smallTransactionAccumulation } from './observations';
 import { spendingOf, spendingPatterns } from './patterns';
@@ -36,6 +37,10 @@ export interface InsightInput {
   categories: readonly CategoryRef[];
   /** Output of `detectRecurring` over the same transactions. */
   recurring: readonly RecurringSeries[];
+  /** Budgets set for `month`, if any. */
+  budgets?: readonly BudgetInput[];
+  /** "Today", for judging a month in progress. */
+  now?: Date;
 }
 
 export interface InsightResult {
@@ -605,6 +610,61 @@ const upcomingPayments: Rule = (ctx) => {
   ];
 };
 
+/** Budgets over their limit, or on course to go over in the month in progress. */
+const budgetAlerts: Rule = (ctx) => {
+  if (!ctx.budgets?.length) return { skip: 'No budgets set for this month.' };
+  const status = budgetStatus(
+    ctx.budgets,
+    ctx.current,
+    ctx.categories,
+    ctx.month,
+    ctx.now ?? new Date(),
+  );
+  const out: Insight[] = [];
+  for (const b of status.items) {
+    const ids = ctx.currentSpend
+      .filter(
+        (t) =>
+          t.categoryId === b.categoryId ||
+          ctx.byId.get(t.categoryId ?? '')?.parentId === b.categoryId,
+      )
+      .map((t) => t.id);
+    if (b.status === 'over') {
+      out.push({
+        id: `budget-over:${b.categoryId}`,
+        kind: 'CALCULATION',
+        group: 'planning',
+        rule: 'budget-over',
+        severity: b.spentPaise >= b.amountPaise * 1.25 ? 'high' : 'medium',
+        title: `${b.name} is ${formatINR(b.spentPaise - b.amountPaise)} over its ${formatINR(b.amountPaise)} budget`,
+        explanation: `You spent ${formatINR(b.spentPaise)} on ${b.name} this month against a budget of ${formatINR(b.amountPaise)}.`,
+        metric: { label: 'Over budget', valuePaise: b.spentPaise - b.amountPaise },
+        supportingTransactionIds: ids,
+        confidence: 1,
+        recommendation:
+          "Check whether the budget is realistic, or plan where next month's cut will come from.",
+      });
+    } else if (b.projectedPaise !== null && b.projectedPaise > b.amountPaise) {
+      out.push({
+        id: `budget-pace:${b.categoryId}`,
+        kind: 'CALCULATION',
+        group: 'planning',
+        rule: 'budget-pace',
+        severity: 'low',
+        title: `${b.name} is on course to pass its ${formatINR(b.amountPaise)} budget`,
+        explanation:
+          `${formatINR(b.spentPaise)} spent in the first ${status.daysElapsed} days. At that pace the month ` +
+          `would end near ${formatINR(b.projectedPaise)}. This is a straight-line estimate.`,
+        metric: { label: 'Projected for the month', valuePaise: b.projectedPaise },
+        supportingTransactionIds: ids,
+        confidence: 0.6,
+        recommendation: `About ${formatINR(b.remainingPaise)} is left for the rest of the month.`,
+      });
+    }
+  }
+  return out;
+};
+
 export const INSIGHT_RULES: Record<string, Rule> = {
   'category-increase': categoryIncrease,
   'category-decrease': categoryDecrease,
@@ -621,6 +681,7 @@ export const INSIGHT_RULES: Record<string, Rule> = {
   'large-one-off': largeOneOff,
   'unusual-for-merchant': unusualForMerchant,
   'upcoming-payments': upcomingPayments,
+  'budget-alerts': budgetAlerts,
 };
 
 const SEVERITY_ORDER: Record<Severity, number> = { high: 0, medium: 1, low: 2, info: 3 };

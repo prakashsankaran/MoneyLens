@@ -9,14 +9,15 @@ tracker. Every number on screen is computed by a deterministic analytics engine,
 and every statement is labelled as a fact, calculation, observation, AI
 interpretation or recommendation.
 
-> **Status: Phase 4 of 8.** Authentication, the dashboard, statement import
+> **Status: Phase 5 of 8.** Authentication, the dashboard, statement import
 > (Google Pay PDF including password-protected ones, bank CSV and Excel) with
 > a review step and duplicate detection, the transaction list with editing,
 > category and merchant management, analytics with period comparisons,
 > recurring payment detection, behaviour insights, potential saving
-> opportunities, an explainable financial health score, the monthly report
-> and data deletion are working. The money plan, AI and the mobile app follow.
-> See [docs/PLAN.md](docs/PLAN.md) and [docs/PHASE4_SUMMARY.md](docs/PHASE4_SUMMARY.md).
+> opportunities, an explainable financial health score, the monthly report,
+> the personal money plan, monthly budgets, the what-if simulator and data
+> deletion are working. The AI assistant and the mobile app follow.
+> See [docs/PLAN.md](docs/PLAN.md) and [docs/PHASE5_SUMMARY.md](docs/PHASE5_SUMMARY.md).
 
 ## Repository layout
 

@@ -60,6 +60,11 @@ table first; it was never written before, and detection repopulates it.
 | `MoneyPlan`                    | Versioned plan inputs and computed allocation (JSON)                                                                                         | `userId`                                                                                                                                                           |
 | `AIConversation` / `AIMessage` | Assistant history, with provider and context reference                                                                                       | `(userId, updatedAt)`, `(conversationId, createdAt)`                                                                                                               |
 
+Since Phase 5, `FinancialProfile` holds the money plan figures (upcoming
+expenses as JSON with rupee-string amounts), `MoneyPlan` keeps one snapshot of
+the last saved inputs and result, and `Budget` holds the monthly budgets.
+Deleting all transactions keeps all three; deleting the account removes them.
+
 Composite indexes lead with `userId` because every query is scoped to one
 user. That is also the authorisation boundary (see SECURITY.md).
 
@@ -71,6 +76,9 @@ user. That is also the authorisation boundary (see SECURITY.md).
 - **Added `Transaction.flow`** (`IN`/`OUT`), because `TRANSFER`, `UNKNOWN` and
   `REFUND` need a direction.
 - **Added `Session`** for refresh-token rotation.
+- **Added `FinancialProfile.emergencyFundCurrent`** (Phase 5, migration
+  `20261005090000_money_plan`) for the amount already saved, plus a
+  `(userId, month)` index on `Budget`.
 - **Added `Transaction.status`** values: `CONFIRMED`, `PENDING_REVIEW` and
   `EXCLUDED`. Analytics read only `CONFIRMED`.
 

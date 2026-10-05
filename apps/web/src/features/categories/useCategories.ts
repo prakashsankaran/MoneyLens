@@ -23,6 +23,8 @@ export function invalidateFinancialData(client: ReturnType<typeof useQueryClient
     'insights',
     'recurring',
     'report',
+    'money-plan',
+    'budgets',
   ]) {
     void client.invalidateQueries({ queryKey: [key] });
   }

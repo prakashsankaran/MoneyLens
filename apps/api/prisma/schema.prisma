@@ -453,23 +453,26 @@ model Budget {
   category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@unique([userId, categoryId, month])
+  @@index([userId, month])
 }
 
 /// Self-declared financial profile used by the money planner.
 model FinancialProfile {
-  id                  String   @id @default(cuid())
-  userId              String   @unique
-  monthlyIncome       Decimal? @db.Decimal(14, 2)
-  fixedExpenses       Decimal? @db.Decimal(14, 2)
-  emis                Decimal? @db.Decimal(14, 2)
-  insurance           Decimal? @db.Decimal(14, 2)
-  investments         Decimal? @db.Decimal(14, 2)
-  savingsTarget       Decimal? @db.Decimal(14, 2)
-  emergencyFundTarget Decimal? @db.Decimal(14, 2)
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  monthlyIncome        Decimal? @db.Decimal(14, 2)
+  fixedExpenses        Decimal? @db.Decimal(14, 2)
+  emis                 Decimal? @db.Decimal(14, 2)
+  insurance            Decimal? @db.Decimal(14, 2)
+  investments          Decimal? @db.Decimal(14, 2)
+  savingsTarget        Decimal? @db.Decimal(14, 2)
+  emergencyFundTarget  Decimal? @db.Decimal(14, 2)
+  /// Emergency fund already saved.
+  emergencyFundCurrent Decimal? @db.Decimal(14, 2)
   /// [{ label, amount, dueMonth }]
-  upcomingExpenses    Json?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  upcomingExpenses     Json?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

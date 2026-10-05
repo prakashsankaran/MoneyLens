@@ -7,6 +7,7 @@ import type {
   RecurringSeries,
 } from '@moneylens/types';
 import { classifyTransaction } from './classify';
+import { budgetStatus, type BudgetInput } from './budgets';
 import { isDiscretionary } from './leakage';
 import { mean } from './stats';
 import { groupByMonth, summarizePeriod } from './summary';
@@ -20,12 +21,12 @@ import { groupByMonth, summarizePeriod } from './summary';
  */
 
 export const HEALTH_WEIGHTS: Record<HealthComponent['key'], number> = {
-  savings: 0.3,
+  savings: 0.25,
   discretionary: 0.2,
-  cashflow: 0.2,
+  cashflow: 0.15,
   stability: 0.15,
   obligations: 0.15,
-  budget: 0,
+  budget: 0.1,
 };
 
 /** Recurring payments in these subcategories are saving, not obligations. */
@@ -43,6 +44,10 @@ export interface HealthInput {
   txs: readonly AnalyticsTransaction[];
   categories: readonly CategoryRef[];
   recurring: readonly RecurringSeries[];
+  /** Budgets set for `month`, if any. */
+  budgets?: readonly BudgetInput[];
+  /** "Today", for judging a month in progress. */
+  now?: Date;
 }
 
 export function healthScore(input: HealthInput): HealthScore {
@@ -211,14 +216,37 @@ export function healthScore(input: HealthInput): HealthScore {
     }
   }
 
-  components.push(
-    unavailable(
-      'budget',
-      'Budget adherence',
-      'Share of budgets kept this month.',
-      'Budgets arrive with the money plan in Phase 5, so this is not scored yet.',
-    ),
-  );
+  // Budget adherence: share of this month's budgets kept so far.
+  {
+    const formula =
+      "Share of this month's budgets where spending stayed within the amount (so far, for the month in progress). Half or fewer kept scores 0; all kept scores 100.";
+    const budgets = input.budgets ?? [];
+    if (budgets.length === 0) {
+      components.push(
+        unavailable('budget', 'Budget adherence', formula, 'No budgets set for this month.'),
+      );
+    } else {
+      const status = budgetStatus(
+        budgets,
+        byMonth.get(input.month) ?? [],
+        input.categories,
+        input.month,
+        input.now ?? new Date(),
+      );
+      const kept = status.items.filter((i) => i.status !== 'over').length;
+      const total = status.items.length;
+      const pct = total ? (kept / total) * 100 : 0;
+      components.push({
+        key: 'budget',
+        label: 'Budget adherence',
+        weight: HEALTH_WEIGHTS.budget,
+        score: total ? linearScore(pct, 50, 100) : null,
+        measured: total ? `${kept} of ${total} ${total === 1 ? 'budget' : 'budgets'} kept` : null,
+        formula,
+        unavailableReason: total ? null : 'No budgets set for this month.',
+      });
+    }
+  }
 
   const scored = components.filter((c) => c.score !== null && c.weight > 0);
   const weight = scored.reduce((a, c) => a + c.weight, 0);

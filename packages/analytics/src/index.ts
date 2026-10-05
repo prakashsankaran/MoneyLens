@@ -9,3 +9,6 @@ export * from './insights';
 export * from './leakage';
 export * from './health';
 export * from './report';
+export * from './budgets';
+export * from './plan';
+export * from './simulator';

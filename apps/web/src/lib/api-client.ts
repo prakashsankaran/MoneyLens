@@ -99,7 +99,7 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 /** JSON request helper for mutations. */
-export function send<T>(method: 'POST' | 'PATCH' | 'DELETE', path: string, body?: unknown) {
+export function send<T>(method: 'POST' | 'PUT' | 'PATCH' | 'DELETE', path: string, body?: unknown) {
   return api<T>(path, { method, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
 }
 

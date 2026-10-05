@@ -163,11 +163,35 @@ Phase 4 added, all pure and deterministic:
   (small purchases, food delivery, rising discretionary spending, overlapping
   subscriptions, merchant surges), each with an estimated monthly saving and
   the assumption behind it.
-- `healthScore` (`health.ts`): five weighted components, each a straight
+- `healthScore` (`health.ts`): six weighted components, each a straight
   line between two stated limits, averaged over the components that could be
-  measured. Budget adherence is listed with weight 0 until Phase 5.
+  measured. Weights: savings 25%, discretionary 20%, cash flow 15%, stability
+  15%, obligations 15%, budget adherence 10% (since Phase 5).
 - `monthlyReport` (`report.ts`): assembles all of the above for one month
   against a comparison month, with labelled template sentences.
+
+Phase 5 added, also pure:
+
+- `observedBaseline`, `buildMoneyPlan` (`plan.ts`): sorts categories into
+  commitments, investing, essentials, lifestyle and other; averages the
+  latest three complete months; and builds the plan (income minus each kind
+  equals the available surplus, then the goals). Empty fields fall back to
+  the observed averages, and every line records its source. Suggestions are
+  labelled `RECOMMENDATION` and every plan carries the "not professional
+  financial advice" disclaimer.
+- `budgetStatus`, `monthProgress` (`budgets.ts`): spending against each
+  budget, net of refunds and including subcategories, with near and over
+  states and a straight-line projection for the month in progress.
+- `simulate`, `futureValue` (`simulator.ts`): what-if changes against the
+  baseline, with the monthly and annual impact and projections compounded
+  monthly at a stated, user-chosen return. The assumptions are returned with
+  every result.
+- A `budget-alerts` insight rule (16 rules in all).
+
+`PlanService` (`apps/api/src/modules/plan`) serves `/api/money-plan` and
+`/api/budgets`. It stores the figures in `FinancialProfile`, a snapshot of
+each saved plan in `MoneyPlan`, and budgets in `Budget`; the plan itself is
+recalculated on every read.
 
 In the API, `RecurringService` stores one `RecurringPayment` row per series
 (keyed so dismissals survive re-detection) and flags its transactions. It
