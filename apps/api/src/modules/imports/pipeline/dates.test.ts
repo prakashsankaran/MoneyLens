@@ -47,7 +47,11 @@ describe('detectDayOrder', () => {
   it('assumes day-first when ambiguous', () => {
     expect(detectDayOrder(['01/02/2026', '03/04/2026'])).toEqual({ order: 'DMY', assumed: true });
   });
-  it('is not affected by ISO dates', () => {
-    expect(detectDayOrder(['2026-09-25'])).toEqual({ order: 'DMY', assumed: true });
+  it('needs no assumption when no date is numeric day/month', () => {
+    expect(detectDayOrder(['2026-09-25', '05 Sep 2026'])).toEqual({ order: 'DMY', assumed: false });
+  });
+
+  it('still assumes day-first for ambiguous numeric dates next to ISO ones', () => {
+    expect(detectDayOrder(['2026-09-25', '05/09/2026'])).toEqual({ order: 'DMY', assumed: true });
   });
 });

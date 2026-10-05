@@ -9,11 +9,12 @@ tracker. Every number on screen is computed by a deterministic analytics engine,
 and every statement is labelled as a fact, calculation, observation, AI
 interpretation or recommendation.
 
-> **Status: Phase 2 of 8.** Authentication, the dashboard, CSV statement
-> import with a review step, the transaction list with editing, category
-> management, month analytics and data deletion are working. Google Pay PDF
-> import, deeper insights, planning, AI and the mobile app follow. See
-> [docs/PLAN.md](docs/PLAN.md) and [docs/PHASE2_SUMMARY.md](docs/PHASE2_SUMMARY.md).
+> **Status: Phase 3 of 8.** Authentication, the dashboard, statement import
+> (Google Pay PDF including password-protected ones, bank CSV and Excel) with
+> a review step and duplicate detection, the transaction list with editing,
+> category and merchant management, month analytics and data deletion are
+> working. Deeper insights, planning, AI and the mobile app follow. See
+> [docs/PLAN.md](docs/PLAN.md) and [docs/PHASE3_SUMMARY.md](docs/PHASE3_SUMMARY.md).
 
 ## Repository layout
 
@@ -29,13 +30,13 @@ packages/
   analytics/  Pure, deterministic analytics engine
   ui/         Design tokens shared by web and mobile
 infrastructure/docker/   Dockerfiles, Compose stack, nginx config
-samples/                 Fictional statement for trying the import flow
+samples/                 Fictional statements for trying the import flow
 docs/                    Architecture and engineering docs
 ```
 
 ## Prerequisites
 
-- Node.js 22 (see `.nvmrc`; 20.11+ works) and npm 10
+- Node.js 22.13 or newer (see `.nvmrc`; the PDF reader needs it) and npm 10
 - PostgreSQL 16, either local or via Docker Compose
 
 ## Quick start
@@ -59,9 +60,9 @@ npm run dev
 ```
 
 Sign in with the demo account **demo@moneylens.app / moneylens-demo**, or
-create your own account and import
-[`samples/sample-bank-statement.csv`](samples/sample-bank-statement.csv), a
-fictional one-month bank statement, from the **Imports** page.
+create your own account and import one of the fictional statements in
+[`samples/`](samples/) (Google Pay PDF, bank CSV or Excel) from the
+**Imports** page.
 
 ## Environment variables
 
@@ -146,7 +147,7 @@ built app with nginx and proxies `/api` to the API.
 - [DATABASE.md](docs/DATABASE.md): schema and conventions
 - [SECURITY.md](docs/SECURITY.md): auth, privacy and threat model
 - [DEVELOPMENT.md](docs/DEVELOPMENT.md): workflow and conventions
-- [IMPORT_PIPELINE.md](docs/IMPORT_PIPELINE.md): statement import pipeline and CSV format support
+- [IMPORT_PIPELINE.md](docs/IMPORT_PIPELINE.md): statement import pipeline, supported formats and duplicate detection
 - [AI_ARCHITECTURE.md](docs/AI_ARCHITECTURE.md): AIProvider and guardrails design (phase 6)
 - [PLAN.md](docs/PLAN.md): architecture proposal and phased plan
 

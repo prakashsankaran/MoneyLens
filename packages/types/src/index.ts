@@ -351,6 +351,19 @@ export interface ImportReview {
 export interface ImportRowUpdateResult {
   row: ImportRow;
   stats: ImportStats;
+  /** Other rows changed by `applyToSimilar`; the client refetches when > 0. */
+  similarUpdated: number;
+}
+
+/** Why an upload needs more input from the user (error `details.reason`). */
+export type ImportNeedsInputReason =
+  'COLUMNS_NOT_FOUND' | 'PASSWORD_REQUIRED' | 'PASSWORD_INCORRECT';
+
+/** `details` of a 400 upload error that the user can resolve. */
+export interface ImportNeedsInputDetails {
+  reason: ImportNeedsInputReason;
+  /** First rows of the sheet, for choosing columns (COLUMNS_NOT_FOUND only). */
+  preview?: string[][];
 }
 
 export interface ImportConfirmResult {

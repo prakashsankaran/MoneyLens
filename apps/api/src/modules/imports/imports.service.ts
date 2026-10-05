@@ -20,13 +20,12 @@ import { findOrCreateMerchant, merchantsByKey } from '../../lib/merchants';
 import { decimalToPaise } from '../../lib/money';
 import { FLOW_FOR_TYPE } from '../transactions/transactions.service';
 import { categorize, type CategorizationContext } from './pipeline/categorize';
-import { extractMerchantText } from './pipeline/merchants';
+import { findDuplicates, type ExistingTransaction } from './pipeline/duplicates';
+import { extractMerchantText, merchantKey } from './pipeline/merchants';
 import { selectParser } from './pipeline/registry';
 import { StatementParseError, type ParseResult, type UploadedFile } from './pipeline/types';
 
-/** Formats recognised by extension that are planned but not parsed yet. */
-const COMING_SOON = new Set(['pdf', 'xlsx', 'xls']);
-const SUPPORTED = new Set(['csv']);
+const SUPPORTED = new Set(['csv', 'xlsx', 'pdf']);
 
 /** Statements this large are almost certainly not a personal export. */
 export const MAX_ROWS = 20_000;
@@ -51,22 +50,36 @@ export function safeFilename(name: string): string {
   return (base || 'statement').slice(0, 200);
 }
 
+function sniff(buffer: Buffer): 'pdf' | 'zip' | 'ole' | 'binary' | 'text' {
+  const head = buffer.subarray(0, 8);
+  // PDF readers accept the marker anywhere in the first kilobyte.
+  if (buffer.subarray(0, 1024).includes('%PDF-')) return 'pdf';
+  if (head[0] === 0x50 && head[1] === 0x4b && head[2] === 0x03 && head[3] === 0x04) return 'zip';
+  if (head.subarray(0, 4).toString('hex') === 'd0cf11e0') return 'ole';
+  return buffer.subarray(0, 8192).includes(0) ? 'binary' : 'text';
+}
+
 /**
  * Check the bytes, not just the extension: a renamed PDF, spreadsheet or
  * binary is rejected before any parser sees it.
  */
-function assertLooksLikeText(buffer: Buffer): void {
-  const head = buffer.subarray(0, 8);
-  const isPdf = head.subarray(0, 5).toString('latin1') === '%PDF-';
-  const isZip = head[0] === 0x50 && head[1] === 0x4b && head[2] === 0x03 && head[3] === 0x04;
-  const isOle = head.subarray(0, 4).toString('hex') === 'd0cf11e0';
-  if (isPdf || isZip || isOle || buffer.subarray(0, 8192).includes(0)) {
-    throw new AppError(
-      'UNSUPPORTED_MEDIA_TYPE',
-      'This file has a .csv name but is not a text CSV file. Export the statement as CSV and try again.',
-    );
-  }
+function assertContentMatches(ext: string, buffer: Buffer): void {
+  const kind = sniff(buffer);
+  const expected = ext === 'csv' ? 'text' : ext === 'xlsx' ? 'zip' : 'pdf';
+  if (kind === expected) return;
+  const messages: Record<string, string> = {
+    csv: 'This file has a .csv name but is not a text CSV file. Export the statement as CSV and try again.',
+    xlsx:
+      kind === 'ole'
+        ? 'This file is an encrypted or old-format Excel workbook. Remove its password, or save it as .xlsx or CSV, and try again.'
+        : 'This file has a .xlsx name but is not an Excel workbook.',
+    pdf: 'This file has a .pdf name but is not a PDF.',
+  };
+  throw new AppError('UNSUPPORTED_MEDIA_TYPE', messages[ext] ?? 'Unsupported file.');
 }
+
+/** Rows within this many days of a new row are checked for duplicates. */
+const DUPLICATE_WINDOW_DAYS = 1;
 
 function dbDate(day: string | null): Date | null {
   return day ? new Date(`${day}T00:00:00.000Z`) : null;
@@ -143,21 +156,24 @@ export class ImportsService {
   async upload(userId: string, file: UploadedFile): Promise<ImportReview> {
     const filename = safeFilename(file.filename);
     const ext = fileExtension(filename);
-    if (COMING_SOON.has(ext)) {
+    if (ext === 'xls') {
       throw new AppError(
         'UNSUPPORTED_MEDIA_TYPE',
-        `.${ext} statements are not supported yet (planned for Phase 3). Export the statement as CSV for now.`,
+        'Old .xls workbooks are not supported. Open the file in Excel or Google Sheets, save it as .xlsx or CSV, and upload that.',
       );
     }
     if (!SUPPORTED.has(ext)) {
-      throw new AppError('UNSUPPORTED_MEDIA_TYPE', 'Upload a .csv statement file.');
+      throw new AppError(
+        'UNSUPPORTED_MEDIA_TYPE',
+        'Upload a Google Pay statement PDF, or a bank statement as .csv or .xlsx.',
+      );
     }
     if (file.buffer.length === 0) {
       throw new AppError('VALIDATION_ERROR', 'The file is empty.', {
         fields: { file: 'Empty file' },
       });
     }
-    assertLooksLikeText(file.buffer);
+    assertContentMatches(ext, file.buffer);
 
     const sha256 = createHash('sha256').update(file.buffer).digest('hex');
     const previous = await this.prisma.import.findFirst({
@@ -177,7 +193,7 @@ export class ImportsService {
     const base = {
       userId,
       originalFilename: filename,
-      mimeType: file.mimeType || 'text/csv',
+      mimeType: file.mimeType || 'application/octet-stream',
       sizeBytes: file.buffer.length,
       sha256,
     };
@@ -198,6 +214,13 @@ export class ImportsService {
       }
     } catch (err) {
       if (!(err instanceof StatementParseError)) throw err;
+      // Problems the user can fix on the spot are answered without a history entry.
+      if (err.reason !== 'UNREADABLE') {
+        throw new AppError('VALIDATION_ERROR', err.message, {
+          reason: err.reason,
+          ...(err.preview ? { preview: err.preview } : {}),
+        });
+      }
       // Failed imports stay in the history so the user can see what happened.
       const failed = await this.prisma.import.create({
         data: {
@@ -212,21 +235,22 @@ export class ImportsService {
     }
 
     const ctx = await this.categorizationContext(userId);
-    const references = parsed.rows.map((r) => r.reference).filter((r): r is string => !!r);
-    const existingRefs = new Map(
-      references.length
-        ? (
-            await this.prisma.transaction.findMany({
-              where: { userId, transactionReference: { in: references } },
-              select: { id: true, transactionReference: true },
-            })
-          ).map((t) => [t.transactionReference as string, t.id])
-        : [],
+    const categorized = parsed.rows.map((row) => categorize(row, ctx));
+    const duplicates = findDuplicates(
+      parsed.rows.map((row, i) => ({
+        date: row.date,
+        amountPaise: row.amountPaise,
+        flow: row.flow,
+        reference: row.reference,
+        merchantKey: merchantKey((categorized[i] as (typeof categorized)[number]).merchantName),
+        upiId: row.upiId,
+      })),
+      await this.duplicateCandidates(userId, parsed),
     );
 
-    const staged = parsed.rows.map((row) => {
-      const c = categorize(row, ctx);
-      const duplicateOfId = row.reference ? (existingRefs.get(row.reference) ?? null) : null;
+    const staged = parsed.rows.map((row, i) => {
+      const c = categorized[i] as (typeof categorized)[number];
+      const duplicate = duplicates[i] ?? null;
       return {
         rowIndex: row.rowIndex,
         transactionDate: row.date,
@@ -239,11 +263,9 @@ export class ImportsService {
         categoryConfidence: c.confidence,
         upiId: row.upiId,
         transactionReference: row.reference,
-        decision: duplicateOfId ? ('DUPLICATE' as const) : ('INCLUDE' as const),
-        duplicateOfId,
-        duplicateReason: duplicateOfId
-          ? 'Same reference number as a transaction you already have'
-          : null,
+        decision: duplicate ? ('DUPLICATE' as const) : ('INCLUDE' as const),
+        duplicateOfId: duplicate?.duplicateOfId ?? null,
+        duplicateReason: duplicate?.reason ?? null,
         warnings: row.warnings.length ? row.warnings : undefined,
       };
     });
@@ -270,6 +292,49 @@ export class ImportsService {
     });
 
     return this.review(userId, created.id);
+  }
+
+  /**
+   * The user's transactions that a new row could repeat: those around the
+   * statement's dates, plus any sharing a reference number regardless of date.
+   */
+  private async duplicateCandidates(
+    userId: string,
+    parsed: ParseResult,
+  ): Promise<ExistingTransaction[]> {
+    const times = parsed.rows.map((r) => r.date.getTime());
+    const margin = (DUPLICATE_WINDOW_DAYS + 1) * 86_400_000;
+    const from = new Date(Math.min(...times) - margin);
+    const to = new Date(Math.max(...times) + margin);
+    const references = parsed.rows.map((r) => r.reference).filter((r): r is string => !!r);
+    const found = await this.prisma.transaction.findMany({
+      where: {
+        userId,
+        OR: [
+          { transactionDate: { gte: from, lte: to } },
+          ...(references.length ? [{ transactionReference: { in: references } }] : []),
+        ],
+      },
+      select: {
+        id: true,
+        transactionDate: true,
+        amount: true,
+        flow: true,
+        transactionReference: true,
+        merchantName: true,
+        upiId: true,
+      },
+      orderBy: { transactionDate: 'asc' },
+    });
+    return found.map((t) => ({
+      id: t.id,
+      date: t.transactionDate,
+      amountPaise: decimalToPaise(t.amount),
+      flow: t.flow,
+      reference: t.transactionReference,
+      merchantKey: t.merchantName ? merchantKey(t.merchantName) : null,
+      upiId: t.upiId,
+    }));
   }
 
   private async categorizationContext(userId: string): Promise<CategorizationContext> {
@@ -348,16 +413,29 @@ export class ImportsService {
       if (flow) data.flow = flow;
     }
 
-    const updated = await this.prisma.importTransaction.update({
-      where: { id: row.id },
-      data,
-      include: rowInclude,
+    const { updated, similarUpdated } = await this.prisma.$transaction(async (tx) => {
+      const changed = await tx.importTransaction.update({
+        where: { id: row.id },
+        data,
+        include: rowInclude,
+      });
+      // Rows from the same merchant (as named before this edit) get the same
+      // change. Include/exclude stays a per-row choice.
+      const { decision: _decision, ...shared } = data;
+      const similar =
+        input.applyToSimilar && row.merchantName && Object.keys(shared).length
+          ? await tx.importTransaction.updateMany({
+              where: { importId, id: { not: row.id }, merchantName: row.merchantName },
+              data: shared,
+            })
+          : { count: 0 };
+      return { updated: changed, similarUpdated: similar.count };
     });
     const all = await this.prisma.importTransaction.findMany({
       where: { importId },
       select: { transactionDate: true, amount: true, flow: true, decision: true, categoryId: true },
     });
-    return { row: toImportRow(updated), stats: statsOf(all) };
+    return { row: toImportRow(updated), stats: statsOf(all), similarUpdated };
   }
 
   /**

@@ -5,7 +5,7 @@ import type {
   ImportReview,
   ImportRowUpdateResult,
 } from '@moneylens/types';
-import type { UpdateImportRowInput } from '@moneylens/validation';
+import type { ColumnMappingInput, UpdateImportRowInput } from '@moneylens/validation';
 import { api, send } from '../../lib/api-client';
 import { invalidateFinancialData } from '../categories/useCategories';
 
@@ -20,11 +20,20 @@ export function useImportReview(id: string) {
   });
 }
 
+export interface UploadRequest {
+  file: File;
+  /** For a protected PDF. Sent once with the file; never kept in the browser. */
+  password?: string;
+  mapping?: ColumnMappingInput;
+}
+
 export function useUploadStatement() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (file: File) => {
+    mutationFn: ({ file, password, mapping }: UploadRequest) => {
       const body = new FormData();
+      if (password) body.append('password', password);
+      if (mapping) body.append('mapping', JSON.stringify(mapping));
       body.append('file', file);
       return api<ImportReview>('/imports', { method: 'POST', body });
     },
@@ -73,10 +82,12 @@ export function useUpdateImportRow(importId: string) {
     onError: (_err, _vars, context) => {
       if (context?.previous) client.setQueryData(key, context.previous);
     },
-    onSuccess: ({ row, stats }) => {
+    onSuccess: ({ row, stats, similarUpdated }) => {
       client.setQueryData<ImportReview>(key, (prev) =>
         prev ? { ...prev, stats, rows: prev.rows.map((r) => (r.id === row.id ? row : r)) } : prev,
       );
+      // Other rows changed on the server too; fetch them.
+      if (similarUpdated > 0) void client.invalidateQueries({ queryKey: key, exact: true });
     },
   });
 }

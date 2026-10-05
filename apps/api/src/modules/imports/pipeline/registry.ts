@@ -1,11 +1,17 @@
 import { CsvTransactionParser } from './csv-parser';
+import { GooglePayPdfParser } from './google-pay-pdf';
+import { XlsxTransactionParser } from './xlsx-parser';
 import type { TransactionParser, UploadedFile } from './types';
 
 /**
  * Registered statement parsers. New sources (Google Pay PDF, XLSX, other
  * banks) are added here; the rest of the pipeline is unchanged.
  */
-export const PARSERS: TransactionParser[] = [new CsvTransactionParser()];
+export const PARSERS: TransactionParser[] = [
+  new CsvTransactionParser(),
+  new XlsxTransactionParser(),
+  new GooglePayPdfParser(),
+];
 
 export function selectParser(
   file: UploadedFile,

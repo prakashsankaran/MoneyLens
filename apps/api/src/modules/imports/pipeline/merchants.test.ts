@@ -9,6 +9,8 @@ describe('extractMerchantText', () => {
     ['SWIGGY*FOOD', 'SWIGGY'],
     ['NEFT CR-NORTHWIND TECHNOLOGIES PVT LTD-SALARY SEP', 'NORTHWIND TECHNOLOGIES PVT LTD'],
     ['Meghana Foods Koramangala', 'MEGHANA FOODS KORAMANGALA'],
+    ['Paid to Sri Ganesh Stores', 'SRI GANESH STORES'],
+    ['Received from Arjun Mehta', 'ARJUN MEHTA'],
   ])('%s -> %s', (raw, expected) => {
     expect(extractMerchantText(raw)).toBe(expected);
   });

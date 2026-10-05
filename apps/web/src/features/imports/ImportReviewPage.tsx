@@ -1,8 +1,14 @@
-import { AlertTriangle, ArrowLeft, CheckCircle2 } from 'lucide-react';
-import { useState } from 'react';
+import { AlertTriangle, ArrowLeft, CheckCircle2, Pencil } from 'lucide-react';
+import { useId, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { formatINR } from '@moneylens/shared';
-import type { CategoryNode, ImportReview, ImportRow } from '@moneylens/types';
+import type {
+  CategoryNode,
+  ImportReview,
+  ImportRow,
+  MerchantOption,
+  TransactionType,
+} from '@moneylens/types';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { FullPageSpinner } from '../../components/FullPageSpinner';
@@ -12,6 +18,7 @@ import { formatDay, formatDayKey, TYPE_LABELS } from '../../lib/format';
 import { CategorySelect } from '../categories/CategorySelect';
 import { useCategories } from '../categories/useCategories';
 import { Amount } from '../transactions/Amount';
+import { useMerchants } from '../transactions/useTransactions';
 import {
   useConfirmImport,
   useDeleteImport,
@@ -57,6 +64,8 @@ export function ImportReviewPage() {
 function ReviewContent({ review }: { review: ImportReview }) {
   const navigate = useNavigate();
   const categories = useCategories();
+  const merchants = useMerchants();
+  const merchantListId = useId();
   const confirm = useConfirmImport(review.import.id);
   const discard = useDeleteImport();
   const [view, setView] = useState<View>('all');
@@ -69,8 +78,8 @@ function ReviewContent({ review }: { review: ImportReview }) {
       <Card className="mt-4" title={`We couldn't read ${record.filename}`}>
         <p className="text-sm text-ink-700">{record.errorMessage}</p>
         <p className="mt-3 text-sm text-ink-500">
-          Check that the file is a CSV export with a date, a description and an amount column, then
-          try again.
+          Check that the file is a Google Pay statement PDF, or a CSV or Excel export with a date, a
+          description and an amount column, then try again.
         </p>
         <Link
           to="/imports"
@@ -116,6 +125,12 @@ function ReviewContent({ review }: { review: ImportReview }) {
         : true,
   );
   const attentionCount = review.rows.filter(needsAttention).length;
+  // How many rows share each merchant name, for "apply to similar".
+  const merchantCounts = new Map<string, number>();
+  for (const r of review.rows) {
+    if (r.merchantName)
+      merchantCounts.set(r.merchantName, (merchantCounts.get(r.merchantName) ?? 0) + 1);
+  }
 
   return (
     <>
@@ -201,6 +216,7 @@ function ReviewContent({ review }: { review: ImportReview }) {
         ))}
       </div>
 
+      <MerchantDatalist id={merchantListId} merchants={merchants.data ?? []} />
       <ul className="mt-4 divide-y divide-ink-100 rounded-2xl border border-ink-100 bg-surface">
         {rows.slice(0, limit).map((row) => (
           <ReviewRow
@@ -209,6 +225,8 @@ function ReviewContent({ review }: { review: ImportReview }) {
             row={row}
             categories={categories.data ?? []}
             editable={editable}
+            similarCount={(row.merchantName ? (merchantCounts.get(row.merchantName) ?? 1) : 1) - 1}
+            merchantListId={merchantListId}
           />
         ))}
         {rows.length === 0 && (
@@ -271,24 +289,51 @@ function Stat({ label, value, warn }: { label: string; value: string | number; w
   );
 }
 
+function MerchantDatalist({ id, merchants }: { id: string; merchants: MerchantOption[] }) {
+  return (
+    <datalist id={id}>
+      {merchants.map((m) => (
+        <option key={m.id} value={m.name} />
+      ))}
+    </datalist>
+  );
+}
+
+const ROW_TYPES: TransactionType[] = [
+  'DEBIT',
+  'CREDIT',
+  'REFUND',
+  'CASHBACK',
+  'TRANSFER',
+  'SELF_TRANSFER',
+];
+
 function ReviewRow({
   importId,
   row,
   categories,
   editable,
+  similarCount,
+  merchantListId,
 }: {
   importId: string;
   row: ImportRow;
   categories: CategoryNode[];
   editable: boolean;
+  /** Other rows in this import from the same merchant. */
+  similarCount: number;
+  merchantListId: string;
 }) {
   const update = useUpdateImportRow(importId);
+  const [editing, setEditing] = useState(false);
+  // After a category change, offer to use it for the merchant's other rows.
+  const [offer, setOffer] = useState<{ categoryId: string | null } | null>(null);
   const included = row.decision === 'INCLUDE';
   const label = row.merchantName ?? 'Unknown';
 
   return (
     <li className={`px-4 py-3 ${included ? '' : 'bg-ink-100/40'}`}>
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-[auto_minmax(0,1fr)_14rem_8rem] md:items-center">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-[auto_minmax(0,1fr)_14rem_8rem_auto] md:items-center">
         <label className="flex min-w-0 items-center gap-3 md:contents">
           <input
             type="checkbox"
@@ -318,25 +363,62 @@ function ReviewRow({
             </span>
           </span>
         </label>
-        <div className="md:col-start-3">
-          <CategorySelect
-            aria-label={`Category for ${label}`}
-            categories={categories}
-            emptyLabel="Uncategorised"
-            className={`!h-10 ${included && !row.category ? 'border-warning' : ''}`}
-            value={row.category?.id ?? ''}
-            disabled={!editable}
-            onChange={(e) =>
-              update.mutate({ rowId: row.id, input: { categoryId: e.target.value || null } })
-            }
+        <div className="flex items-center gap-2 md:contents">
+          <div className="min-w-0 flex-1 md:col-start-3">
+            <CategorySelect
+              aria-label={`Category for ${label}`}
+              categories={categories}
+              emptyLabel="Uncategorised"
+              className={`!h-10 ${included && !row.category ? 'border-warning' : ''}`}
+              value={row.category?.id ?? ''}
+              disabled={!editable}
+              onChange={(e) => {
+                const categoryId = e.target.value || null;
+                update.mutate({ rowId: row.id, input: { categoryId } });
+                setOffer(similarCount > 0 ? { categoryId } : null);
+              }}
+            />
+          </div>
+          <Amount
+            paise={row.amountPaise}
+            flow={row.flow}
+            className="hidden text-right text-sm md:col-start-4 md:block"
           />
+          {editable && (
+            <button
+              type="button"
+              onClick={() => setEditing((v) => !v)}
+              aria-expanded={editing}
+              aria-label={`Edit ${label} on ${formatDay(row.date)}`}
+              className="rounded-lg p-2 text-ink-500 hover:bg-ink-100 md:col-start-5"
+            >
+              <Pencil className="size-4" aria-hidden="true" />
+            </button>
+          )}
         </div>
-        <Amount
-          paise={row.amountPaise}
-          flow={row.flow}
-          className="hidden text-right text-sm md:col-start-4 md:block"
-        />
       </div>
+      {offer && editable && (
+        <p className="mt-2 flex flex-wrap items-center gap-2 text-xs text-ink-700">
+          Use this category for the {similarCount} other {similarCount === 1 ? 'row' : 'rows'} from{' '}
+          {label}?
+          <button
+            type="button"
+            className="font-medium text-brand-700 hover:underline"
+            onClick={() => {
+              update.mutate({
+                rowId: row.id,
+                input: { categoryId: offer.categoryId, applyToSimilar: true },
+              });
+              setOffer(null);
+            }}
+          >
+            Apply to all
+          </button>
+          <button type="button" className="font-medium" onClick={() => setOffer(null)}>
+            No thanks
+          </button>
+        </p>
+      )}
       {(row.duplicateReason || row.warnings.length > 0) && (
         <p className="mt-2 text-xs text-warning">
           {[row.duplicateReason && `Possible duplicate: ${row.duplicateReason}.`, ...row.warnings]
@@ -344,7 +426,126 @@ function ReviewRow({
             .join(' ')}
         </p>
       )}
+      {editing && editable && (
+        <RowEditor
+          row={row}
+          similarCount={similarCount}
+          merchantListId={merchantListId}
+          busy={update.isPending}
+          onCancel={() => setEditing(false)}
+          onSave={(input) =>
+            update.mutate({ rowId: row.id, input }, { onSuccess: () => setEditing(false) })
+          }
+        />
+      )}
       {update.isError && <p className="mt-2 text-xs text-negative">{update.error.message}</p>}
     </li>
+  );
+}
+
+function RowEditor({
+  row,
+  similarCount,
+  merchantListId,
+  busy,
+  onSave,
+  onCancel,
+}: {
+  row: ImportRow;
+  similarCount: number;
+  merchantListId: string;
+  busy: boolean;
+  onSave: (input: {
+    merchantName?: string;
+    transactionType?: TransactionType;
+    decision?: ImportRow['decision'];
+    applyToSimilar?: boolean;
+  }) => void;
+  onCancel: () => void;
+}) {
+  const [merchantName, setMerchantName] = useState(row.merchantName ?? '');
+  const [type, setType] = useState<TransactionType>(row.type);
+  const [duplicate, setDuplicate] = useState(row.decision === 'DUPLICATE');
+  const [applyToSimilar, setApplyToSimilar] = useState(false);
+  const fieldId = useId();
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    const name = merchantName.trim();
+    onSave({
+      ...(name && name !== row.merchantName ? { merchantName: name } : {}),
+      ...(type !== row.type ? { transactionType: type } : {}),
+      ...(duplicate !== (row.decision === 'DUPLICATE')
+        ? { decision: duplicate ? 'DUPLICATE' : 'INCLUDE' }
+        : {}),
+      ...(applyToSimilar ? { applyToSimilar: true } : {}),
+    });
+  };
+  const changed =
+    (merchantName.trim() && merchantName.trim() !== row.merchantName) ||
+    type !== row.type ||
+    duplicate !== (row.decision === 'DUPLICATE');
+
+  return (
+    <form
+      onSubmit={submit}
+      aria-label={`Edit ${row.merchantName ?? 'row'}`}
+      className="mt-3 grid gap-3 rounded-xl border border-ink-100 bg-canvas p-3 text-sm sm:grid-cols-2"
+    >
+      <label htmlFor={`${fieldId}-merchant`} className="block">
+        <span className="font-medium text-ink-700">Merchant</span>
+        <input
+          id={`${fieldId}-merchant`}
+          list={merchantListId}
+          value={merchantName}
+          maxLength={80}
+          onChange={(e) => setMerchantName(e.target.value)}
+          className="mt-1.5 h-10 w-full rounded-lg border border-ink-300 bg-surface px-3"
+        />
+      </label>
+      <label className="block">
+        <span className="font-medium text-ink-700">Type</span>
+        <select
+          value={type}
+          onChange={(e) => setType(e.target.value as TransactionType)}
+          className="mt-1.5 h-10 w-full rounded-lg border border-ink-300 bg-surface px-3"
+        >
+          {ROW_TYPES.map((t) => (
+            <option key={t} value={t}>
+              {TYPE_LABELS[t]}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="flex items-center gap-2 sm:col-span-2">
+        <input
+          type="checkbox"
+          className="size-4"
+          checked={duplicate}
+          onChange={(e) => setDuplicate(e.target.checked)}
+        />
+        Duplicate of a transaction I already have (it will not be imported)
+      </label>
+      {similarCount > 0 && (
+        <label className="flex items-center gap-2 sm:col-span-2">
+          <input
+            type="checkbox"
+            className="size-4"
+            checked={applyToSimilar}
+            onChange={(e) => setApplyToSimilar(e.target.checked)}
+          />
+          Also change the merchant and type of the {similarCount} other{' '}
+          {similarCount === 1 ? 'row' : 'rows'} from {row.merchantName}
+        </label>
+      )}
+      <div className="flex gap-2 sm:col-span-2">
+        <Button type="submit" className="!h-10" disabled={!changed || busy}>
+          Save
+        </Button>
+        <Button type="button" variant="ghost" className="!h-10" onClick={onCancel}>
+          Cancel
+        </Button>
+      </div>
+    </form>
   );
 }

@@ -4,6 +4,32 @@ export interface UploadedFile {
   filename: string;
   mimeType: string;
   buffer: Buffer;
+  /** Password for a protected PDF. Used in memory only, never stored or logged. */
+  password?: string;
+  /** User-chosen columns for a spreadsheet whose headings were not recognised. */
+  mapping?: ColumnMapping;
+}
+
+/** Spreadsheet fields MoneyLens reads. */
+export const TABLE_FIELDS = [
+  'date',
+  'description',
+  'amount',
+  'debit',
+  'credit',
+  'direction',
+  'reference',
+  'upi',
+] as const;
+export type TableField = (typeof TABLE_FIELDS)[number];
+
+/**
+ * Manual column choice: the 0-based index of the heading row in the preview
+ * and a 0-based column index per field.
+ */
+export interface ColumnMapping {
+  headerRow: number;
+  columns: Partial<Record<TableField, number>>;
 }
 
 /** One transaction as read from a statement, before categorisation. */
@@ -18,6 +44,11 @@ export interface ParsedRow {
   description: string;
   upiId: string | null;
   reference: string | null;
+  /**
+   * Counterparty name when the statement states it separately (e.g. Google
+   * Pay's "Paid to Swiggy"); otherwise merchant text is taken from the description.
+   */
+  counterparty?: string | null;
   warnings: string[];
 }
 
@@ -42,9 +73,24 @@ export interface TransactionParser {
   parse(file: UploadedFile): Promise<ParseResult>;
 }
 
-/** The file could not be read at all; the message is shown to the user. */
+/** The first rows of a spreadsheet, so the user can pick its columns. */
+export type TablePreview = string[][];
+
+/**
+ * The file could not be read; the message is shown to the user.
+ * - `UNREADABLE`: recorded as a failed import.
+ * - `COLUMNS_NOT_FOUND`: the user can choose the columns from `preview`.
+ * - `PASSWORD_REQUIRED` / `PASSWORD_INCORRECT`: the user can supply a password.
+ */
+export type ParseErrorReason =
+  'UNREADABLE' | 'COLUMNS_NOT_FOUND' | 'PASSWORD_REQUIRED' | 'PASSWORD_INCORRECT';
+
 export class StatementParseError extends Error {
-  constructor(message: string) {
+  constructor(
+    message: string,
+    readonly reason: ParseErrorReason = 'UNREADABLE',
+    readonly preview?: TablePreview,
+  ) {
     super(message);
     this.name = 'StatementParseError';
   }

@@ -129,6 +129,35 @@ export const updateTransactionSchema = z
   });
 export type UpdateTransactionInput = z.infer<typeof updateTransactionSchema>;
 
+export const renameMerchantSchema = z.object({
+  name: z.string().trim().min(1, 'Enter a name').max(80),
+});
+export type RenameMerchantInput = z.infer<typeof renameMerchantSchema>;
+
+export const mergeMerchantSchema = z.object({ intoId: idSchema });
+export type MergeMerchantInput = z.infer<typeof mergeMerchantSchema>;
+
+/**
+ * Column choice for a spreadsheet whose headings were not recognised, sent as
+ * a JSON string in the upload form.
+ */
+export const columnMappingSchema = z.object({
+  headerRow: z.number().int().min(0).max(50),
+  columns: z
+    .object({
+      date: z.number().int().min(0).max(200).optional(),
+      description: z.number().int().min(0).max(200).optional(),
+      amount: z.number().int().min(0).max(200).optional(),
+      debit: z.number().int().min(0).max(200).optional(),
+      credit: z.number().int().min(0).max(200).optional(),
+      direction: z.number().int().min(0).max(200).optional(),
+      reference: z.number().int().min(0).max(200).optional(),
+      upi: z.number().int().min(0).max(200).optional(),
+    })
+    .strict(),
+});
+export type ColumnMappingInput = z.infer<typeof columnMappingSchema>;
+
 /** Typed confirmation for destructive bulk actions. */
 export const confirmDeleteAllSchema = z.object({
   confirm: z.literal('DELETE', { message: 'Type DELETE to confirm' }),
@@ -166,8 +195,15 @@ export const updateImportRowSchema = z
     transactionType: z
       .enum(['DEBIT', 'CREDIT', 'REFUND', 'CASHBACK', 'TRANSFER', 'SELF_TRANSFER', 'UNKNOWN'])
       .optional(),
+    /**
+     * Also apply the category, merchant name or type to the other rows in this
+     * import from the same merchant.
+     */
+    applyToSimilar: z.boolean().optional(),
   })
-  .refine((v) => Object.keys(v).length > 0, { message: 'Nothing to update' });
+  .refine((v) => Object.keys(v).some((k) => k !== 'applyToSimilar'), {
+    message: 'Nothing to update',
+  });
 export type UpdateImportRowInput = z.infer<typeof updateImportRowSchema>;
 
 // ---------------------------------------------------------------------------

@@ -1,12 +1,35 @@
 import { FileUp, Trash2 } from 'lucide-react';
-import { useRef, useState, type DragEvent } from 'react';
+import { useCallback, useRef, useState, type DragEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
-import type { ImportRecord, ImportStatus } from '@moneylens/types';
+import type { ImportNeedsInputDetails, ImportRecord, ImportStatus } from '@moneylens/types';
 import { Card } from '../../components/Card';
 import { ErrorCard, PageHeader } from '../../components/PageHeader';
 import { ApiError } from '../../lib/api-client';
 import { formatDay, formatDayKey } from '../../lib/format';
-import { useDeleteImport, useImportHistory, useUploadStatement } from './useImports';
+import { ColumnMappingDialog, PasswordDialog } from './UploadDialogs';
+import {
+  useDeleteImport,
+  useImportHistory,
+  useUploadStatement,
+  type UploadRequest,
+} from './useImports';
+
+/** An upload the server could read once the user gives a password or columns. */
+type NeedsInput = { request: UploadRequest; message: string } & ImportNeedsInputDetails;
+
+function needsInput(err: unknown, request: UploadRequest): NeedsInput | null {
+  if (!(err instanceof ApiError) || err.code !== 'VALIDATION_ERROR') return null;
+  const reason = err.details?.reason;
+  if (
+    reason !== 'COLUMNS_NOT_FOUND' &&
+    reason !== 'PASSWORD_REQUIRED' &&
+    reason !== 'PASSWORD_INCORRECT'
+  ) {
+    return null;
+  }
+  const preview = Array.isArray(err.details?.preview) ? (err.details.preview as string[][]) : [];
+  return { request, message: err.message, reason, preview };
+}
 
 const STATUS_LABELS: Record<ImportStatus, { label: string; className: string }> = {
   UPLOADED: { label: 'Uploaded', className: 'bg-ink-100 text-ink-700' },
@@ -23,12 +46,20 @@ export function ImportsPage() {
   const history = useImportHistory();
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
+  const [pending, setPending] = useState<NeedsInput | null>(null);
+  const closeDialog = useCallback(() => setPending(null), []);
 
-  const start = (file: File | undefined) => {
-    if (!file) return;
-    upload.mutate(file, {
-      onSuccess: (review) => void navigate(`/imports/${review.import.id}`),
+  const send = (request: UploadRequest) => {
+    upload.mutate(request, {
+      onSuccess: (review) => {
+        setPending(null);
+        void navigate(`/imports/${review.import.id}`);
+      },
+      onError: (err) => setPending(needsInput(err, request)),
     });
+  };
+  const start = (file: File | undefined) => {
+    if (file) send({ file });
   };
   const onDrop = (e: DragEvent) => {
     e.preventDefault();
@@ -61,13 +92,13 @@ export function ImportsPage() {
           }`}
         >
           <FileUp className="size-8 text-ink-500" aria-hidden="true" />
-          <p className="mt-3 text-sm font-medium">Drop a CSV file here, or</p>
+          <p className="mt-3 text-sm font-medium">Drop a statement here, or</p>
           <label className="mt-3 inline-flex h-11 cursor-pointer items-center rounded-lg bg-brand-700 px-4 text-sm font-medium text-white hover:bg-brand-600 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand-600">
             {upload.isPending ? 'Reading file…' : 'Choose file'}
             <input
               ref={inputRef}
               type="file"
-              accept=".csv,text/csv"
+              accept=".pdf,.csv,.xlsx,application/pdf,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
               className="sr-only"
               disabled={upload.isPending}
               onChange={(e) => {
@@ -77,12 +108,12 @@ export function ImportsPage() {
             />
           </label>
           <p className="mt-4 max-w-md text-xs text-ink-500">
-            CSV exports from most Indian banks work: a date, a description, and either one amount
-            column or separate withdrawal and deposit columns. Google Pay PDF and Excel statements
-            are coming next. Your file is read and then discarded; it is not stored.
+            Google Pay statement PDFs, and CSV or Excel (.xlsx) exports from most Indian banks. If
+            the columns are not recognised, you can choose them. Your file is read and then
+            discarded; it is not stored, and neither is a PDF password.
           </p>
         </div>
-        {upload.isError && (
+        {upload.isError && !pending && (
           <div role="alert" className="mt-4 text-sm text-negative">
             {upload.error.message}{' '}
             {duplicateId && (
@@ -93,6 +124,27 @@ export function ImportsPage() {
           </div>
         )}
       </Card>
+
+      {pending?.reason === 'COLUMNS_NOT_FOUND' && (
+        <ColumnMappingDialog
+          filename={pending.request.file.name}
+          preview={pending.preview ?? []}
+          message={pending.request.mapping ? pending.message : undefined}
+          busy={upload.isPending}
+          onClose={closeDialog}
+          onSubmit={(mapping) => send({ ...pending.request, mapping })}
+        />
+      )}
+      {(pending?.reason === 'PASSWORD_REQUIRED' || pending?.reason === 'PASSWORD_INCORRECT') && (
+        <PasswordDialog
+          key={pending.reason + String(pending.request.password)}
+          filename={pending.request.file.name}
+          incorrect={pending.reason === 'PASSWORD_INCORRECT'}
+          busy={upload.isPending}
+          onClose={closeDialog}
+          onSubmit={(password) => send({ ...pending.request, password })}
+        />
+      )}
 
       <section className="mt-8" aria-labelledby="history-heading">
         <h2 id="history-heading" className="text-base font-semibold">

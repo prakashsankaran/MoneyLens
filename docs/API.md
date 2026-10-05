@@ -210,13 +210,29 @@ transactions until `confirm`. See [IMPORT_PIPELINE.md](IMPORT_PIPELINE.md).
 
 ### `POST /api/imports` 🔒
 
-`multipart/form-data` with one `file` field, at most `MAX_UPLOAD_MB`.
+`multipart/form-data` with one `file` field (at most `MAX_UPLOAD_MB`) and two
+optional text fields:
 
-- `.csv` → `201` `ImportReview` with status `READY_FOR_REVIEW`.
-- A CSV that cannot be read → `201` `ImportReview` with status `FAILED` and
-  `errorMessage`. It stays in the history.
-- `.pdf`, `.xlsx`, `.xls` → `415` naming Phase 3. Other extensions, or a
-  `.csv` whose bytes are a PDF, ZIP/XLSX, OLE or binary → `415`.
+| Field      | Use                                                                                           |
+| ---------- | --------------------------------------------------------------------------------------------- |
+| `password` | Password of a protected PDF. Used once in memory; never stored, logged or returned            |
+| `mapping`  | JSON `{"headerRow": n, "columns": {"date": i, "description": i, "amount": i, ...}}` (0-based) |
+
+`columns` keys: `date`, `description`, `amount`, `debit`, `credit`,
+`direction`, `reference`, `upi`.
+
+- `.pdf` (Google Pay statement), `.csv` or `.xlsx` → `201` `ImportReview` with
+  status `READY_FOR_REVIEW`.
+- Needs input from the user → `400` `VALIDATION_ERROR` with
+  `details.reason`, and nothing is recorded:
+  - `PASSWORD_REQUIRED` / `PASSWORD_INCORRECT`: re-send with `password`.
+  - `COLUMNS_NOT_FOUND`: `details.preview` holds the first 15 rows (≤ 12
+    columns, ≤ 40 characters each); re-send with `mapping`.
+- A file that cannot be read at all → `201` `ImportReview` with status
+  `FAILED` and `errorMessage`. It stays in the history.
+- `.xls`, other extensions, or bytes that do not match the extension (a
+  `.csv` that is a PDF, a `.xlsx` that is not a ZIP, an encrypted workbook)
+  → `415` with an explanation.
 - The same bytes already imported or awaiting review → `409` with
   `details.importId`.
 - Too large → `413`.
@@ -234,6 +250,7 @@ transactions until `confirm`. See [IMPORT_PIPELINE.md](IMPORT_PIPELINE.md).
   "import": {
     "id": "…",
     "filename": "hdfc.csv",
+    "source": "CSV", // GOOGLE_PAY | CSV | XLSX
     "status": "READY_FOR_REVIEW",
     "parserName": "csv@1",
     "statementStart": "2026-09-01",
@@ -279,8 +296,11 @@ transactions until `confirm`. See [IMPORT_PIPELINE.md](IMPORT_PIPELINE.md).
 ### `PATCH /api/imports/:id/rows/:rowId` 🔒
 
 Body: any of `decision` (`INCLUDE`/`EXCLUDE`/`DUPLICATE`), `categoryId`
-(nullable), `merchantName`, `transactionType`. Only while
-`READY_FOR_REVIEW`, else `409` → `{ row, stats }`.
+(nullable), `merchantName`, `transactionType`, plus `applyToSimilar: true` to
+apply the category, merchant name and type (not the decision) to the other
+rows in this import that have the row's current merchant name. Changing the
+type to one with a fixed direction (refund, credit, …) updates `flow`. Only
+while `READY_FOR_REVIEW`, else `409` → `{ row, stats, similarUpdated }`.
 
 ### `POST /api/imports/:id/confirm` 🔒
 
@@ -321,6 +341,22 @@ lose the assignment → `{ deleted: true, uncategorized }`.
 
 → `[{ id, name, transactionCount }]`, sorted by name.
 
+### `PATCH /api/merchants/:id` 🔒
+
+Body: `{ "name" }`. Renames the merchant and its transactions. The old name
+is kept as an alias (so statements that use it still match) and merchant
+rules follow the new name. A name another of the user's merchants already
+has → `409` with `details.merchantId` (merge instead) →
+`{ id, name, transactionCount }`.
+
+### `POST /api/merchants/:id/merge` 🔒
+
+Body: `{ "intoId" }`. Moves the merchant's transactions, aliases, rules and
+recurring payments to `intoId`, keeps `intoId`'s own category choice (or
+takes this one's if it had none), and deletes `:id`. Same id → `400`;
+another user's merchant → `404` → the kept merchant
+`{ id, name, transactionCount }`.
+
 ## Analytics
 
 Every figure comes from the deterministic engine over confirmed transactions.
@@ -341,9 +377,8 @@ Every figure comes from the deterministic engine over confirmed transactions.
 
 ## Planned endpoints
 
-| Phase | Endpoints                                                                     |
-| ----- | ----------------------------------------------------------------------------- |
-| 3     | PDF and XLSX parsing in `POST /api/imports`, duplicate review, merchant merge |
-| 4     | `GET /api/insights`, recurring payments, deeper analytics                     |
-| 5     | `GET/POST/PATCH /api/money-plan`, budgets, simulator                          |
-| 6     | `POST /api/ai/chat`                                                           |
+| Phase | Endpoints                                                 |
+| ----- | --------------------------------------------------------- |
+| 4     | `GET /api/insights`, recurring payments, deeper analytics |
+| 5     | `GET/POST/PATCH /api/money-plan`, budgets, simulator      |
+| 6     | `POST /api/ai/chat`                                       |

@@ -150,6 +150,28 @@ describe('GET /api/auth/me', () => {
 });
 
 describe('refresh token rotation', () => {
+  it('refuses refresh and logout from pages on other sites', async () => {
+    const { cookie } = await registerUser(app);
+    const first = refreshCookie(cookie);
+    const evil = await request(app)
+      .post('/api/auth/refresh')
+      .set('Cookie', first)
+      .set('Origin', 'https://evil.example')
+      .expect(403);
+    expect(evil.body.error.code).toBe('FORBIDDEN');
+    await request(app)
+      .post('/api/auth/logout')
+      .set('Cookie', first)
+      .set('Origin', 'https://evil.example')
+      .expect(403);
+    // The app's own origin is accepted, and the token was not consumed above.
+    await request(app)
+      .post('/api/auth/refresh')
+      .set('Cookie', first)
+      .set('Origin', 'http://localhost:5173')
+      .expect(200);
+  });
+
   it('rotates the refresh token and issues a new access token', async () => {
     const { cookie } = await registerUser(app);
     const first = refreshCookie(cookie);

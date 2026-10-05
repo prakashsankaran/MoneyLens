@@ -1,25 +1,26 @@
 import { Router } from 'express';
-import type { PrismaClient } from '@prisma/client';
-import type { MerchantOption } from '@moneylens/types';
+import { mergeMerchantSchema, renameMerchantSchema } from '@moneylens/validation';
 import { ok } from '../../lib/respond';
 import { requireUserId } from '../../middleware/authenticate';
+import { parseInput } from '../../middleware/validate';
+import type { MerchantsService } from './merchants.service';
 
-/** The user's merchants, for filters and pickers. */
-export function merchantRoutes(prisma: PrismaClient): Router {
+/** The user's merchants: list for filters and pickers, rename, merge. */
+export function merchantRoutes(service: MerchantsService): Router {
   const router = Router();
 
   router.get('/', async (req, res) => {
-    const rows = await prisma.merchant.findMany({
-      where: { userId: requireUserId(req) },
-      select: { id: true, name: true, _count: { select: { transactions: true } } },
-      orderBy: { name: 'asc' },
-    });
-    const merchants: MerchantOption[] = rows.map((m) => ({
-      id: m.id,
-      name: m.name,
-      transactionCount: m._count.transactions,
-    }));
-    ok(res, merchants);
+    ok(res, await service.list(requireUserId(req)));
+  });
+
+  router.patch('/:id', async (req, res) => {
+    const { name } = parseInput(renameMerchantSchema, req.body);
+    ok(res, await service.rename(requireUserId(req), req.params.id, name));
+  });
+
+  router.post('/:id/merge', async (req, res) => {
+    const { intoId } = parseInput(mergeMerchantSchema, req.body);
+    ok(res, await service.merge(requireUserId(req), req.params.id, intoId));
   });
 
   return router;

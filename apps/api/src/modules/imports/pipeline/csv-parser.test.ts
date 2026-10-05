@@ -98,8 +98,30 @@ describe('edge cases', () => {
     );
   });
 
-  it('rejects files without recognisable headings', async () => {
-    await expect(parser.parse(csv('foo,bar\n1,2\n'))).rejects.toThrow(/column headings/);
+  it('rejects files without recognisable headings, with a preview to choose columns', async () => {
+    const err = (await parser
+      .parse(csv('foo,bar\n1,2\n'))
+      .catch((e: unknown) => e)) as StatementParseError;
+    expect(err.message).toMatch(/column headings/);
+    expect(err.reason).toBe('COLUMNS_NOT_FOUND');
+    expect(err.preview).toEqual([
+      ['foo', 'bar'],
+      ['1', '2'],
+    ]);
+  });
+
+  it('reads a file with the columns the user chose', async () => {
+    const file = {
+      ...csv(
+        'Account XXXX1234\nOn,Note,Out,In\n05/09/2026,Chai point,20,\n06/09/2026,Refund from Myntra,,499\n',
+      ),
+      mapping: { headerRow: 1, columns: { date: 0, description: 1, debit: 2, credit: 3 } },
+    };
+    const result = await parser.parse(file);
+    expect(result.rows.map((r) => [r.rowIndex, r.amountPaise, r.flow, r.type])).toEqual([
+      [3, 2_000, 'OUT', 'DEBIT'],
+      [4, 49_900, 'IN', 'REFUND'],
+    ]);
   });
 
   it('skips rows without an amount', async () => {
