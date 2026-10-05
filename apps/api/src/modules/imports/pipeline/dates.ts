@@ -53,18 +53,22 @@ function fullYear(y: string): number {
  * Inspect every numeric date in a column: a first component above 12 proves
  * day-first; a second component above 12 proves month-first. Without proof we
  * assume day-first (the Indian convention) and report that we assumed it.
+ * Columns without numeric dates (ISO, "05 Sep 2026") need no assumption.
  */
 export function detectDayOrder(values: readonly string[]): { order: DayOrder; assumed: boolean } {
   let dmy = false;
   let mdy = false;
+  let numeric = false;
   for (const value of values) {
     const m = NUMERIC.exec(value.trim());
     if (!m) continue;
+    numeric = true;
     if (Number(m[1]) > 12) dmy = true;
     if (Number(m[2]) > 12) mdy = true;
   }
   if (mdy && !dmy) return { order: 'MDY', assumed: false };
-  return { order: 'DMY', assumed: !dmy };
+  // Only numeric dates can be ambiguous; ISO and month-name dates are not.
+  return { order: 'DMY', assumed: numeric && !dmy };
 }
 
 /** Parse a statement date (optionally with a time) as an IST instant, or null. */

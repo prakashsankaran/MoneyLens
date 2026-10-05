@@ -79,4 +79,58 @@ describe('ImportReviewPage', () => {
     expect(await screen.findByText(/couldn't read hdfc.csv/)).toBeInTheDocument();
     expect(screen.getByText('No transactions were found in this file.')).toBeInTheDocument();
   });
+
+  it('edits a row and can apply the change to the same merchant’s other rows', async () => {
+    const twoSwiggy: ImportReview = {
+      ...importReview,
+      rows: [
+        importReview.rows[0]!,
+        {
+          ...importReview.rows[1]!,
+          merchantName: 'Swiggy',
+          decision: 'INCLUDE',
+          duplicateReason: null,
+        },
+      ],
+    };
+    const calls = mockApi(({ method, url, body }) => {
+      if (url.includes('/categories')) return { data: categoryTree };
+      if (url.includes('/merchants'))
+        return { data: [{ id: 'm1', name: 'Swiggy', transactionCount: 3 }] };
+      if (method === 'PATCH') {
+        const row = { ...twoSwiggy.rows[0]!, ...(body as object) };
+        return { data: { row, stats: twoSwiggy.stats, similarUpdated: 1 } };
+      }
+      if (url.includes('/imports/imp1')) return { data: twoSwiggy };
+      return undefined;
+    });
+    renderPage();
+
+    // Changing a category offers to use it for the merchant's other row.
+    const selects = await screen.findAllByRole('combobox', { name: 'Category for Swiggy' });
+    expect(selects).toHaveLength(2);
+    const select = selects[0]!;
+    await userEvent.selectOptions(select, '');
+    await userEvent.click(await screen.findByRole('button', { name: 'Apply to all' }));
+    const patches = () => calls.filter((c) => c.method === 'PATCH').map((c) => c.body);
+    expect(patches()).toEqual([{ categoryId: null }, { categoryId: null, applyToSimilar: true }]);
+
+    await userEvent.click(screen.getAllByRole('button', { name: /^Edit Swiggy/ })[0]!);
+    const form = screen.getByRole('form', { name: 'Edit Swiggy' });
+    const name = within(form).getByLabelText('Merchant');
+    await userEvent.clear(name);
+    await userEvent.type(name, 'Swiggy Instamart');
+    await userEvent.selectOptions(within(form).getByLabelText('Type'), 'Refund');
+    await userEvent.click(within(form).getByLabelText(/Duplicate of a transaction/));
+    await userEvent.click(
+      within(form).getByLabelText(/Also change the merchant and type of the 1 other row/),
+    );
+    await userEvent.click(within(form).getByRole('button', { name: 'Save' }));
+    expect(patches()[2]).toEqual({
+      merchantName: 'Swiggy Instamart',
+      transactionType: 'REFUND',
+      decision: 'DUPLICATE',
+      applyToSimilar: true,
+    });
+  });
 });

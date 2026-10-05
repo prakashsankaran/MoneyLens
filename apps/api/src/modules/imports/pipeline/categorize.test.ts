@@ -104,6 +104,13 @@ describe('categorize', () => {
     });
   });
 
+  it('uses the counterparty a statement states separately', () => {
+    const c = categorize(row('Paid to Swiggy Limited', { counterparty: 'Swiggy Limited' }), ctx());
+    expect(c).toMatchObject({ merchantName: 'Swiggy', categoryId: 'cat-delivery' });
+    const person = categorize(row('Paid to Ravi Kumar', { counterparty: 'Ravi Kumar' }), ctx());
+    expect(person.merchantName).toBe('Ravi Kumar');
+  });
+
   it('leaves unknown merchants uncategorised with a readable name', () => {
     expect(categorize(row('UPI-RAVI KUMAR-ravi@okhdfc-424600000001'), ctx())).toMatchObject({
       merchantName: 'Ravi Kumar',

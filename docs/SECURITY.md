@@ -3,7 +3,7 @@
 Financial data is sensitive. MoneyLens stores as little as it can and keeps
 every user's data isolated.
 
-## What is implemented (Phases 1–2)
+## What is implemented (Phases 1–3)
 
 ### Authentication
 
@@ -32,8 +32,17 @@ Path=/api/auth` cookie (`Secure` in production). Only its SHA-256 hash is
 ### Uploads
 
 - One file per request, held in memory (multer), limited to `MAX_UPLOAD_MB`.
-- Extension allowlist plus content sniffing: a `.csv` whose bytes are a PDF,
-  ZIP/XLSX, legacy Office (OLE) file or contain NUL bytes is rejected.
+- Extension allowlist (`.pdf`, `.csv`, `.xlsx`) plus content sniffing: a
+  `.csv` must be text, a `.xlsx` a ZIP container and a `.pdf` a PDF. Anything
+  else, including a renamed binary, is rejected before a parser runs.
+- **PDFs** are read with pdf.js with font loading, scripts and network access
+  off, at most 200 pages per file. Only the text layer is used.
+- **PDF passwords** arrive as a multipart field, are passed to the PDF reader
+  in memory for that one request, and are never stored, logged or returned.
+  Wrong passwords get the same short message every time. The multipart form
+  accepts at most two small text fields besides the file.
+- A password-protected Excel workbook is refused with an explanation rather
+  than opened.
 - Filenames are reduced to a base name without control characters before
   being stored or shown.
 - **Raw files are never written to disk or kept.** Only metadata and the
@@ -41,6 +50,10 @@ Path=/api/auth` cookie (`Secure` in production). Only its SHA-256 hash is
   confirms. A row cap (20,000) bounds the work per upload.
 
 ### Transport and request hardening
+
+- `POST /api/auth/refresh` and `/logout`, the routes that act on the refresh
+  cookie, refuse requests whose `Origin` header is not one of `CORS_ORIGINS`
+  (`403`). This backs up the cookie's `SameSite=Strict` setting.
 
 - `helmet` security headers. `x-powered-by` is disabled.
 - CORS allowlist from `CORS_ORIGINS`, with credentials only for listed origins.
@@ -87,8 +100,7 @@ aggregates → AI`. Raw documents and raw transaction lists are not sent to an
 
 | Phase | Item                                                                                                                                      |
 | ----- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| 3     | PDF upload hardening: encrypted/oversized PDFs, page caps, parser time limits                                                             |
-| 3     | Origin check on cookie-authenticated auth routes, in addition to SameSite                                                                 |
+| 8     | Parser time limits (a worker thread with a deadline for PDF and Excel parsing)                                                            |
 | 7     | Mobile refresh tokens in the body, stored in `expo-secure-store`                                                                          |
 | 8     | Account lockout/backoff per email, audit log of auth events, CSP review for the web build, dependency scanning in CI, threat-model review |
 

@@ -44,7 +44,9 @@ export const CONFIDENCE: Record<Exclude<CategorySource, 'none'>, number> = {
  * keywords. Deterministic and explainable via `source`.
  */
 export function categorize(row: ParsedRow, ctx: CategorizationContext): Categorization {
-  const text = extractMerchantText(row.description);
+  const text = row.counterparty?.trim()
+    ? row.counterparty.trim().toUpperCase()
+    : extractMerchantText(row.description);
   const key = merchantKey(text);
   const descriptionKey = merchantKey(row.description);
 

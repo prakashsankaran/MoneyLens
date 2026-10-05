@@ -75,6 +75,8 @@ export function extractMerchantText(description: string): string {
       s
         .trim()
         .replace(/^(UPI|POS|NEFT|IMPS|RTGS|ACH|NACH|ECS)\s+/, '')
+        // Wallet wording such as Google Pay's "Paid to Swiggy".
+        .replace(/^(PAID TO|RECEIVED FROM|SENT TO|PAYMENT TO|PAYMENT FROM|MONEY SENT TO)\s+/, '')
         .trim(),
     )
     .filter((s) => !isNoise(s));

@@ -23,6 +23,7 @@ import { healthRoutes } from './modules/health/health.routes';
 import { ImportsService } from './modules/imports/imports.service';
 import { importRoutes } from './modules/imports/imports.routes';
 import { merchantRoutes } from './modules/merchants/merchants.routes';
+import { MerchantsService } from './modules/merchants/merchants.service';
 import { TransactionsService } from './modules/transactions/transactions.service';
 import { transactionRoutes } from './modules/transactions/transactions.routes';
 
@@ -67,6 +68,7 @@ export function createApp({ env, prisma, logger }: AppDeps): Express {
       tokens,
       secureCookies: env.NODE_ENV === 'production',
       rateLimitPer15Min: env.AUTH_RATE_LIMIT,
+      trustedOrigins: env.CORS_ORIGINS,
     }),
   );
 
@@ -80,7 +82,7 @@ export function createApp({ env, prisma, logger }: AppDeps): Express {
     requireAuth,
     importRoutes(new ImportsService(prisma), { maxUploadMb: env.MAX_UPLOAD_MB }),
   );
-  api.use('/merchants', requireAuth, merchantRoutes(prisma));
+  api.use('/merchants', requireAuth, merchantRoutes(new MerchantsService(prisma)));
   api.use('/analytics', requireAuth, analyticsRoutes(new AnalyticsService(analyticsData)));
 
   app.use('/api', api);
