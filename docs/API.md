@@ -126,6 +126,8 @@ transactions (or the current month for a new account).
   "topMerchants": [
     { "merchantId": "…", "name": "Swiggy", "amountPaise": 0, "transactionCount": 0 },
   ],
+  "savingOpportunities": [], // Insight[] in the "saving" group, largest saving first
+  "health": {}, // HealthScore, see GET /api/analytics/health
   "observations": [
     {
       "id": "category-above-average:food-delivery",
@@ -160,7 +162,8 @@ Query (all optional):
 | `minAmount`, `maxAmount` | Rupees, e.g. `1,250.50`                                                   |
 | `type`                   | Comma-separated `DEBIT,CREDIT,REFUND,CASHBACK,TRANSFER,SELF_TRANSFER,...` |
 | `flow`                   | `IN` or `OUT`                                                             |
-| `recurring`              | `true` or `false`                                                         |
+| `recurring`              | `true` or `false` (part of a detected, non-dismissed recurring series)    |
+| `ids`                    | Comma-separated transaction ids (≤ 200), e.g. an insight's evidence       |
 | `source`                 | Comma-separated `CSV,GOOGLE_PAY,XLSX,MANUAL,OTHER`                        |
 | `status`                 | `CONFIRMED` (default) or `EXCLUDED`                                       |
 | `sort`                   | `date_desc` (default), `date_asc`, `amount_desc`, `amount_asc`            |
@@ -362,12 +365,88 @@ another user's merchant → `404` → the kept merchant
 Every figure comes from the deterministic engine over confirmed transactions.
 `month` defaults to the latest month with data.
 
-| Endpoint                                                         | Returns                                                                                            |
-| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `GET /api/analytics/monthly?month=`                              | `{ month, availableMonths, totals, comparison }`                                                   |
-| `GET /api/analytics/categories?month=&level=top\|leaf&parentId=` | `{ month, parent, items: CategoryBreakdownItem[] }`; `parentId` drills into one top-level category |
-| `GET /api/analytics/merchants?month=&limit=` (≤ 50, default 10)  | `{ month, items: MerchantSummaryItem[] }`                                                          |
-| `GET /api/analytics/trends?end=&months=` (≤ 24, default 6)       | `{ points: MonthlyTrendPoint[] }`                                                                  |
+| Endpoint                                                         | Returns                                                                                                                                            |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/analytics/monthly?month=`                              | `{ month, availableMonths, totals, comparison }`                                                                                                   |
+| `GET /api/analytics/categories?month=&level=top\|leaf&parentId=` | `{ month, parent, items: CategoryBreakdownItem[] }`; `parentId` drills into one top-level category                                                 |
+| `GET /api/analytics/merchants?month=&limit=` (≤ 50, default 10)  | `{ month, items: MerchantSummaryItem[] }`                                                                                                          |
+| `GET /api/analytics/trends?end=&months=` (≤ 24, default 6)       | `{ points: MonthlyTrendPoint[] }`                                                                                                                  |
+| `GET /api/analytics/health?month=`                               | `HealthScore`: `score` (0–100 or null), `components[]` with weight, score, measured value, formula and `unavailableReason`, `method`, `monthsUsed` |
+| `GET /api/analytics/comparisons?month=`                          | `{ month, availableMonths, totals: PeriodComparisonRow[], categories: CategoryComparisonRow[], patterns: SpendingPatterns }`                       |
+
+`totals` compares spending with the previous month, the 3- and 6-month
+averages (months with data only), the quarter so far and the year to date.
+`changePct` is null when there is no baseline data. `patterns` holds weekday
+vs weekend per-day averages, spending by weekday and by week (Monday start),
+month-to-month volatility (coefficient of variation, needs 3 months), the
+largest payments, refunds, cashback and transfers in and out.
+
+## Insights
+
+### `GET /api/insights?month=YYYY-MM` 🔒
+
+```jsonc
+{
+  "month": "2026-09",
+  "availableMonths": ["…"],
+  "historyMonths": 5,
+  "insights": [
+    {
+      "id": "leak-food-delivery",
+      "rule": "leak-food-delivery",
+      "group": "saving", // spending | saving | behaviour | recurring | anomalies | planning
+      "kind": "OBSERVATION", // or CALCULATION
+      "severity": "medium", // high | medium | low | info
+      "title": "Potential saving opportunity: 14 food delivery orders cost ₹8,900",
+      "explanation": "…",
+      "metric": { "label": "Food delivery this month", "valuePaise": 890000 },
+      "supportingTransactionIds": ["…"],
+      "confidence": 0.75, // 0..1
+      "recommendation": "Choose one or two fixed days for ordering in.", // or null
+      "potentialMonthlySavingPaise": 372300, // saving group only
+      "assumption": "Bringing food delivery back to your 3-month average would save about ₹3,723 a month.",
+    },
+  ],
+  "skipped": [
+    { "rule": "category-increase", "reason": "Needs at least 2 earlier months of data." },
+  ],
+}
+```
+
+Saving opportunities come first, then insights by severity. Every insight is
+produced by a fixed rule; none is AI-generated. Fetch the evidence with
+`GET /api/transactions?ids=a,b,c`.
+
+## Recurring payments
+
+### `GET /api/recurring` 🔒
+
+Series detected over the last 15 months, as of today:
+`{ items: RecurringPaymentItem[], monthlyOutgoingPaise, annualOutgoingPaise }`.
+Each item has `id`, `label`, `flow`, `frequency` (`WEEKLY`, `MONTHLY`,
+`QUARTERLY`, `YEARLY`), `typicalAmountPaise`, `amountVaries`, `occurrences`,
+`firstDate`, `lastDate`, `nextExpectedDate`, `monthlyEquivalentPaise`,
+`annualEquivalentPaise`, `confidence`, `subscriptionLike`, `active`,
+`dismissed` and `transactionIds`. Totals count active, non-dismissed outgoing
+items.
+
+### `PATCH /api/recurring/:id` 🔒
+
+`{ "dismissed": true }` marks a series as not recurring (it leaves insights,
+totals and the `recurring=true` transaction filter); `false` brings it back.
+Returns the updated list.
+
+## Reports
+
+### `GET /api/reports/monthly?month=&compare=` 🔒
+
+`compare` defaults to the month before and must differ from `month`. Returns
+`MonthlyReport`: `executiveSummary` (labelled statements), `totals` and
+`compareTotals`, `incomeSources`, `categories` (with the compared month and
+3-month average), `merchants` (with the compared month), `recurring`,
+`biggestTransactions`, `changes`, `behaviour`, `savingOpportunities`,
+`recommendations` (labelled `RECOMMENDATION`) and `health`. `compareMonth` is
+null when the compared month has no data.
 
 ## Health
 
@@ -377,8 +456,7 @@ Every figure comes from the deterministic engine over confirmed transactions.
 
 ## Planned endpoints
 
-| Phase | Endpoints                                                 |
-| ----- | --------------------------------------------------------- |
-| 4     | `GET /api/insights`, recurring payments, deeper analytics |
-| 5     | `GET/POST/PATCH /api/money-plan`, budgets, simulator      |
-| 6     | `POST /api/ai/chat`                                       |
+| Phase | Endpoints                                            |
+| ----- | ---------------------------------------------------- |
+| 5     | `GET/POST/PATCH /api/money-plan`, budgets, simulator |
+| 6     | `POST /api/ai/chat`                                  |

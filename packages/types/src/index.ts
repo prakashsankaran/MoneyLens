@@ -204,6 +204,210 @@ export interface DashboardData {
   trend: MonthlyTrendPoint[];
   topMerchants: MerchantSummaryItem[];
   observations: Observation[];
+  /** Top potential saving opportunities (Phase 4). */
+  savingOpportunities: Insight[];
+  health: HealthScore;
+}
+
+// ---------------------------------------------------------------------------
+// Insights, recurring payments, health score, reports (Phase 4)
+// ---------------------------------------------------------------------------
+
+export const INSIGHT_GROUPS = [
+  'spending',
+  'saving',
+  'behaviour',
+  'recurring',
+  'anomalies',
+  'planning',
+] as const;
+export type InsightGroup = (typeof INSIGHT_GROUPS)[number];
+
+/**
+ * A deterministic finding. `kind` says what sort of statement the title is
+ * (OBSERVATION for patterns, CALCULATION for totals); `recommendation` is a
+ * separate RECOMMENDATION and never mixed into the explanation.
+ */
+export interface Insight extends Observation {
+  group: InsightGroup;
+  /** The rule that produced it, e.g. "weekend-spending". */
+  rule: string;
+  /** 0..1: how strongly the data supports the finding. */
+  confidence: number;
+  recommendation: string | null;
+  /** Saving opportunities only: an estimate and the assumption behind it. */
+  potentialMonthlySavingPaise?: number;
+  assumption?: string;
+}
+
+export interface InsightsResponse {
+  month: string;
+  availableMonths: string[];
+  /** Months of data before `month` that the rules could use. */
+  historyMonths: number;
+  insights: Insight[];
+  /** Rules that could not run, with the reason (e.g. not enough history). */
+  skipped: { rule: string; reason: string }[];
+}
+
+export type RecurringFrequencyKind = 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
+
+/** A payment (or income) that repeats on a regular schedule. */
+export interface RecurringSeries {
+  /** Stable key: merchant plus direction plus amount band. */
+  key: string;
+  merchantId: string | null;
+  label: string;
+  flow: TransactionFlow;
+  categoryId: string | null;
+  frequency: RecurringFrequencyKind;
+  /** Median days between payments. */
+  intervalDays: number;
+  /** Median amount. */
+  typicalAmountPaise: number;
+  /** True when amounts differ by more than 15% (bills, utilities). */
+  amountVaries: boolean;
+  occurrences: number;
+  firstDate: string;
+  lastDate: string;
+  nextExpectedDate: string;
+  monthlyEquivalentPaise: number;
+  annualEquivalentPaise: number;
+  /** 0..1 from schedule regularity, amount stability and history length. */
+  confidence: number;
+  /** Fixed amount on a monthly/quarterly/yearly schedule, like a subscription. */
+  subscriptionLike: boolean;
+  /** False when the last payment is overdue by more than half an interval. */
+  active: boolean;
+  transactionIds: string[];
+}
+
+export interface RecurringPaymentItem extends RecurringSeries {
+  id: string;
+  /** The user said this is not a recurring payment. */
+  dismissed: boolean;
+}
+
+export interface RecurringSummary {
+  items: RecurringPaymentItem[];
+  /** CALCULATION over active, non-dismissed outgoing items. */
+  monthlyOutgoingPaise: number;
+  annualOutgoingPaise: number;
+}
+
+export interface HealthComponent {
+  key: 'savings' | 'stability' | 'discretionary' | 'obligations' | 'cashflow' | 'budget';
+  label: string;
+  /** Share of the overall score when available, 0..1 (before re-weighting). */
+  weight: number;
+  /** 0..100, or null when it cannot be calculated. */
+  score: number | null;
+  /** The measured input, ready to display ("24.0% of income saved"). */
+  measured: string | null;
+  /** How the input becomes a score. */
+  formula: string;
+  /** Why the component is missing, when score is null. */
+  unavailableReason: string | null;
+}
+
+export interface HealthScore {
+  month: string;
+  /** Weighted average of available components, 0..100; null when none are. */
+  score: number | null;
+  components: HealthComponent[];
+  /** Plain-language description of the method. */
+  method: string;
+  /** Months of data the calculation used. */
+  monthsUsed: string[];
+}
+
+export type ComparisonBaseline = 'previous-month' | 'avg-3' | 'avg-6' | 'quarter' | 'ytd';
+
+export interface PeriodComparisonRow {
+  baseline: ComparisonBaseline;
+  label: string;
+  /** Spending in the current period (month, quarter or YTD). */
+  currentPaise: number;
+  /** Spending in the comparison period, or the average month. */
+  baselinePaise: number;
+  changePaise: number;
+  changePct: number | null;
+  /** Months of data behind the baseline; 0 means not enough data. */
+  baselineMonths: number;
+}
+
+export interface CategoryComparisonRow {
+  categoryId: string | null;
+  name: string;
+  slug: string;
+  currentPaise: number;
+  previousPaise: number;
+  average3Paise: number;
+  changeVsPreviousPct: number | null;
+  changeVsAverage3Pct: number | null;
+  currentCount: number;
+  previousCount: number;
+}
+
+export interface SpendingPatterns {
+  /** Average spend per weekday and per weekend day in the month (IST). */
+  weekdayDailyAveragePaise: number;
+  weekendDailyAveragePaise: number;
+  /** weekend / weekday, 2 decimals; null when there is no weekday spend. */
+  weekendRatio: number | null;
+  /** Spending by IST day of week, Monday first. */
+  byWeekday: { weekday: number; label: string; amountPaise: number; transactionCount: number }[];
+  /** Spending per calendar week (weeks starting Monday) that overlaps the month. */
+  weekly: { weekStart: string; amountPaise: number; transactionCount: number }[];
+  /** Coefficient of variation of monthly spending, 2 decimals, over `volatilityMonths`. */
+  monthlyVolatility: number | null;
+  volatilityMonths: number;
+  largest: TransactionBrief[];
+  refunds: { count: number; amountPaise: number };
+  cashback: { count: number; amountPaise: number };
+  transfersOut: { count: number; amountPaise: number };
+  transfersIn: { count: number; amountPaise: number };
+}
+
+export interface TransactionBrief {
+  id: string;
+  date: string;
+  merchantName: string | null;
+  amountPaise: number;
+  flow: TransactionFlow;
+  categoryId: string | null;
+}
+
+export interface ComparisonsResponse {
+  month: string;
+  availableMonths: string[];
+  totals: PeriodComparisonRow[];
+  categories: CategoryComparisonRow[];
+  patterns: SpendingPatterns;
+}
+
+export interface ReportStatement {
+  kind: ProvenanceKind;
+  text: string;
+}
+
+export interface MonthlyReport {
+  month: string;
+  availableMonths: string[];
+  compareMonth: string | null;
+  executiveSummary: ReportStatement[];
+  totals: PeriodTotals;
+  compareTotals: PeriodTotals | null;
+  incomeSources: MerchantSummaryItem[];
+  categories: CategoryComparisonRow[];
+  merchants: (MerchantSummaryItem & { previousAmountPaise: number })[];
+  recurring: RecurringSeries[];
+  biggestTransactions: TransactionBrief[];
+  changes: Insight[];
+  behaviour: Insight[];
+  savingOpportunities: Insight[];
+  recommendations: ReportStatement[];
+  health: HealthScore;
 }
 
 // ---------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 import { istDate } from '@moneylens/shared';
-import type { AnalyticsTransaction, CategoryRef } from '@moneylens/types';
+import type { AnalyticsTransaction, CategoryRef, RecurringSeries } from '@moneylens/types';
 
 let counter = 0;
 
@@ -41,3 +41,27 @@ export const categories: CategoryRef[] = [
   },
   { id: 'bills', name: 'Bills', slug: 'bills', parentId: null, color: null, icon: null },
 ];
+
+/** A recurring series for tests; defaults to an active monthly payment due 5 Oct 2026. */
+export const series = (o: Partial<RecurringSeries> = {}): RecurringSeries => ({
+  key: 'k',
+  merchantId: null,
+  label: 'Series',
+  flow: 'OUT',
+  categoryId: null,
+  frequency: 'MONTHLY',
+  intervalDays: 30,
+  typicalAmountPaise: 0,
+  amountVaries: false,
+  occurrences: 6,
+  firstDate: '2026-04-05',
+  lastDate: '2026-09-05',
+  nextExpectedDate: '2026-10-05',
+  monthlyEquivalentPaise: 0,
+  annualEquivalentPaise: 0,
+  confidence: 0.9,
+  subscriptionLike: false,
+  active: true,
+  transactionIds: [],
+  ...o,
+});

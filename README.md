@@ -9,12 +9,14 @@ tracker. Every number on screen is computed by a deterministic analytics engine,
 and every statement is labelled as a fact, calculation, observation, AI
 interpretation or recommendation.
 
-> **Status: Phase 3 of 8.** Authentication, the dashboard, statement import
+> **Status: Phase 4 of 8.** Authentication, the dashboard, statement import
 > (Google Pay PDF including password-protected ones, bank CSV and Excel) with
 > a review step and duplicate detection, the transaction list with editing,
-> category and merchant management, month analytics and data deletion are
-> working. Deeper insights, planning, AI and the mobile app follow. See
-> [docs/PLAN.md](docs/PLAN.md) and [docs/PHASE3_SUMMARY.md](docs/PHASE3_SUMMARY.md).
+> category and merchant management, analytics with period comparisons,
+> recurring payment detection, behaviour insights, potential saving
+> opportunities, an explainable financial health score, the monthly report
+> and data deletion are working. The money plan, AI and the mobile app follow.
+> See [docs/PLAN.md](docs/PLAN.md) and [docs/PHASE4_SUMMARY.md](docs/PHASE4_SUMMARY.md).
 
 ## Repository layout
 
@@ -150,5 +152,6 @@ built app with nginx and proxies `/api` to the API.
 - [IMPORT_PIPELINE.md](docs/IMPORT_PIPELINE.md): statement import pipeline, supported formats and duplicate detection
 - [AI_ARCHITECTURE.md](docs/AI_ARCHITECTURE.md): AIProvider and guardrails design (phase 6)
 - [PLAN.md](docs/PLAN.md): architecture proposal and phased plan
+- [PHASE4_SUMMARY.md](docs/PHASE4_SUMMARY.md): insights, recurring payments, health score and monthly report
 
 MoneyLens provides educational analysis, not regulated financial advice.

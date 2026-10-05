@@ -24,6 +24,7 @@ import { findDuplicates, type ExistingTransaction } from './pipeline/duplicates'
 import { extractMerchantText, merchantKey } from './pipeline/merchants';
 import { selectParser } from './pipeline/registry';
 import { StatementParseError, type ParseResult, type UploadedFile } from './pipeline/types';
+import { ignoreChanges, type TransactionsChanged } from '../../lib/change-hooks';
 
 const SUPPORTED = new Set(['csv', 'xlsx', 'pdf']);
 
@@ -146,7 +147,10 @@ function statsOf(
 }
 
 export class ImportsService {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(
+    private readonly prisma: PrismaClient,
+    private readonly onChange: TransactionsChanged = ignoreChanges,
+  ) {}
 
   /**
    * Parse an uploaded statement into staged rows for review. Nothing is added
@@ -533,16 +537,19 @@ export class ImportsService {
       { timeout: 60_000, maxWait: 10_000 },
     );
 
+    await this.onChange(userId);
     return { import: toImportRecord(result), committed: result.committedCount };
   }
 
   /** Delete an import and every transaction it added. */
   async remove(userId: string, id: string): Promise<{ transactions: number }> {
     await this.findOwned(userId, id);
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       const transactions = await tx.transaction.deleteMany({ where: { userId, sourceFileId: id } });
       await tx.import.deleteMany({ where: { id, userId } });
       return { transactions: transactions.count };
     });
+    await this.onChange(userId);
+    return result;
   }
 }

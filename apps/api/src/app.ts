@@ -20,10 +20,13 @@ import { categoryRoutes } from './modules/categories/categories.routes';
 import { DashboardService } from './modules/dashboard/dashboard.service';
 import { dashboardRoutes } from './modules/dashboard/dashboard.routes';
 import { healthRoutes } from './modules/health/health.routes';
+import { InsightsService } from './modules/insights/insights.service';
+import { insightRoutes, recurringRoutes, reportRoutes } from './modules/insights/insights.routes';
 import { ImportsService } from './modules/imports/imports.service';
 import { importRoutes } from './modules/imports/imports.routes';
 import { merchantRoutes } from './modules/merchants/merchants.routes';
 import { MerchantsService } from './modules/merchants/merchants.service';
+import { RecurringService } from './modules/recurring/recurring.service';
 import { TransactionsService } from './modules/transactions/transactions.service';
 import { transactionRoutes } from './modules/transactions/transactions.routes';
 
@@ -57,6 +60,14 @@ export function createApp({ env, prisma, logger }: AppDeps): Express {
     refreshTokenTtlDays: env.REFRESH_TOKEN_TTL_DAYS,
   });
   const analyticsData = new AnalyticsDataSource(prisma);
+  const recurring = new RecurringService(prisma, analyticsData);
+  const insights = new InsightsService(analyticsData, recurring);
+  // Keep recurring detection current. A failed refresh must not fail the
+  // change the user made, so it is logged and the next change retries it.
+  const onChange = (userId: string) =>
+    recurring.refresh(userId).catch((err: unknown) => {
+      logger.error({ err, userId }, 'Recurring payment refresh failed');
+    });
 
   const api = Router();
   api.use(apiRateLimit(env.API_RATE_LIMIT));
@@ -74,16 +85,31 @@ export function createApp({ env, prisma, logger }: AppDeps): Express {
 
   // Everything below requires an authenticated user.
   const requireAuth = authenticate(tokens);
-  api.use('/dashboard', requireAuth, dashboardRoutes(new DashboardService(analyticsData)));
+  api.use(
+    '/dashboard',
+    requireAuth,
+    dashboardRoutes(new DashboardService(analyticsData, insights)),
+  );
   api.use('/categories', requireAuth, categoryRoutes(new CategoriesService(prisma)));
-  api.use('/transactions', requireAuth, transactionRoutes(new TransactionsService(prisma)));
+  api.use(
+    '/transactions',
+    requireAuth,
+    transactionRoutes(new TransactionsService(prisma, onChange)),
+  );
   api.use(
     '/imports',
     requireAuth,
-    importRoutes(new ImportsService(prisma), { maxUploadMb: env.MAX_UPLOAD_MB }),
+    importRoutes(new ImportsService(prisma, onChange), { maxUploadMb: env.MAX_UPLOAD_MB }),
   );
-  api.use('/merchants', requireAuth, merchantRoutes(new MerchantsService(prisma)));
-  api.use('/analytics', requireAuth, analyticsRoutes(new AnalyticsService(analyticsData)));
+  api.use('/merchants', requireAuth, merchantRoutes(new MerchantsService(prisma, onChange)));
+  api.use(
+    '/analytics',
+    requireAuth,
+    analyticsRoutes(new AnalyticsService(analyticsData), insights),
+  );
+  api.use('/insights', requireAuth, insightRoutes(insights));
+  api.use('/recurring', requireAuth, recurringRoutes(recurring));
+  api.use('/reports', requireAuth, reportRoutes(insights));
 
   app.use('/api', api);
   app.use(notFoundHandler);

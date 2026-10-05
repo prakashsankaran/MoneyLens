@@ -8,6 +8,8 @@ import { FullPageSpinner } from '../../components/FullPageSpinner';
 import { ErrorCard, PageHeader } from '../../components/PageHeader';
 import { OverviewTiles } from '../dashboard/components/OverviewTiles';
 import { SpendingTrendChart } from '../dashboard/components/SpendingTrendChart';
+import { useComparisons } from '../insights/useInsights';
+import { ComparisonsSection } from './ComparisonsSection';
 import {
   useCategoryAnalytics,
   useMerchantAnalytics,
@@ -34,6 +36,7 @@ export function AnalyticsPage() {
     monthly.data?.availableMonths.filter((m) => m <= (current ?? '')).length ?? 0;
   const trendMonths = Math.min(12, Math.max(6, monthsWithHistory));
   const trend = useTrendAnalytics(current, trendMonths);
+  const comparisons = useComparisons(current);
 
   if (monthly.isPending) return <FullPageSpinner />;
   if (monthly.isError) {
@@ -199,10 +202,23 @@ export function AnalyticsPage() {
             )}
           </Card>
 
+          {comparisons.isError ? (
+            <ErrorCard message={comparisons.error.message} />
+          ) : comparisons.data ? (
+            <ComparisonsSection data={comparisons.data} monthName={monthName} />
+          ) : (
+            <p role="status" className="text-sm text-ink-500">
+              Loading…
+            </p>
+          )}
+
           <p className="text-xs text-ink-500">
-            Recurring payments, weekday patterns and spending volatility are added in a later phase.
             Every figure here is calculated from your confirmed transactions; transfers between your
-            own accounts are not counted.
+            own accounts are not counted. Recurring payments are on the{' '}
+            <Link to="/insights" className="font-medium text-brand-700 hover:underline">
+              Insights
+            </Link>{' '}
+            page.
           </p>
         </div>
       )}

@@ -13,6 +13,7 @@ import {
   transactionDetailInclude,
   transactionInclude,
 } from '../../lib/transaction-mapper';
+import { ignoreChanges, type TransactionsChanged } from '../../lib/change-hooks';
 
 /** Special category filter value for transactions without a category. */
 export const UNCATEGORIZED_FILTER = 'uncategorized';
@@ -57,6 +58,7 @@ export function buildTransactionWhere(
   if (q.type?.length) and.push({ transactionType: { in: q.type } });
   if (q.flow) and.push({ flow: q.flow });
   if (q.recurring) and.push({ isRecurring: q.recurring === 'true' });
+  if (q.ids) and.push({ id: { in: q.ids } });
   if (q.source?.length) and.push({ source: { in: q.source } });
   if (q.q) {
     const contains = { contains: q.q, mode: 'insensitive' as const };
@@ -68,7 +70,10 @@ export function buildTransactionWhere(
 }
 
 export class TransactionsService {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(
+    private readonly prisma: PrismaClient,
+    private readonly onChange: TransactionsChanged = ignoreChanges,
+  ) {}
 
   async list(userId: string, q: TransactionQuery): Promise<TransactionList> {
     const where = buildTransactionWhere(userId, q);
@@ -131,7 +136,7 @@ export class TransactionsService {
     id: string,
     input: UpdateTransactionInput,
   ): Promise<TransactionUpdateResult> {
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       const existing = await tx.transaction.findFirst({ where: { id, userId } });
       if (!existing) throw notFound('Transaction not found');
 
@@ -177,12 +182,11 @@ export class TransactionsService {
         );
       }
 
-      const updated = await tx.transaction.findFirstOrThrow({
-        where: { id, userId },
-        include: transactionDetailInclude,
-      });
-      return { transaction: toTransactionDetail(updated), alsoUpdated };
+      return { alsoUpdated };
     });
+    await this.onChange(userId);
+    // Read after the refresh so the recurring flag is current.
+    return { transaction: await this.get(userId, id), alsoUpdated: result.alsoUpdated };
   }
 
   /**
@@ -230,6 +234,7 @@ export class TransactionsService {
   async remove(userId: string, id: string): Promise<void> {
     const result = await this.prisma.transaction.deleteMany({ where: { id, userId } });
     if (result.count === 0) throw notFound('Transaction not found');
+    await this.onChange(userId);
   }
 
   /**

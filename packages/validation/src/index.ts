@@ -87,6 +87,18 @@ export const transactionQuerySchema = z
     ] as const).optional(),
     flow: z.enum(['IN', 'OUT']).optional(),
     recurring: z.enum(['true', 'false']).optional(),
+    /** Comma-separated transaction ids, e.g. the evidence behind an insight. */
+    ids: z
+      .string()
+      .trim()
+      .transform((v) =>
+        v
+          .split(',')
+          .map((id) => id.trim())
+          .filter(Boolean),
+      )
+      .pipe(z.array(idSchema).min(1).max(200))
+      .optional(),
     source: csvEnum(['GOOGLE_PAY', 'CSV', 'XLSX', 'MANUAL', 'OTHER'] as const).optional(),
     status: z.enum(['CONFIRMED', 'EXCLUDED']).default('CONFIRMED'),
     sort: z.enum(TRANSACTION_SORTS).default('date_desc'),
@@ -211,6 +223,23 @@ export type UpdateImportRowInput = z.infer<typeof updateImportRowSchema>;
 // ---------------------------------------------------------------------------
 
 export const analyticsMonthQuerySchema = z.object({ month: monthKeySchema.optional() });
+
+export const monthlyReportQuerySchema = z
+  .object({
+    month: monthKeySchema.optional(),
+    /** Month to compare with; defaults to the month before. */
+    compare: monthKeySchema.optional(),
+  })
+  .refine((v) => !v.month || !v.compare || v.compare !== v.month, {
+    message: 'Choose a different month to compare with',
+    path: ['compare'],
+  });
+
+export const updateRecurringSchema = z.object({
+  /** Hide a series that is not really recurring, or bring it back. */
+  dismissed: z.boolean(),
+});
+export type UpdateRecurringInput = z.infer<typeof updateRecurringSchema>;
 
 export const categoryAnalyticsQuerySchema = z.object({
   month: monthKeySchema.optional(),

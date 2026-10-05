@@ -7,6 +7,8 @@ import { AnalyticsPage } from './features/analytics/AnalyticsPage';
 import { DashboardPage } from './features/dashboard/DashboardPage';
 import { ImportReviewPage } from './features/imports/ImportReviewPage';
 import { ImportsPage } from './features/imports/ImportsPage';
+import { InsightsPage } from './features/insights/InsightsPage';
+import { MonthlyReportPage } from './features/reports/MonthlyReportPage';
 import { TransactionsPage } from './features/transactions/TransactionsPage';
 import { PlannedFeaturePage } from './pages/PlannedFeaturePage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -36,20 +38,8 @@ export function App() {
               />
             }
           />
-          <Route
-            path="insights"
-            element={
-              <PlannedFeaturePage
-                title="Insights"
-                phase={4}
-                purpose="Patterns in your spending, each backed by the transactions behind it."
-                plannedCapabilities={[
-                  'Spending, saving, behaviour, recurring, anomaly and planning insights',
-                  'Potential saving opportunities with the evidence for each',
-                ]}
-              />
-            }
-          />
+          <Route path="insights" element={<InsightsPage />} />
+          <Route path="reports" element={<MonthlyReportPage />} />
           <Route
             path="assistant"
             element={

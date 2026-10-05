@@ -8,7 +8,7 @@ import type {
   PeriodComparison,
   PeriodTotals,
 } from '@moneylens/types';
-import { classifyTransaction } from './classify';
+import { classifyTransaction, type FlowClass } from './classify';
 import { mean, median, sum } from './stats';
 
 /** Totals for an arbitrary set of transactions (normally one month). */
@@ -159,14 +159,15 @@ export function groupByMonth(
   return map;
 }
 
-/** Merchants ranked by gross spend in the given transactions. */
+/** Merchants ranked by gross spend (or by income, with `kind: 'income'`). */
 export function topMerchants(
   txs: readonly AnalyticsTransaction[],
   limit = 5,
+  kind: FlowClass = 'spend',
 ): MerchantSummaryItem[] {
   const buckets = new Map<string, MerchantSummaryItem>();
   for (const tx of txs) {
-    if (classifyTransaction(tx) !== 'spend' || !tx.merchantName) continue;
+    if (classifyTransaction(tx) !== kind || !tx.merchantName) continue;
     const key = tx.merchantId ?? `name:${tx.merchantName.toLowerCase()}`;
     const bucket = buckets.get(key) ?? {
       merchantId: tx.merchantId,
