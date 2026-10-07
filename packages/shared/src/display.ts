@@ -1,4 +1,5 @@
 import type {
+  AuthEventKind,
   AssistantAnswerStatus,
   CategoryBreakdownItem,
   Insight,
@@ -201,4 +202,59 @@ export function textBlocks(text: string): TextBlock[] {
     }
     return { kind: 'paragraph', text: block.replace(/\*\*/g, '') };
   });
+}
+
+/** Plain-language names for sign-in activity. */
+export const AUTH_EVENT_LABEL: Record<AuthEventKind, string> = {
+  REGISTERED: 'Account created',
+  LOGIN_SUCCEEDED: 'Signed in',
+  LOGIN_FAILED: 'Wrong password entered',
+  LOGIN_BLOCKED: 'Sign-in paused after too many wrong passwords',
+  SESSION_REUSE_DETECTED: 'Old sign-in reused, so that device was signed out',
+  LOGGED_OUT: 'Signed out',
+  PASSWORD_CHANGED: 'Password changed, other devices signed out',
+  SIGNED_OUT_EVERYWHERE: 'Signed out on every device',
+};
+
+/** Events the account owner may want to look into. */
+export const AUTH_EVENT_WARNING: ReadonlySet<AuthEventKind> = new Set([
+  'LOGIN_FAILED',
+  'LOGIN_BLOCKED',
+  'SESSION_REUSE_DETECTED',
+]);
+
+/**
+ * A short description of the device from its user agent, such as
+ * "Chrome on Mac" or "MoneyLens app on Android". Good enough to recognise
+ * your own devices; not a security signal on its own.
+ */
+export function describeDevice(userAgent: string | null): string {
+  if (!userAgent) return 'Unknown device';
+  const ua = userAgent;
+  const os = /iPhone|iPad|iOS/i.test(ua)
+    ? 'iPhone'
+    : /Android/i.test(ua)
+      ? 'Android'
+      : /Mac OS X|Macintosh/i.test(ua)
+        ? 'Mac'
+        : /Windows/i.test(ua)
+          ? 'Windows'
+          : /Linux/i.test(ua)
+            ? 'Linux'
+            : null;
+  // React Native's fetch identifies itself with okhttp (Android) or CFNetwork/Darwin (iOS).
+  if (/okhttp|CFNetwork|Darwin|Expo/i.test(ua) && !/Mozilla/i.test(ua)) {
+    return `MoneyLens app${os ? ` on ${os}` : /okhttp/i.test(ua) ? ' on Android' : ' on iPhone'}`;
+  }
+  const browser = /Edg\//.test(ua)
+    ? 'Edge'
+    : /Firefox\//.test(ua)
+      ? 'Firefox'
+      : /Chrome\/|CriOS/.test(ua)
+        ? 'Chrome'
+        : /Safari\//.test(ua)
+          ? 'Safari'
+          : null;
+  if (browser && os) return `${browser} on ${os}`;
+  return browser ?? os ?? 'Unknown device';
 }

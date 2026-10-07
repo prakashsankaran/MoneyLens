@@ -1,5 +1,5 @@
 import { LuEllipsis, LuLogOut, LuX } from 'react-icons/lu';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router';
 import { useAuth } from '../../features/auth/useAuth';
 import { Logo } from '../Logo';
@@ -69,7 +69,9 @@ export function AppShell() {
       </header>
 
       <main id="main" className="min-w-0 flex-1 pb-24 lg:pb-0">
-        <Outlet />
+        <Suspense fallback={<PageLoading />}>
+          <Outlet />
+        </Suspense>
       </main>
 
       {/* Mobile bottom navigation */}
@@ -158,6 +160,15 @@ export function AppShell() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function PageLoading() {
+  return (
+    <div className="flex min-h-[50dvh] items-center justify-center" role="status">
+      <span className="size-6 animate-spin rounded-full border-2 border-ink-300 border-t-brand-600" />
+      <span className="sr-only">Loading…</span>
     </div>
   );
 }

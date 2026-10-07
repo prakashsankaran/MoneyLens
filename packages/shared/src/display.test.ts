@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   confidenceLabel,
+  describeDevice,
   displayTitle,
   foldCategories,
   formatDayKey,
@@ -102,5 +103,28 @@ describe('textBlocks', () => {
       { kind: 'paragraph', text: 'Food went up.' },
       { kind: 'list', items: ['Swiggy', 'Zomato'] },
     ]);
+  });
+});
+
+describe('describeDevice', () => {
+  it.each([
+    [
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Safari/537.36',
+      'Chrome on Mac',
+    ],
+    [
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1',
+      'Safari on iPhone',
+    ],
+    [
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:131.0) Gecko/20100101 Firefox/131.0',
+      'Firefox on Windows',
+    ],
+    ['okhttp/4.12.0', 'MoneyLens app on Android'],
+    ['MoneyLens/1 CFNetwork/1568.100.1 Darwin/24.0.0', 'MoneyLens app on iPhone'],
+    ['curl/8.0', 'Unknown device'],
+    [null, 'Unknown device'],
+  ])('%s → %s', (ua, expected) => {
+    expect(describeDevice(ua)).toBe(expected);
   });
 });

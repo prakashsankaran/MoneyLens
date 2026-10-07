@@ -1,7 +1,7 @@
-import { randomUUID } from 'node:crypto';
-import { Prisma, type PrismaClient, type User } from '@prisma/client';
-import type { PublicUser } from '@moneylens/types';
-import type { LoginInput, RegisterInput } from '@moneylens/validation';
+import { createHmac, randomUUID } from 'node:crypto';
+import { Prisma, type AuthEventType, type PrismaClient, type User } from '@prisma/client';
+import type { AuthActivityItem, PublicUser } from '@moneylens/types';
+import type { ChangePasswordInput, LoginInput, RegisterInput } from '@moneylens/validation';
 import { AppError, unauthenticated } from '../../lib/errors';
 import { getDummyHash, hashPassword, verifyPassword } from './password';
 import type { TokenService } from './tokens';
@@ -22,11 +22,74 @@ export function toPublicUser(user: User): PublicUser {
   };
 }
 
+export interface LoginThrottle {
+  /** Failed sign-ins for one account within the window before it is paused. */
+  attempts: number;
+  windowMinutes: number;
+}
+
+/** Sign-in activity is kept this long, then pruned. */
+export const AUTH_EVENT_RETENTION_DAYS = 90;
+
+/** Delete sign-in activity older than the retention period. */
+export async function pruneAuthEvents(prisma: PrismaClient, now = new Date()): Promise<number> {
+  const cutoff = new Date(now.getTime() - AUTH_EVENT_RETENTION_DAYS * 86_400_000);
+  const { count } = await prisma.authEvent.deleteMany({ where: { createdAt: { lt: cutoff } } });
+  return count;
+}
+
 export class AuthService {
   constructor(
     private readonly prisma: PrismaClient,
     private readonly tokens: TokenService,
+    private readonly throttle: LoginThrottle = { attempts: 10, windowMinutes: 15 },
+    /** Keys the email HMAC, so the stored value cannot be reversed with a word list. */
+    private readonly emailKeySecret = 'moneylens-test-email-key',
   ) {}
+
+  /** A stable, non-reversible key for an email address. */
+  emailKey(email: string): string {
+    return createHmac('sha256', this.emailKeySecret)
+      .update(email.trim().toLowerCase())
+      .digest('hex');
+  }
+
+  private async record(
+    type: AuthEventType,
+    data: { userId?: string | null; emailKey?: string | null; userAgent?: string },
+  ): Promise<void> {
+    await this.prisma.authEvent.create({
+      data: {
+        type,
+        userId: data.userId ?? null,
+        emailKey: data.emailKey ?? null,
+        userAgent: data.userAgent?.slice(0, 255) ?? null,
+      },
+    });
+  }
+
+  /**
+   * Failed sign-ins for this email since its last successful one, within the
+   * window. Counting by email (not IP) slows down guessing one account's
+   * password from many addresses; the IP rate limit covers the reverse.
+   */
+  private async recentFailures(emailKey: string): Promise<number> {
+    const since = new Date(Date.now() - this.throttle.windowMinutes * 60_000);
+    const lastSuccess = await this.prisma.authEvent.findFirst({
+      where: { emailKey, type: 'LOGIN_SUCCEEDED', createdAt: { gte: since } },
+      orderBy: { createdAt: 'desc' },
+      select: { createdAt: true },
+    });
+    return this.prisma.authEvent.count({
+      where: {
+        emailKey,
+        type: 'LOGIN_FAILED',
+        createdAt: {
+          gte: lastSuccess && lastSuccess.createdAt > since ? lastSuccess.createdAt : since,
+        },
+      },
+    });
+  }
 
   async register(input: RegisterInput, userAgent?: string): Promise<IssuedSession> {
     const passwordHash = await hashPassword(input.password);
@@ -41,21 +104,44 @@ export class AuthService {
       }
       throw err;
     }
-    return this.issueSession(user, randomUUID(), userAgent);
+    const session = await this.issueSession(user, randomUUID(), userAgent);
+    await this.record('REGISTERED', {
+      userId: user.id,
+      emailKey: this.emailKey(user.email),
+      userAgent,
+    });
+    return session;
   }
 
   async login(input: LoginInput, userAgent?: string): Promise<IssuedSession> {
+    const emailKey = this.emailKey(input.email);
     const user = await this.prisma.user.findUnique({ where: { email: input.email } });
+
+    // The pause applies to registered and unknown emails alike, so it does not
+    // reveal whether an account exists.
+    if ((await this.recentFailures(emailKey)) >= this.throttle.attempts) {
+      await this.record('LOGIN_BLOCKED', { userId: user?.id, emailKey, userAgent });
+      throw new AppError(
+        'RATE_LIMITED',
+        `Too many sign-in attempts for this account. Try again in ${this.throttle.windowMinutes} minutes.`,
+      );
+    }
+
     // Always run a hash verification so response time does not reveal
     // whether the email is registered.
     const valid = await verifyPassword(
       user?.passwordHash ?? (await getDummyHash()),
       input.password,
     );
-    if (!user || !valid) throw unauthenticated('Email or password is incorrect');
+    if (!user || !valid) {
+      await this.record('LOGIN_FAILED', { userId: user?.id, emailKey, userAgent });
+      throw unauthenticated('Email or password is incorrect');
+    }
 
     await this.prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
-    return this.issueSession(user, randomUUID(), userAgent);
+    const session = await this.issueSession(user, randomUUID(), userAgent);
+    await this.record('LOGIN_SUCCEEDED', { userId: user.id, emailKey, userAgent });
+    return session;
   }
 
   /**
@@ -75,6 +161,7 @@ export class AuthService {
         where: { familyId: session.familyId, revokedAt: null },
         data: { revokedAt: new Date() },
       });
+      await this.record('SESSION_REUSE_DETECTED', { userId: session.userId, userAgent });
       throw unauthenticated('Your session has ended. Please sign in again.');
     }
     if (session.expiresAt <= new Date()) {
@@ -96,15 +183,68 @@ export class AuthService {
     return issued;
   }
 
-  async logout(refreshToken: string | undefined): Promise<void> {
+  async logout(refreshToken: string | undefined, userAgent?: string): Promise<void> {
     if (!refreshToken) return;
     const tokenHash = this.tokens.hashRefreshToken(refreshToken);
     const session = await this.prisma.session.findUnique({ where: { tokenHash } });
     if (!session) return;
-    await this.prisma.session.updateMany({
+    const revoked = await this.prisma.session.updateMany({
       where: { familyId: session.familyId, revokedAt: null },
       data: { revokedAt: new Date() },
     });
+    if (revoked.count > 0) await this.record('LOGGED_OUT', { userId: session.userId, userAgent });
+  }
+
+  /**
+   * Change the password after re-checking the current one. Every existing
+   * session is revoked, so a device that knew the old password is signed out;
+   * the caller gets a fresh session.
+   */
+  async changePassword(
+    userId: string,
+    input: ChangePasswordInput,
+    userAgent?: string,
+  ): Promise<IssuedSession> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw unauthenticated();
+    if (!(await verifyPassword(user.passwordHash, input.currentPassword))) {
+      throw new AppError('VALIDATION_ERROR', 'Current password is incorrect', {
+        fields: { currentPassword: 'Current password is incorrect' },
+      });
+    }
+    const passwordHash = await hashPassword(input.newPassword);
+    const [updated] = await this.prisma.$transaction([
+      this.prisma.user.update({ where: { id: userId }, data: { passwordHash } }),
+      this.prisma.session.updateMany({
+        where: { userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      }),
+    ]);
+    await this.record('PASSWORD_CHANGED', { userId, userAgent });
+    return this.issueSession(updated, randomUUID(), userAgent);
+  }
+
+  /** Revoke every session of the account, on all devices. */
+  async signOutEverywhere(userId: string, userAgent?: string): Promise<void> {
+    await this.prisma.session.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+    await this.record('SIGNED_OUT_EVERYWHERE', { userId, userAgent });
+  }
+
+  /** The account's recent sign-in activity, newest first. */
+  async activity(userId: string, limit = 20): Promise<AuthActivityItem[]> {
+    const events = await this.prisma.authEvent.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+    return events.map((e) => ({
+      type: e.type,
+      at: e.createdAt.toISOString(),
+      userAgent: e.userAgent,
+    }));
   }
 
   /**
@@ -120,7 +260,12 @@ export class AuthService {
         fields: { password: 'Password is incorrect' },
       });
     }
-    await this.prisma.user.delete({ where: { id: userId } });
+    // Failed sign-ins for unknown emails have no user link; remove those for
+    // this address too, so nothing about the account remains.
+    await this.prisma.$transaction([
+      this.prisma.authEvent.deleteMany({ where: { emailKey: this.emailKey(user.email) } }),
+      this.prisma.user.delete({ where: { id: userId } }),
+    ]);
   }
 
   async getUser(userId: string): Promise<PublicUser> {

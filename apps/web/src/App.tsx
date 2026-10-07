@@ -1,18 +1,38 @@
+import { lazy } from 'react';
 import { Navigate, Route, Routes } from 'react-router';
 import { AppShell } from './components/layout/AppShell';
 import { LoginPage } from './features/auth/LoginPage';
 import { RegisterPage } from './features/auth/RegisterPage';
 import { RequireAuth } from './features/auth/RequireAuth';
-import { AssistantPage } from './features/assistant/AssistantPage';
-import { AnalyticsPage } from './features/analytics/AnalyticsPage';
 import { DashboardPage } from './features/dashboard/DashboardPage';
-import { ImportReviewPage } from './features/imports/ImportReviewPage';
-import { ImportsPage } from './features/imports/ImportsPage';
-import { InsightsPage } from './features/insights/InsightsPage';
-import { MoneyPlanPage } from './features/plan/MoneyPlanPage';
-import { MonthlyReportPage } from './features/reports/MonthlyReportPage';
 import { TransactionsPage } from './features/transactions/TransactionsPage';
-import { SettingsPage } from './pages/SettingsPage';
+
+// The dashboard and transactions load with the app; other sections are
+// fetched the first time they are opened.
+const AssistantPage = lazy(() =>
+  import('./features/assistant/AssistantPage').then((m) => ({ default: m.AssistantPage })),
+);
+const AnalyticsPage = lazy(() =>
+  import('./features/analytics/AnalyticsPage').then((m) => ({ default: m.AnalyticsPage })),
+);
+const ImportReviewPage = lazy(() =>
+  import('./features/imports/ImportReviewPage').then((m) => ({ default: m.ImportReviewPage })),
+);
+const ImportsPage = lazy(() =>
+  import('./features/imports/ImportsPage').then((m) => ({ default: m.ImportsPage })),
+);
+const InsightsPage = lazy(() =>
+  import('./features/insights/InsightsPage').then((m) => ({ default: m.InsightsPage })),
+);
+const MoneyPlanPage = lazy(() =>
+  import('./features/plan/MoneyPlanPage').then((m) => ({ default: m.MoneyPlanPage })),
+);
+const MonthlyReportPage = lazy(() =>
+  import('./features/reports/MonthlyReportPage').then((m) => ({ default: m.MonthlyReportPage })),
+);
+const SettingsPage = lazy(() =>
+  import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })),
+);
 
 export function App() {
   return (

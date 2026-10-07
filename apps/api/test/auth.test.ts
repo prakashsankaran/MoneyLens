@@ -9,6 +9,13 @@ afterAll(async () => {
   await prisma.$disconnect();
 });
 
+/**
+ * An email with no account, unique per call: failed sign-ins are remembered
+ * per email, so reusing one across runs would trip the per-account pause.
+ */
+const unknownEmail = () =>
+  `nobody-${Date.now()}-${Math.random().toString(36).slice(2)}@example.test`;
+
 function refreshCookie(setCookie: string[] | undefined): string {
   const cookie = setCookie?.find((c) => c.startsWith('ml_rt='));
   if (!cookie) throw new Error('No refresh cookie set');
@@ -90,7 +97,7 @@ describe('POST /api/auth/login', () => {
       .expect(401);
     const unknown = await request(app)
       .post('/api/auth/login')
-      .send({ email: 'nobody@example.test', password: 'whatever-password' })
+      .send({ email: unknownEmail(), password: 'whatever-password' })
       .expect(401);
     expect(wrong.body).toEqual(unknown.body);
     expect(wrong.headers['set-cookie']).toBeUndefined();
@@ -283,10 +290,9 @@ describe('mobile sessions', () => {
 describe('rate limiting', () => {
   it('limits repeated credential attempts', async () => {
     const limited = createTestContext({ AUTH_RATE_LIMIT: '3' });
+    const email = unknownEmail();
     const attempt = () =>
-      request(limited.app)
-        .post('/api/auth/login')
-        .send({ email: 'nobody@example.test', password: 'whatever-password' });
+      request(limited.app).post('/api/auth/login').send({ email, password: 'whatever-password' });
     for (let i = 0; i < 3; i++) expect((await attempt()).status).toBe(401);
     const blocked = await attempt();
     expect(blocked.status).toBe(429);
@@ -301,7 +307,7 @@ describe('rate limiting', () => {
     // Login still has its full budget.
     const login = await request(limited.app)
       .post('/api/auth/login')
-      .send({ email: 'nobody@example.test', password: 'whatever-password' });
+      .send({ email: unknownEmail(), password: 'whatever-password' });
     expect(login.status).toBe(401);
     for (let i = 0; i < 6; i++) await refresh();
     expect((await refresh()).status).toBe(429);

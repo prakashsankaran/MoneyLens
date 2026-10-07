@@ -1,3 +1,4 @@
+import { createHmac } from 'node:crypto';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { Router, type Express } from 'express';
@@ -66,6 +67,12 @@ export function createApp({ env, prisma, logger, aiProvider }: AppDeps): Express
     accessTokenTtlSeconds: env.ACCESS_TOKEN_TTL_SECONDS,
     refreshTokenTtlDays: env.REFRESH_TOKEN_TTL_DAYS,
   });
+  const auth = new AuthService(
+    prisma,
+    tokens,
+    { attempts: env.LOGIN_LOCKOUT_ATTEMPTS, windowMinutes: env.LOGIN_LOCKOUT_MINUTES },
+    createHmac('sha256', env.JWT_ACCESS_SECRET).update('moneylens:email-key').digest('hex'),
+  );
   const analyticsData = new AnalyticsDataSource(prisma);
   const recurring = new RecurringService(prisma, analyticsData);
   const insights = new InsightsService(analyticsData, recurring);
@@ -82,7 +89,7 @@ export function createApp({ env, prisma, logger, aiProvider }: AppDeps): Express
   api.use(
     '/auth',
     authRoutes({
-      auth: new AuthService(prisma, tokens),
+      auth,
       tokens,
       secureCookies: env.NODE_ENV === 'production',
       rateLimitPer15Min: env.AUTH_RATE_LIMIT,
@@ -106,7 +113,9 @@ export function createApp({ env, prisma, logger, aiProvider }: AppDeps): Express
   api.use(
     '/imports',
     requireAuth,
-    importRoutes(new ImportsService(prisma, onChange), { maxUploadMb: env.MAX_UPLOAD_MB }),
+    importRoutes(new ImportsService(prisma, onChange, env.PARSE_TIMEOUT_MS), {
+      maxUploadMb: env.MAX_UPLOAD_MB,
+    }),
   );
   api.use('/merchants', requireAuth, merchantRoutes(new MerchantsService(prisma, onChange)));
   api.use(

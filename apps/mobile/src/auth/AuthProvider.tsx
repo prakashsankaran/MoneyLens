@@ -2,7 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { AuthResult, PublicUser } from '@moneylens/types';
-import type { LoginInput, RegisterInput } from '@moneylens/validation';
+import type { ChangePasswordInput, LoginInput, RegisterInput } from '@moneylens/validation';
 import {
   acceptSession,
   api,
@@ -27,6 +27,10 @@ export interface AuthContextValue {
   register: (input: RegisterInput) => Promise<void>;
   logout: () => Promise<void>;
   deleteAccount: (password: string) => Promise<void>;
+  /** Change the password; every other device is signed out. */
+  changePassword: (input: ChangePasswordInput) => Promise<void>;
+  /** End every session of the account, including this one. */
+  signOutEverywhere: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -107,6 +111,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await api('/auth/account', { method: 'DELETE', body: JSON.stringify({ password }) });
         await forgetSession();
         signOutLocally();
+      },
+      async changePassword(input) {
+        await accept(await send<AuthResult>('POST', '/auth/password', input));
+      },
+      async signOutEverywhere() {
+        try {
+          await send('POST', '/auth/sign-out-everywhere');
+        } finally {
+          await forgetSession();
+          signOutLocally();
+        }
       },
     }),
     [status, user, problem, accept, signOutLocally],

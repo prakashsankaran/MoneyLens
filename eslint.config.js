@@ -63,7 +63,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['apps/api/prisma/seed.ts'],
+    files: ['apps/api/prisma/seed.ts', 'scripts/**/*.mjs'],
     rules: { 'no-console': 'off' },
   },
   {

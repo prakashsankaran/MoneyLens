@@ -180,6 +180,17 @@ export const deleteAccountSchema = z.object({
 });
 export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;
 
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Enter your current password').max(128),
+    newPassword: passwordSchema,
+  })
+  .refine((v) => v.currentPassword !== v.newPassword, {
+    path: ['newPassword'],
+    message: 'Choose a password different from the current one',
+  });
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+
 /** Mobile clients send the refresh token in the body instead of a cookie. */
 export const refreshTokenSchema = z.object({
   refreshToken: z.string().min(16).max(256),

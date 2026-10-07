@@ -6,6 +6,7 @@ import { errorMessage } from '@/lib/api';
 import { apiBaseUrl } from '@/lib/config';
 import { useDeleteAllTransactions } from '@/lib/queries';
 import { colors, type } from '@/lib/theme';
+import { ActivityCard, PasswordCard } from './AccountSecurity';
 
 export function SettingsScreen() {
   const { deleteAccount } = useAuth();
@@ -27,6 +28,9 @@ export function SettingsScreen() {
           On this phone your session is kept in the secure device keychain.
         </Text>
       </Card>
+
+      <PasswordCard />
+      <ActivityCard />
 
       <Card
         title="Delete all transactions"

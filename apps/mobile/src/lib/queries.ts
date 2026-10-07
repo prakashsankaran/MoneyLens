@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-query';
 import type {
   AssistantConversation,
+  AuthActivityItem,
   AssistantConversationSummary,
   AssistantStatus,
   BudgetsResponse,
@@ -212,6 +213,13 @@ export function useDeleteImport() {
   return useMutation({
     mutationFn: (id: string) => send<{ transactions: number }>('DELETE', `/imports/${id}`),
     onSuccess: () => invalidateFinancialData(client),
+  });
+}
+
+export function useAuthActivity() {
+  return useQuery({
+    queryKey: ['auth-activity'],
+    queryFn: () => api<AuthActivityItem[]>('/auth/activity'),
   });
 }
 

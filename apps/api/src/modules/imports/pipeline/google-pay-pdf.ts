@@ -296,7 +296,7 @@ export class GooglePayPdfParser implements TransactionParser {
   }
 
   async parse(file: UploadedFile): Promise<ParseResult> {
-    const lines = await extractPdfLines(file.buffer, file.password);
+    const lines = await extractPdfLines(file.buffer, file.password, file.signal);
     const { rows, warnings } = parseGooglePayLines(lines);
     return { parserName: this.name, source: this.source, rows, warnings };
   }
