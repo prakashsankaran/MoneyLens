@@ -11,6 +11,11 @@ const FREQUENCY: Record<RecurringFrequencyKind, string> = {
   YEARLY: 'Yearly',
 };
 
+/** "3 Oct" rather than "3 Oct 2026", for next-expected dates, which are always close. */
+function shortDay(day: string): string {
+  return formatDayKey(day).replace(/ \d{4}$/, '');
+}
+
 /** Detected recurring payments and income, with a way to say "not recurring". */
 export function RecurringList() {
   const { data, isPending, isError, error } = useRecurring();
@@ -38,11 +43,20 @@ export function RecurringList() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm">
-        Active recurring payments come to{' '}
-        <strong className="tabular-nums">{formatINR(data.monthlyOutgoingPaise)} a month</strong> (
-        {formatINR(data.annualOutgoingPaise)} a year).
-      </p>
+      <dl className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col-reverse rounded-lg bg-ink-100/60 p-3">
+          <dt className="text-xs text-ink-500">Active recurring payments</dt>
+          <dd className="text-lg font-semibold tabular-nums">
+            {formatINR(data.monthlyOutgoingPaise)} a month
+          </dd>
+        </div>
+        <div className="flex flex-col-reverse rounded-lg bg-ink-100/60 p-3">
+          <dt className="text-xs text-ink-500">Over a year</dt>
+          <dd className="text-lg font-semibold tabular-nums">
+            {formatINR(data.annualOutgoingPaise)}
+          </dd>
+        </div>
+      </dl>
       {dismiss.isError && (
         <p role="alert" className="text-sm text-negative">
           {dismiss.error.message}
@@ -84,7 +98,7 @@ function Section({
         {items.map((i) => (
           <li
             key={i.id}
-            className={`flex flex-wrap items-start justify-between gap-3 py-3 ${i.dismissed ? 'opacity-60' : ''}`}
+            className={`flex items-start justify-between gap-3 py-3 ${i.dismissed ? 'opacity-60' : ''}`}
           >
             <div className="min-w-0">
               <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
@@ -105,26 +119,29 @@ function Section({
                   </span>
                 )}
               </p>
-              <p className="mt-0.5 text-xs text-ink-500">
-                {FREQUENCY[i.frequency]}, {i.amountVaries ? 'usually about ' : ''}
-                {formatINR(i.typicalAmountPaise)} · {i.occurrences} payments since{' '}
-                {formatDayKey(i.firstDate)} ·{' '}
+              <p className="mt-0.5 text-xs text-ink-700">
+                {FREQUENCY[i.frequency]}
+                {i.frequency !== 'MONTHLY' &&
+                  ` · ${i.amountVaries ? '~' : ''}${formatINR(i.typicalAmountPaise)}`}{' '}
+                ·{' '}
                 {i.active
-                  ? `next expected around ${formatDayKey(i.nextExpectedDate)}`
-                  : `last on ${formatDayKey(i.lastDate)}`}{' '}
-                · confidence {confidenceLabel(i.confidence)}
+                  ? `next ~${shortDay(i.nextExpectedDate)}`
+                  : `last on ${formatDayKey(i.lastDate)}`}
+              </p>
+              <p className="mt-0.5 text-[11px] text-ink-500">
+                {i.occurrences} payments · confidence {confidenceLabel(i.confidence)}
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-right text-sm tabular-nums">
+            <div className="flex shrink-0 flex-col items-end gap-1">
+              <span className="text-right text-sm font-semibold tabular-nums">
                 {formatINR(i.monthlyEquivalentPaise)}
-                <span className="block text-xs text-ink-500">a month</span>
+                <span className="font-normal text-ink-500">/mo</span>
               </span>
               <button
                 type="button"
                 onClick={() => onToggle(i)}
                 disabled={busyId === i.id}
-                className="rounded-lg border border-ink-300 px-3 py-1.5 text-xs font-medium hover:bg-ink-100 disabled:opacity-50"
+                className="text-xs font-medium text-brand-700 hover:underline disabled:opacity-50"
                 aria-label={`${i.dismissed ? 'Restore' : 'Not recurring:'} ${i.label}`}
               >
                 {i.dismissed ? 'Restore' : 'Not recurring'}

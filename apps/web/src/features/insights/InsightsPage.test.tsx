@@ -80,7 +80,7 @@ describe('InsightsPage', () => {
     expect(c.getByText('Notable')).toBeInTheDocument();
     expect(c.getByText('₹9,000')).toBeInTheDocument();
     expect(c.getByText('₹2,100 a month')).toBeInTheDocument();
-    expect(c.getByText('Medium (75%)')).toBeInTheDocument();
+    expect(c.getByText('Confidence Medium (75%)')).toBeInTheDocument();
     expect(c.getByText('Suggestion')).toBeInTheDocument();
     expect(c.getByText(/Bringing food delivery back/)).toBeInTheDocument();
     expect(screen.getByText('1.8x')).toBeInTheDocument();

@@ -14,3 +14,12 @@ export function metricText(metric: Insight['metric']): string {
   const value = Number(metric.value.toFixed(2));
   return metric.unit === '%' ? `${value}%` : `${value}${metric.unit ?? ''}`;
 }
+
+const SAVING_PREFIX = 'Potential saving opportunity: ';
+
+/** Moves the long "Potential saving opportunity:" prefix out of the headline into a tag. */
+export function displayTitle(title: string): { title: string; savingIdea: boolean } {
+  if (!title.startsWith(SAVING_PREFIX)) return { title, savingIdea: false };
+  const rest = title.slice(SAVING_PREFIX.length);
+  return { title: rest.charAt(0).toUpperCase() + rest.slice(1), savingIdea: true };
+}
