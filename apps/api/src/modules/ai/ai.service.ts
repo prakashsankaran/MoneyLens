@@ -14,12 +14,13 @@ import type {
   ReportStatement,
 } from '@moneylens/types';
 import type { ChatInput } from '@moneylens/validation';
+import { formatMonthKey } from '@moneylens/shared';
 import { AppError, notFound } from '../../lib/errors';
 import type { InsightsService } from '../insights/insights.service';
 import type { PlanService } from '../plan/plan.service';
 import { factsFor } from './facts';
 import { allowedNumbers, checkGrounding, screenInput } from './guardrails';
-import { classifyQuestion } from './intent';
+import { classifyQuestion, mentionedMonth } from './intent';
 import {
   BRIEF_INSTRUCTION,
   SYSTEM_PROMPT,
@@ -87,6 +88,7 @@ export class AIService {
       model: this.provider.model,
       dailyMessageLimit: this.options.dailyMessageLimit,
       messagesToday: await this.messagesToday(userId),
+      availableMonths: await this.insights.availableMonths(userId),
     };
   }
 
@@ -185,7 +187,13 @@ export class AIService {
       };
       content = screened.reply;
     } else {
-      const ctx = await this.context(userId, input.month);
+      // A month named in the question wins over the page's month picker.
+      const named = mentionedMonth(question, await this.insights.availableMonths(userId));
+      const ctx = await this.context(userId, named.month ?? input.month);
+      const noData = named.missing.map(
+        (m) =>
+          `I have no transaction data for ${m}, so this answer is about ${formatMonthKey(ctx.month)}.`,
+      );
       const { topics, facts } = factsFor(classifyQuestion(question), ctx, question);
       const history = await this.history(conv.id);
       const turn = questionTurn(question, contextFor(ctx, topics), facts);
@@ -196,7 +204,7 @@ export class AIService {
         topics,
         facts,
         interpretation: result.interpretation,
-        dataLimitations: ctx.dataLimitations,
+        dataLimitations: [...noData, ...ctx.dataLimitations],
         provider: result.interpretation ? this.providerLabel : null,
         regenerated: result.regenerated,
       };

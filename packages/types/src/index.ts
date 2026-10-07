@@ -762,6 +762,8 @@ export interface AssistantStatus {
   model: string | null;
   dailyMessageLimit: number;
   messagesToday: number;
+  /** Months the assistant can answer about, oldest first. */
+  availableMonths: string[];
 }
 
 export interface MoneyBrief {

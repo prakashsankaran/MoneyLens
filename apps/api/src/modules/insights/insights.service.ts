@@ -29,6 +29,11 @@ export class InsightsService {
     private readonly recurring: RecurringService,
   ) {}
 
+  /** Months with at least one confirmed transaction, oldest first. */
+  availableMonths(userId: string): Promise<string[]> {
+    return this.data.monthsWithData(userId);
+  }
+
   /**
    * What the engine needs to explain `month`: transactions from the start of
    * the recurring window (or January of last year, for year-to-date, or an

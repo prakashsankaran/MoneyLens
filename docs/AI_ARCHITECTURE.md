@@ -60,8 +60,15 @@ refuses to start when a provider is chosen without the settings it needs.
 
 ## Assistant context
 
+Each question is answered about one month. It is, in order: a month named in
+the question that has data ("September", "Sep 2026", "2026-09"; the latest one
+if several are named), the month picked on the AI Assistant page, or the latest
+month with data. A named month with no data adds a data limitation saying
+which month the answer covers instead. `GET /ai/status` lists the months
+available.
+
 `assistantContext()` returns `AssistantContext` (see `@moneylens/types`) for
-one month:
+that month:
 
 - totals, the previous month and the change;
 - period comparisons (3- and 6-month averages, quarter, year to date);
