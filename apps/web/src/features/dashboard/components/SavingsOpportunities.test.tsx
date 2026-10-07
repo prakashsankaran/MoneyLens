@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { MemoryRouter } from 'react-router';
 import { dashboardFixture } from '../../../test/fixtures';
@@ -28,7 +28,7 @@ describe('SavingsOpportunities', () => {
 });
 
 describe('SavingsOpportunities with saving estimates', () => {
-  it('shows the estimated saving and its assumption first', () => {
+  it('leads with the estimated saving, with the assumption behind "Why?"', () => {
     render(
       <MemoryRouter>
         <SavingsOpportunities
@@ -39,9 +39,14 @@ describe('SavingsOpportunities with saving estimates', () => {
       </MemoryRouter>,
     );
     const items = screen.getAllByRole('listitem');
-    expect(items[0]).toHaveTextContent('Potential saving opportunity: 12 food delivery orders');
+    expect(items[0]).toHaveTextContent('Saving idea');
+    expect(items[0]).toHaveTextContent('12 food delivery orders');
     expect(items[0]).toHaveTextContent('About ₹2,100 a month');
-    expect(items[0]).toHaveTextContent('Bringing food delivery back');
+    expect(
+      within(items[0]!)
+        .getByText(/Bringing food delivery back/)
+        .closest('details'),
+    ).not.toBe(null);
     expect(screen.getByRole('link', { name: /See all insights/ })).toHaveAttribute(
       'href',
       '/insights',

@@ -1,43 +1,44 @@
 import { Link } from 'react-router';
 import type { HealthScore } from '@moneylens/types';
-import { ProvenanceBadge } from '../../../components/ProvenanceBadge';
+import { ScoreRing } from '../../../components/charts/ScoreRing';
+import { TONE_LABEL, TONE_TEXT, toneForScore } from '../../../components/charts/score-tone';
+import { ScoreBar } from '../../insights/HealthScoreCard';
 
-/** The health score and its components at a glance; the full working is on Insights. */
+/** The health score as a ring with its components as bars; the full working is on Insights. */
 export function HealthScoreSummary({ health }: { health: HealthScore }) {
   const scored = health.components.filter((c) => c.weight > 0);
+  const tone = toneForScore(health.score);
   return (
-    <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
-      <div className="shrink-0">
-        <p className="text-4xl font-semibold tabular-nums">
-          {health.score === null ? '–' : health.score}
-          <span className="text-base font-normal text-ink-500"> / 100</span>
-        </p>
-        <div className="mt-1">
-          <ProvenanceBadge kind="CALCULATION" />
-        </div>
+    <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center">
+      <div className="flex flex-col items-center">
+        <ScoreRing value={health.score} tone={tone} size={136} thickness={12}>
+          <span className="text-4xl font-bold tracking-tight">
+            {health.score === null ? '–' : health.score}
+          </span>
+          <span className="text-xs text-ink-500">out of 100</span>
+        </ScoreRing>
+        <p className={`mt-2 text-sm font-semibold ${TONE_TEXT[tone]}`}>{TONE_LABEL[tone]}</p>
       </div>
-      <div className="min-w-0 flex-1">
-        <ul className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+      <div className="w-full min-w-0 flex-1">
+        <ul className="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
           {scored.map((c) => (
-            <li key={c.key} className="flex justify-between gap-3">
-              <span className="text-ink-700">{c.label}</span>
-              <span className="font-medium tabular-nums">
-                {c.score === null ? 'Not scored' : c.score}
-              </span>
+            <li key={c.key}>
+              <div className="flex justify-between gap-3">
+                <span className="text-ink-700">{c.label}</span>
+                <span className="font-semibold tabular-nums">
+                  {c.score === null ? 'Not scored' : c.score}
+                </span>
+              </div>
+              <ScoreBar score={c.score} />
             </li>
           ))}
         </ul>
-        <p className="mt-3 text-xs text-ink-500">
-          {health.score === null
-            ? 'More months of data are needed for a score. '
-            : 'A weighted average of the components above, calculated from your transactions. '}
-          <Link
-            to="/insights"
-            className="font-medium text-brand-600 hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
-          >
-            See how it is calculated
-          </Link>
-        </p>
+        <Link
+          to="/insights"
+          className="mt-4 inline-block text-sm font-medium text-brand-600 hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
+        >
+          {health.score === null ? 'What is missing?' : 'How it is calculated'}
+        </Link>
       </div>
     </div>
   );

@@ -107,7 +107,7 @@ export function DashboardPage() {
             <Card
               className="lg:col-span-2"
               title="Where can I potentially save?"
-              description="Potential saving opportunities and patterns from your recent months"
+              description="Ideas from your recent months"
             >
               <SavingsOpportunities
                 opportunities={data.savingOpportunities}

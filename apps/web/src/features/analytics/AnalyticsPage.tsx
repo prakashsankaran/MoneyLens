@@ -2,7 +2,9 @@ import { LuChevronRight } from 'react-icons/lu';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { formatINR, formatMonthKey, monthRangeUtc } from '@moneylens/shared';
-import type { CategoryBreakdownItem } from '@moneylens/types';
+import type { CategoryBreakdownItem, MerchantSummaryItem } from '@moneylens/types';
+import { DonutChart } from '../../components/charts/DonutChart';
+import { categoryColour } from '../../lib/category-colors';
 import { Card } from '../../components/Card';
 import { FullPageSpinner } from '../../components/FullPageSpinner';
 import { ErrorCard, PageHeader } from '../../components/PageHeader';
@@ -147,45 +149,12 @@ export function AnalyticsPage() {
               description="Merchants ranked by spending"
             >
               {merchants.data && merchants.data.items.length > 0 ? (
-                <table className="w-full text-sm">
-                  <thead className="text-left text-xs text-ink-500">
-                    <tr>
-                      <th scope="col" className="pb-2 font-medium">
-                        Merchant
-                      </th>
-                      <th scope="col" className="pb-2 text-right font-medium">
-                        Payments
-                      </th>
-                      <th scope="col" className="pb-2 text-right font-medium">
-                        Spent
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-ink-100">
-                    {merchants.data.items.map((m) => (
-                      <tr key={m.merchantId ?? m.name}>
-                        <td className="max-w-[10rem] truncate py-2">
-                          {m.merchantId ? (
-                            <Link
-                              to={`/transactions?from=${days.from}&to=${days.to}&merchantId=${m.merchantId}`}
-                              className="hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
-                            >
-                              {m.name}
-                            </Link>
-                          ) : (
-                            m.name
-                          )}
-                        </td>
-                        <td className="py-2 text-right tabular-nums text-ink-700">
-                          {m.transactionCount}
-                        </td>
-                        <td className="py-2 text-right font-medium tabular-nums">
-                          {formatINR(m.amountPaise)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <MerchantBars
+                  items={merchants.data.items}
+                  linkFor={(merchantId) =>
+                    `/transactions?from=${days.from}&to=${days.to}&merchantId=${merchantId}`
+                  }
+                />
               ) : (
                 <p className="text-sm text-ink-500">No merchant payments this month.</p>
               )}
@@ -247,57 +216,129 @@ function CategoryList({
     return <p className="text-sm text-ink-500">No spending recorded here.</p>;
   }
   const max = Math.max(...items.map((i) => i.amountPaise));
+  const total = items.reduce((a, i) => a + i.amountPaise, 0);
   return (
-    <ol className="space-y-1">
-      {items.map((item) => {
-        const body = (
+    <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start">
+      <DonutChart
+        slices={items.map((item, i) => ({
+          key: item.categoryId ?? item.slug,
+          label: item.name,
+          value: item.amountPaise,
+          color: categoryColour(i),
+        }))}
+        size={180}
+        label={`Spending by category: ${items.map((i) => `${i.name} ${Math.round(i.sharePct)}%`).join(', ')}`}
+        center={
           <>
-            <span className="flex items-baseline justify-between gap-3 text-sm">
-              <span className="font-medium">{item.name}</span>
-              <span className="tabular-nums">
-                <span className="font-medium">{formatINR(item.amountPaise)}</span>
-                <span className="ml-2 inline-block w-12 text-right text-ink-500">
-                  {Math.round(item.sharePct)}%
+            <span className="text-xl font-bold tracking-tight">{formatINR(total)}</span>
+            <span className="mt-0.5 text-xs text-ink-500">spent</span>
+          </>
+        }
+      />
+      <ol className="w-full min-w-0 flex-1 space-y-1">
+        {items.map((item, index) => {
+          const body = (
+            <>
+              <span className="flex items-baseline justify-between gap-3 text-sm">
+                <span className="flex min-w-0 items-center gap-2 font-medium">
+                  <span
+                    className="size-2.5 shrink-0 rounded-full"
+                    style={{ background: categoryColour(index) }}
+                    aria-hidden="true"
+                  />
+                  <span className="truncate">{item.name}</span>
+                </span>
+                <span className="shrink-0 tabular-nums">
+                  <span className="font-semibold">{formatINR(item.amountPaise)}</span>
+                  <span className="ml-2 inline-block w-12 text-right text-ink-500">
+                    {Math.round(item.sharePct)}%
+                  </span>
                 </span>
               </span>
-            </span>
-            <span className="mt-1.5 block h-2 rounded-full bg-ink-100" aria-hidden="true">
-              <span
-                className="block h-full rounded-full bg-series-1"
-                style={{ width: `${Math.max((item.amountPaise / max) * 100, 1)}%` }}
-              />
-            </span>
-            <span className="mt-1 block text-xs text-ink-500">
-              {item.transactionCount} {item.transactionCount === 1 ? 'payment' : 'payments'}
-            </span>
-          </>
-        );
-        const canDrill = drillable && item.categoryId !== null;
-        return (
-          <li key={item.categoryId ?? item.slug} className="flex items-center gap-2">
-            {canDrill ? (
-              <button
-                type="button"
-                onClick={() => onSelect(item)}
-                className="min-w-0 flex-1 rounded-xl px-2 py-2 text-left hover:bg-ink-100 transition-all duration-200"
-                aria-label={`${item.name}: ${formatINR(item.amountPaise)}. Show subcategories`}
-              >
-                {body}
-              </button>
-            ) : (
+              <span className="mt-1.5 block h-2 rounded-full bg-ink-100" aria-hidden="true">
+                <span
+                  className="block h-full rounded-full"
+                  style={{
+                    width: `${Math.max((item.amountPaise / max) * 100, 1)}%`,
+                    background: categoryColour(index),
+                  }}
+                />
+              </span>
+              <span className="mt-1 block text-xs text-ink-500">
+                {item.transactionCount} {item.transactionCount === 1 ? 'payment' : 'payments'}
+              </span>
+            </>
+          );
+          const canDrill = drillable && item.categoryId !== null;
+          return (
+            <li key={item.categoryId ?? item.slug} className="flex items-center gap-2">
+              {canDrill ? (
+                <button
+                  type="button"
+                  onClick={() => onSelect(item)}
+                  className="min-w-0 flex-1 rounded-xl px-2 py-2 text-left hover:bg-ink-100 transition-all duration-200"
+                  aria-label={`${item.name}: ${formatINR(item.amountPaise)}. Show subcategories`}
+                >
+                  {body}
+                </button>
+              ) : (
+                <Link
+                  to={linkFor(item)}
+                  className="block min-w-0 flex-1 rounded-xl px-2 py-2 hover:bg-ink-100 transition-all duration-200"
+                >
+                  {body}
+                </Link>
+              )}
+              {canDrill && (
+                <LuChevronRight className="size-4 shrink-0 text-ink-500" aria-hidden="true" />
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
+/** Merchants as ranked bars, each linking to its transactions. */
+function MerchantBars({
+  items,
+  linkFor,
+}: {
+  items: MerchantSummaryItem[];
+  linkFor: (merchantId: string) => string;
+}) {
+  const max = Math.max(...items.map((m) => m.amountPaise));
+  return (
+    <ol className="space-y-3">
+      {items.map((m) => (
+        <li key={m.merchantId ?? m.name}>
+          <div className="flex items-baseline justify-between gap-3 text-sm">
+            {m.merchantId ? (
               <Link
-                to={linkFor(item)}
-                className="block min-w-0 flex-1 rounded-xl px-2 py-2 hover:bg-ink-100 transition-all duration-200"
+                to={linkFor(m.merchantId)}
+                className="min-w-0 truncate font-medium hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
               >
-                {body}
+                {m.name}
               </Link>
+            ) : (
+              <span className="min-w-0 truncate font-medium">{m.name}</span>
             )}
-            {canDrill && (
-              <LuChevronRight className="size-4 shrink-0 text-ink-500" aria-hidden="true" />
-            )}
-          </li>
-        );
-      })}
+            <span className="shrink-0 font-semibold tabular-nums">{formatINR(m.amountPaise)}</span>
+          </div>
+          <div className="mt-1.5 flex items-center gap-2">
+            <div className="h-2 flex-1 rounded-full bg-ink-100" aria-hidden="true">
+              <div
+                className="h-full rounded-full bg-series-1"
+                style={{ width: `${Math.max((m.amountPaise / max) * 100, 2)}%` }}
+              />
+            </div>
+            <span className="w-20 shrink-0 text-right text-xs whitespace-nowrap text-ink-500">
+              {m.transactionCount} {m.transactionCount === 1 ? 'payment' : 'payments'}
+            </span>
+          </div>
+        </li>
+      ))}
     </ol>
   );
 }

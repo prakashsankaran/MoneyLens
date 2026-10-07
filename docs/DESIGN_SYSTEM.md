@@ -43,3 +43,17 @@ text), `size-[18px]` (navigation) or `size-5` (icon buttons), and let them inher
 - Pages: `mx-auto max-w-6xl px-4 py-8 sm:px-8 lg:py-12`.
 - Columns stack on phones and become grids from `sm:`/`lg:` upward.
 - Shared building blocks: `Button`, `Card`, `PageHeader`, `FormField`, `Dialog` in `apps/web/src/components`.
+
+## Charts and headline numbers
+
+- Lead with the number that needs attention: the month's spending, each saving idea's monthly
+  amount and the health score are the largest text on their cards (`text-2xl` to `text-5xl`,
+  `font-bold`). Changes sit beside them as small pills: green when good, red when not.
+- Shared chart pieces live in `apps/web/src/components/charts`: `DonutChart` (part-to-whole,
+  total in the hole) and `ScoreRing` (a 0–100 value such as the health score or savings rate).
+- Category colours come from `categoryColour()` in `apps/web/src/lib/category-colors.ts`: the
+  `chartSeries` palette from `packages/ui` in fixed order for the top six, neutral grey after.
+  Every donut has a labelled legend beside it, so colour is never the only cue.
+- Rankings (categories, merchants) are horizontal bars; days of the week are columns.
+- Long explanations go behind a "Why?" `<details>` toggle.
+- Charts must fit a 390px-wide phone without horizontal scrolling.
