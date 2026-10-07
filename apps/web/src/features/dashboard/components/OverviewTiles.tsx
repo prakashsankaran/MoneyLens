@@ -69,43 +69,47 @@ export function OverviewTiles({
   const incomeDelta = comparison ? pctDelta(comparison.incomeChangePct, prev, true) : undefined;
   const rate = totals.savingsRatePct;
   const overspent = totals.savedPaise < 0;
+  // Far below zero the exact rate stops meaning much and would not fit the ring.
+  const rateText = rate === null ? '—' : rate < -999 ? '< −999%' : `${Math.round(rate)}%`;
 
   return (
-    <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-      <div className="col-span-2 flex items-center justify-between gap-4 rounded-2xl border border-ink-200/70 bg-surface p-5 shadow-card sm:p-6">
-        <div className="min-w-0">
-          <dt className="text-sm font-medium text-ink-500">Spending</dt>
-          <dd className="mt-1 text-[34px] leading-none font-bold tracking-tight sm:text-5xl">
-            {formatINR(totals.spendingPaise)}
-          </dd>
-          <dd className="mt-2 text-xs text-ink-500">
-            {totals.refundsPaise > 0
-              ? `After ${formatINR(totals.refundsPaise)} in refunds`
-              : `${totals.spendTransactionCount} payments`}
-          </dd>
-          {spendingDelta && (
-            <dd className="mt-3">
-              <DeltaPill delta={spendingDelta} />
+    <dl className="grid grid-cols-2 gap-3 lg:gap-4 xl:grid-cols-4">
+      <div className="@container col-span-2 rounded-2xl border border-ink-200/70 bg-surface p-5 shadow-card sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="min-w-0">
+            <dt className="text-sm font-medium text-ink-500">Spending</dt>
+            <dd className="mt-1 text-3xl leading-none font-bold tracking-tight [overflow-wrap:anywhere] @sm:text-4xl @md:text-5xl">
+              {formatINR(totals.spendingPaise)}
             </dd>
-          )}
-        </div>
-        <div className="flex flex-col items-center">
-          <dt className="sr-only">Savings rate</dt>
-          <dd>
-            <ScoreRing value={rate === null ? null : Math.max(0, rate)} tone={rateTone(rate)}>
-              <span
-                className={`text-2xl font-bold tracking-tight ${overspent ? 'text-negative' : ''}`}
-              >
-                {rate === null ? '—' : `${Math.round(rate)}%`}
-              </span>
-              <span className="text-[11px] text-ink-500">
-                {rate === null ? 'No income' : 'kept'}
-              </span>
-            </ScoreRing>
-          </dd>
-          <dd className="mt-1.5 text-xs font-medium text-ink-500">
-            {rate === null ? 'No income recorded' : 'Savings rate'}
-          </dd>
+            <dd className="mt-2 text-xs text-ink-500">
+              {totals.refundsPaise > 0
+                ? `After ${formatINR(totals.refundsPaise)} in refunds`
+                : `${totals.spendTransactionCount} payments`}
+            </dd>
+            {spendingDelta && (
+              <dd className="mt-3">
+                <DeltaPill delta={spendingDelta} />
+              </dd>
+            )}
+          </div>
+          <div className="flex flex-col items-center">
+            <dt className="sr-only">Savings rate</dt>
+            <dd>
+              <ScoreRing value={rate === null ? null : Math.max(0, rate)} tone={rateTone(rate)}>
+                <span
+                  className={`font-bold tracking-tight ${rateText.length > 4 ? 'text-lg' : 'text-2xl'} ${overspent ? 'text-negative' : ''}`}
+                >
+                  {rateText}
+                </span>
+                <span className="text-[11px] text-ink-500">
+                  {rate === null ? 'No income' : 'kept'}
+                </span>
+              </ScoreRing>
+            </dd>
+            <dd className="mt-1.5 text-xs font-medium text-ink-500">
+              {rate === null ? 'No income recorded' : 'Savings rate'}
+            </dd>
+          </div>
         </div>
       </div>
 

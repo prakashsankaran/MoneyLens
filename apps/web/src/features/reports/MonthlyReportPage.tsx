@@ -400,53 +400,59 @@ function CategoryVisual({
       : []),
   ];
   return (
-    <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
-      {total > 0 && (
-        <DonutChart
-          slices={slices}
-          size={180}
-          label={`Spending by category: ${slices.map((s) => s.label).join(', ')}`}
-          center={
-            <>
-              <span className="text-xl font-bold tracking-tight">{formatINR(total)}</span>
-              <span className="mt-0.5 text-xs text-ink-500">spent</span>
-            </>
-          }
-        />
-      )}
-      <ul className="w-full min-w-0 flex-1 divide-y divide-ink-100">
-        {sorted.map((r, i) => {
-          const change = r.currentPaise - r.previousPaise;
-          return (
-            <li key={r.categoryId ?? r.slug} className="flex items-center gap-3 py-2 text-sm">
-              <span
-                className="size-2.5 shrink-0 rounded-full"
-                style={{ background: r.currentPaise > 0 ? categoryColour(i) : 'transparent' }}
-                aria-hidden="true"
-              />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate font-medium">{r.name}</span>
-                <span className="block text-xs text-ink-500">
-                  3-month average {formatINR(r.average3Paise)}
-                </span>
-              </span>
-              <span className="shrink-0 text-right">
-                <span className="block font-semibold tabular-nums">
-                  {formatINR(r.currentPaise)}
-                </span>
+    <div className="@container">
+      <div className="flex flex-col items-center gap-6 @lg:flex-row @lg:items-start">
+        {total > 0 && (
+          <DonutChart
+            slices={slices}
+            size={180}
+            label={`Spending by category: ${slices.map((s) => s.label).join(', ')}`}
+            center={
+              <>
                 <span
-                  className={`block text-xs font-medium tabular-nums ${
-                    change === 0 ? 'text-ink-500' : change > 0 ? 'text-negative' : 'text-positive'
-                  }`}
-                  title={compareLabel ? `Compared with ${compareLabel}` : undefined}
+                  className={`font-bold tracking-tight ${formatINR(total).length > 9 ? 'text-base' : 'text-xl'}`}
                 >
-                  {diff(r.currentPaise, r.previousPaise)}
+                  {formatINR(total)}
                 </span>
-              </span>
-            </li>
-          );
-        })}
-      </ul>
+                <span className="mt-0.5 text-xs text-ink-500">spent</span>
+              </>
+            }
+          />
+        )}
+        <ul className="w-full min-w-0 flex-1 divide-y divide-ink-100">
+          {sorted.map((r, i) => {
+            const change = r.currentPaise - r.previousPaise;
+            return (
+              <li key={r.categoryId ?? r.slug} className="flex items-center gap-3 py-2 text-sm">
+                <span
+                  className="size-2.5 shrink-0 rounded-full"
+                  style={{ background: r.currentPaise > 0 ? categoryColour(i) : 'transparent' }}
+                  aria-hidden="true"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium">{r.name}</span>
+                  <span className="block text-xs text-ink-500">
+                    3-month average {formatINR(r.average3Paise)}
+                  </span>
+                </span>
+                <span className="shrink-0 text-right">
+                  <span className="block font-semibold tabular-nums">
+                    {formatINR(r.currentPaise)}
+                  </span>
+                  <span
+                    className={`block text-xs font-medium tabular-nums ${
+                      change === 0 ? 'text-ink-500' : change > 0 ? 'text-negative' : 'text-positive'
+                    }`}
+                    title={compareLabel ? `Compared with ${compareLabel}` : undefined}
+                  >
+                    {diff(r.currentPaise, r.previousPaise)}
+                  </span>
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </div>
   );
 }
