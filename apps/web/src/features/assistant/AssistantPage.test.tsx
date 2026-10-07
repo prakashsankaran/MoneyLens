@@ -113,4 +113,27 @@ describe('AssistantPage', () => {
     await userEvent.type(await screen.findByLabelText('Ask MoneyLens AI'), 'my pin is 1234{Enter}');
     expect(await screen.findByText(/don't share PINs/)).toBeInTheDocument();
   });
+
+  it('asks about the month picked on the page and labels the answer with its month', async () => {
+    const calls = mockApi(({ url, method }) => {
+      if (url.endsWith('/ai/status')) return { data: statusFixture };
+      if (url.endsWith('/ai/conversations')) return { data: [] };
+      if (url.endsWith('/ai/chat') && method === 'POST') return { data: chatFixture };
+      return undefined;
+    });
+    renderRoute(<AssistantPage />);
+    const picker = await screen.findByLabelText(/Answer about/);
+    expect(
+      within(picker).getByRole('option', { name: 'Latest month (September 2026)' }),
+    ).toBeInTheDocument();
+    await userEvent.selectOptions(picker, 'August 2026');
+    await userEvent.type(screen.getByLabelText('Ask MoneyLens AI'), 'Where did it go?{Enter}');
+
+    const reply = await screen.findByRole('listitem', { name: 'MoneyLens AI reply' });
+    expect(within(reply).getByText('About September 2026')).toBeInTheDocument();
+    expect(calls.find((c) => c.url.endsWith('/ai/chat'))?.body).toEqual({
+      message: 'Where did it go?',
+      month: '2026-08',
+    });
+  });
 });

@@ -1,3 +1,4 @@
+import { formatMonthKey } from '@moneylens/shared';
 import type { AssistantContext, AssistantTopic } from '@moneylens/types';
 
 const RULES: { topic: AssistantTopic; pattern: RegExp }[] = [
@@ -62,6 +63,66 @@ export function classifyQuestion(question: string): AssistantTopic[] {
     topics.splice(topics.indexOf('increasing'), 1);
   }
   return ['overview', ...new Set(topics)];
+}
+
+const MONTH_PATTERNS = [
+  'jan(?:uary)?',
+  'feb(?:ruary)?',
+  'mar(?:ch)?',
+  'apr(?:il)?',
+  'may',
+  'june?',
+  'july?',
+  'aug(?:ust)?',
+  'sep(?:t(?:ember)?)?',
+  'oct(?:ober)?',
+  'nov(?:ember)?',
+  'dec(?:ember)?',
+];
+
+export interface MentionedMonth {
+  /** The month to answer about: the latest one named that has data. */
+  month: string | null;
+  /** Months the question named that have no data, as shown to the user. */
+  missing: string[];
+}
+
+/**
+ * The month a question names, such as "September", "Sep 2026" or "2026-09".
+ * A name without a year means the most recent month of that name with data.
+ * Relative phrases ("last month") are left alone: they compare against the
+ * month being explained, they don't change it.
+ */
+export function mentionedMonth(question: string, availableMonths: string[]): MentionedMonth {
+  const available = new Set(availableMonths);
+  const found = new Set<string>();
+  const missing = new Set<string>();
+  const add = (monthNumber: number, year: number | null) => {
+    const mm = String(monthNumber).padStart(2, '0');
+    const key = year
+      ? `${year}-${mm}`
+      : [...availableMonths].reverse().find((m) => m.endsWith(`-${mm}`));
+    if (key && available.has(key)) found.add(key);
+    else missing.add(key ? formatMonthKey(key) : formatMonthKey(`2000-${mm}`).replace(' 2000', ''));
+  };
+
+  for (const match of question.matchAll(/\b(20\d{2})-(0[1-9]|1[0-2])\b/g)) {
+    add(Number(match[2]), Number(match[1]));
+  }
+  MONTH_PATTERNS.forEach((pattern, i) => {
+    const re = new RegExp(
+      `\\b(in|for|of|during|about)?\\s*\\b(${pattern})\\b\\.?,?(?:\\s+(20\\d{2}))?`,
+      'gi',
+    );
+    for (const match of question.matchAll(re)) {
+      const year = match[3] ? Number(match[3]) : null;
+      // "may" is usually a verb: count it only as "in May" or "May 2026".
+      if (pattern === 'may' && !year && !match[1]) continue;
+      add(i + 1, year);
+    }
+  });
+
+  return { month: [...found].sort().at(-1) ?? null, missing: [...missing] };
 }
 
 const SYNONYMS: Record<string, string[]> = {

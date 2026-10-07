@@ -6,6 +6,7 @@ export const statusFixture: AssistantStatus = {
   model: 'claude-sonnet-5-5',
   dailyMessageLimit: 50,
   messagesToday: 3,
+  availableMonths: ['2026-07', '2026-08', '2026-09'],
 };
 
 export const chatFixture: ChatResponse = {
