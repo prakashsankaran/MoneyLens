@@ -30,7 +30,7 @@
     "expo-system-ui": "~57.0.4",
     "lucide-react-native": "^1.52.0",
     "react": "19.2.3",
-    "react-dom": "19.2.3",
+    "react-dom": "19.3.0",
     "react-hook-form": "^7.89.0",
     "react-native": "0.86.3",
     "react-native-gesture-handler": "~2.32.0",
