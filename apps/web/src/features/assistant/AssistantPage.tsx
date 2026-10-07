@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { LuPlus, LuSend, LuTrash2 } from 'react-icons/lu';
+import { formatMonthKey } from '@moneylens/shared';
 import { ASSISTANT_MESSAGE_MAX } from '@moneylens/validation';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
@@ -23,6 +24,8 @@ export function AssistantPage() {
   const chat = useChat();
   const remove = useDeleteConversation();
   const [draft, setDraft] = useState('');
+  // '' means the latest month with data, which the server picks.
+  const [month, setMonth] = useState('');
   const [pendingQuestion, setPendingQuestion] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -36,7 +39,11 @@ export function AssistantPage() {
     if (!message || chat.isPending) return;
     setPendingQuestion(message);
     chat.mutate(
-      { message, ...(activeId ? { conversationId: activeId } : {}) },
+      {
+        message,
+        ...(activeId ? { conversationId: activeId } : {}),
+        ...(month ? { month } : {}),
+      },
       {
         onSuccess: (data) => {
           setActiveId(data.conversation.id);
@@ -48,6 +55,7 @@ export function AssistantPage() {
   };
 
   const list = conversations.data ?? [];
+  const [latestMonth, ...earlierMonths] = [...(status.data?.availableMonths ?? [])].reverse();
   const limitReached =
     status.data !== undefined && status.data.messagesToday >= status.data.dailyMessageLimit;
 
@@ -200,6 +208,24 @@ export function AssistantPage() {
               ask(draft);
             }}
           >
+            {latestMonth && earlierMonths.length > 0 && (
+              <label className="mb-3 flex items-center gap-2 text-sm text-ink-500">
+                <span>Answer about</span>
+                <select
+                  value={month}
+                  onChange={(e) => setMonth(e.target.value)}
+                  className="h-9 rounded-lg border border-ink-200 bg-surface px-2 text-sm text-ink-900 transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
+                >
+                  <option value="">Latest month ({formatMonthKey(latestMonth)})</option>
+                  {earlierMonths.map((m) => (
+                    <option key={m} value={m}>
+                      {formatMonthKey(m)}
+                    </option>
+                  ))}
+                </select>
+                <span className="hidden sm:inline">or name a month in your question</span>
+              </label>
+            )}
             <label htmlFor="assistant-question" className="sr-only">
               Ask MoneyLens AI
             </label>

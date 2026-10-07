@@ -107,6 +107,42 @@ describe('the example questions from the brief', () => {
   });
 });
 
+describe('choosing the month', () => {
+  it('lists the months it can answer about', async () => {
+    const res = await request(main.app)
+      .get('/api/ai/status')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+    const { availableMonths } = res.body.data as AssistantStatus;
+    expect(availableMonths.at(-1)).toBe('2026-09');
+    expect(availableMonths).toContain('2026-08');
+  });
+
+  it('answers about a month named in the question, even over the picked month', async () => {
+    const named = await ask('Where did most of my money go in August?').expect(200);
+    expect((named.body.data as ChatResponse).reply.answer?.month).toBe('2026-08');
+    expect((named.body.data as ChatResponse).reply.answer?.facts[0]?.text).toMatch(
+      /^In August 2026 you received/,
+    );
+
+    const picked = await request(main.app)
+      .post('/api/ai/chat')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ message: 'What about July?', month: '2026-08' })
+      .expect(200);
+    expect((picked.body.data as ChatResponse).reply.answer?.month).toBe('2026-07');
+  });
+
+  it('says so when the named month has no data', async () => {
+    const res = await ask('How much did I spend in January 2020?').expect(200);
+    const { answer } = (res.body.data as ChatResponse).reply;
+    expect(answer?.month).toBe('2026-09');
+    expect(answer?.dataLimitations[0]).toBe(
+      'I have no transaction data for January 2020, so this answer is about September 2026.',
+    );
+  });
+});
+
 describe('what the provider is given', () => {
   it('sends aggregated figures and rules, never identifiers or raw descriptions', async () => {
     const provider = new ScriptedProvider(() => 'You spent ₹1,03,283 in September 2026.');

@@ -1,4 +1,4 @@
-import { ANSWER_STATUS_NOTE, textBlocks } from '@moneylens/shared';
+import { ANSWER_STATUS_NOTE, formatMonthKey, textBlocks } from '@moneylens/shared';
 import type { AssistantAnswer } from '@moneylens/types';
 import { ProvenanceBadge } from '../../components/ProvenanceBadge';
 
@@ -35,6 +35,9 @@ export function AnswerCard({
   const note = ANSWER_STATUS_NOTE[answer.status];
   return (
     <div className="space-y-4 text-sm">
+      {answer.month && (
+        <p className="text-xs font-medium text-ink-500">About {formatMonthKey(answer.month)}</p>
+      )}
       {answer.interpretation ? (
         <section aria-label="MoneyLens AI answer">
           <div className="mb-2 flex items-center gap-2">

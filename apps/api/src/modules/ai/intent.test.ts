@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { AssistantContext } from '@moneylens/types';
-import { classifyQuestion, matchCategory } from './intent';
+import { classifyQuestion, matchCategory, mentionedMonth } from './intent';
 
 describe('classifyQuestion', () => {
   // The example questions from the product brief.
@@ -37,5 +37,37 @@ describe('matchCategory', () => {
     expect(matchCategory('Why is food delivery so high?', ctx)?.categoryId).toBe('fd');
     expect(matchCategory('How much on Swiggy?', ctx)?.categoryId).toBe('fd');
     expect(matchCategory('What about rent?', ctx)).toBeNull();
+  });
+});
+
+describe('mentionedMonth', () => {
+  const months = ['2025-09', '2026-08', '2026-09', '2026-10'];
+
+  it.each([
+    ['What was my biggest category in September?', '2026-09'],
+    ['How much did I spend in Sep 2025?', '2025-09'],
+    ['Show me 2026-08', '2026-08'],
+    ['Compare August with September', '2026-09'],
+    ['Where did my money go in sept.', '2026-09'],
+  ])('%s', (question, expected) => {
+    expect(mentionedMonth(question, months)).toEqual({ month: expected, missing: [] });
+  });
+
+  it('leaves questions without a month, relative phrases and the verb "may" alone', () => {
+    for (const q of [
+      'Why did I spend more this month?',
+      'More than last month?',
+      'How may I save?',
+    ]) {
+      expect(mentionedMonth(q, months)).toEqual({ month: null, missing: [] });
+    }
+  });
+
+  it('reports named months that have no data', () => {
+    expect(mentionedMonth('What about in May?', months)).toEqual({ month: null, missing: ['May'] });
+    expect(mentionedMonth('January 2026 versus October', months)).toEqual({
+      month: '2026-10',
+      missing: ['January 2026'],
+    });
   });
 });
