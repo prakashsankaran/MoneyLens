@@ -3,7 +3,12 @@ import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { formatINR, formatMonthKey } from '@moneylens/shared';
-import type { Insight, MonthlyReport, PeriodTotals } from '@moneylens/types';
+import type { CategoryComparisonRow, Insight, MonthlyReport, PeriodTotals } from '@moneylens/types';
+import { DonutChart } from '../../components/charts/DonutChart';
+import { ScoreRing } from '../../components/charts/ScoreRing';
+
+import { categoryColour, COLOURED_CATEGORIES } from '../../lib/category-colors';
+import { TopMerchants } from '../dashboard/components/TopMerchants';
 import { Card } from '../../components/Card';
 import { FullPageSpinner } from '../../components/FullPageSpinner';
 import { ErrorCard, PageHeader } from '../../components/PageHeader';
@@ -132,10 +137,12 @@ function ReportBody({ report }: { report: MonthlyReport }) {
       </Section>
 
       <Section n={2} title="Income and spending">
-        <TotalsTable
+        <TotalsVisual
           totals={report.totals}
           compare={report.compareTotals}
-          compareLabel={compareLabel}
+          compareLabel={
+            report.compareMonth ? formatMonthKey(report.compareMonth, { short: true }) : null
+          }
         />
       </Section>
 
@@ -143,14 +150,7 @@ function ReportBody({ report }: { report: MonthlyReport }) {
         {report.incomeSources.length === 0 ? (
           <Empty>No income recorded this month.</Empty>
         ) : (
-          <SimpleTable
-            head={['Source', 'Payments', 'Amount']}
-            rows={report.incomeSources.map((m) => [
-              m.name,
-              String(m.transactionCount),
-              formatINR(m.amountPaise),
-            ])}
-          />
+          <TopMerchants merchants={report.incomeSources} />
         )}
       </Section>
 
@@ -158,22 +158,7 @@ function ReportBody({ report }: { report: MonthlyReport }) {
         {report.categories.length === 0 ? (
           <Empty>No spending this month.</Empty>
         ) : (
-          <SimpleTable
-            head={[
-              'Category',
-              'This month',
-              compareLabel ?? 'Compared month',
-              'Difference',
-              '3-month average',
-            ]}
-            rows={report.categories.map((c) => [
-              c.name,
-              formatINR(c.currentPaise),
-              formatINR(c.previousPaise),
-              diff(c.currentPaise, c.previousPaise),
-              formatINR(c.average3Paise),
-            ])}
-          />
+          <CategoryVisual rows={report.categories} compareLabel={compareLabel} />
         )}
       </Section>
 
@@ -181,15 +166,7 @@ function ReportBody({ report }: { report: MonthlyReport }) {
         {report.merchants.length === 0 ? (
           <Empty>No merchant payments this month.</Empty>
         ) : (
-          <SimpleTable
-            head={['Merchant', 'Payments', 'This month', compareLabel ?? 'Compared month']}
-            rows={report.merchants.map((m) => [
-              m.name,
-              String(m.transactionCount),
-              formatINR(m.amountPaise),
-              formatINR(m.previousAmountPaise),
-            ])}
-          />
+          <TopMerchants merchants={report.merchants} />
         )}
       </Section>
 
@@ -284,7 +261,7 @@ function InsightList({ items, empty }: { items: Insight[]; empty: string }) {
   );
 }
 
-function TotalsTable({
+function TotalsVisual({
   totals,
   compare,
   compareLabel,
@@ -293,31 +270,184 @@ function TotalsTable({
   compare: PeriodTotals | null;
   compareLabel: string | null;
 }) {
-  const rows: [string, number, number | undefined][] = [
-    ['Income', totals.incomePaise, compare?.incomePaise],
-    ['Spending (after refunds)', totals.spendingPaise, compare?.spendingPaise],
-    ['Refunds', totals.refundsPaise, compare?.refundsPaise],
-    ['Cashback', totals.cashbackPaise, compare?.cashbackPaise],
-    ['Kept (income minus spending)', totals.savedPaise, compare?.savedPaise],
+  const kept = totals.savedPaise;
+  const tiles: { label: string; now: number; before?: number; upIsGood: boolean; tone?: string }[] =
+    [
+      { label: 'Income', now: totals.incomePaise, before: compare?.incomePaise, upIsGood: true },
+      {
+        label: 'Spending',
+        now: totals.spendingPaise,
+        before: compare?.spendingPaise,
+        upIsGood: false,
+      },
+      {
+        label: kept >= 0 ? 'Kept' : 'Overspent',
+        now: Math.abs(kept),
+        before: compare ? compare.savedPaise : undefined,
+        upIsGood: true,
+        tone: kept >= 0 ? 'text-positive' : 'text-negative',
+      },
+    ];
+  const max = Math.max(1, totals.incomePaise, totals.spendingPaise);
+  return (
+    <div>
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {tiles.map((t) => {
+          const change =
+            t.before === undefined ? null : (t.label === 'Overspent' ? kept : t.now) - t.before;
+          return (
+            <div key={t.label} className="rounded-xl bg-ink-50 p-3.5">
+              <dt className="text-xs font-medium text-ink-500">{t.label}</dt>
+              <dd className={`mt-1 text-xl font-bold tracking-tight sm:text-2xl ${t.tone ?? ''}`}>
+                {formatINR(t.now)}
+              </dd>
+              {change !== null && compareLabel && (
+                <dd
+                  className={`mt-1 text-xs font-medium ${
+                    change === 0
+                      ? 'text-ink-500'
+                      : change > 0 === t.upIsGood
+                        ? 'text-positive'
+                        : 'text-negative'
+                  }`}
+                >
+                  {diff(change, 0)} vs {compareLabel}
+                </dd>
+              )}
+            </div>
+          );
+        })}
+        <div className="flex items-center gap-3 rounded-xl bg-ink-50 p-3.5">
+          <ScoreRing
+            value={totals.savingsRatePct === null ? null : Math.max(0, totals.savingsRatePct)}
+            tone={
+              totals.savingsRatePct === null
+                ? 'none'
+                : totals.savingsRatePct >= 20
+                  ? 'good'
+                  : totals.savingsRatePct >= 0
+                    ? 'fair'
+                    : 'poor'
+            }
+            size={56}
+            thickness={6}
+          >
+            <span className="text-xs font-bold">
+              {totals.savingsRatePct === null ? '–' : `${Math.round(totals.savingsRatePct)}%`}
+            </span>
+          </ScoreRing>
+          <div>
+            <dt className="text-xs font-medium text-ink-500">Savings rate</dt>
+            <dd className="text-sm font-semibold">
+              {totals.savingsRatePct === null ? 'No income' : 'of income kept'}
+            </dd>
+          </div>
+        </div>
+      </dl>
+      <div className="mt-5 space-y-2.5" aria-hidden="true">
+        {(
+          [
+            ['Income', totals.incomePaise, 'bg-series-1'],
+            ['Spending', totals.spendingPaise, 'bg-series-2'],
+          ] as const
+        ).map(([name, value, colour]) => (
+          <div key={name} className="grid grid-cols-[4.5rem_1fr] items-center gap-2 text-xs">
+            <span className="text-ink-500">{name}</span>
+            <span className="h-3 rounded-full bg-ink-100">
+              <span
+                className={`block h-full rounded-full ${colour}`}
+                style={{ width: `${Math.max((value / max) * 100, 1)}%` }}
+              />
+            </span>
+          </div>
+        ))}
+      </div>
+      <p className="mt-4 text-xs text-ink-500">
+        Refunds {formatINR(totals.refundsPaise)} · Cashback {formatINR(totals.cashbackPaise)}
+      </p>
+    </div>
+  );
+}
+
+function CategoryVisual({
+  rows,
+  compareLabel,
+}: {
+  rows: CategoryComparisonRow[];
+  compareLabel: string | null;
+}) {
+  const sorted = [...rows].sort((a, b) => b.currentPaise - a.currentPaise);
+  const spent = sorted.filter((r) => r.currentPaise > 0);
+  const total = spent.reduce((a, r) => a + r.currentPaise, 0);
+  const shown = spent.slice(0, COLOURED_CATEGORIES);
+  const rest = spent.slice(COLOURED_CATEGORIES);
+  const slices = [
+    ...shown.map((r, i) => ({
+      key: r.categoryId ?? r.slug,
+      label: r.name,
+      value: r.currentPaise,
+      color: categoryColour(i),
+    })),
+    ...(rest.length
+      ? [
+          {
+            key: '__rest__',
+            label: 'Everything else',
+            value: rest.reduce((a, r) => a + r.currentPaise, 0),
+            color: categoryColour(COLOURED_CATEGORIES),
+          },
+        ]
+      : []),
   ];
   return (
-    <SimpleTable
-      head={['', 'This month', ...(compare ? [compareLabel ?? '', 'Difference'] : [])]}
-      rows={[
-        ...rows.map(([name, now, before]) => [
-          name,
-          formatINR(now),
-          ...(compare && before !== undefined ? [formatINR(before), diff(now, before)] : []),
-        ]),
-        [
-          'Savings rate',
-          totals.savingsRatePct === null ? '–' : `${totals.savingsRatePct}%`,
-          ...(compare
-            ? [compare.savingsRatePct === null ? '–' : `${compare.savingsRatePct}%`, '']
-            : []),
-        ],
-      ]}
-    />
+    <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
+      {total > 0 && (
+        <DonutChart
+          slices={slices}
+          size={180}
+          label={`Spending by category: ${slices.map((s) => s.label).join(', ')}`}
+          center={
+            <>
+              <span className="text-xl font-bold tracking-tight">{formatINR(total)}</span>
+              <span className="mt-0.5 text-xs text-ink-500">spent</span>
+            </>
+          }
+        />
+      )}
+      <ul className="w-full min-w-0 flex-1 divide-y divide-ink-100">
+        {sorted.map((r, i) => {
+          const change = r.currentPaise - r.previousPaise;
+          return (
+            <li key={r.categoryId ?? r.slug} className="flex items-center gap-3 py-2 text-sm">
+              <span
+                className="size-2.5 shrink-0 rounded-full"
+                style={{ background: r.currentPaise > 0 ? categoryColour(i) : 'transparent' }}
+                aria-hidden="true"
+              />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-medium">{r.name}</span>
+                <span className="block text-xs text-ink-500">
+                  3-month average {formatINR(r.average3Paise)}
+                </span>
+              </span>
+              <span className="shrink-0 text-right">
+                <span className="block font-semibold tabular-nums">
+                  {formatINR(r.currentPaise)}
+                </span>
+                <span
+                  className={`block text-xs font-medium tabular-nums ${
+                    change === 0 ? 'text-ink-500' : change > 0 ? 'text-negative' : 'text-positive'
+                  }`}
+                  title={compareLabel ? `Compared with ${compareLabel}` : undefined}
+                >
+                  {diff(r.currentPaise, r.previousPaise)}
+                </span>
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 

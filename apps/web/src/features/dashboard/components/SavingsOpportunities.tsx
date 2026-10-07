@@ -1,12 +1,14 @@
+import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { formatINR } from '@moneylens/shared';
 import type { Insight, Observation } from '@moneylens/types';
 import { ProvenanceBadge } from '../../../components/ProvenanceBadge';
+import { displayTitle, metricText } from '../../insights/insight-format';
 
 /**
- * Potential saving opportunities, each with its estimated saving and the
- * assumption behind it, followed by categories above their recent average.
- * Worded as opportunities, never as judgements ("wasted").
+ * Potential saving opportunities led by their estimated monthly saving, then
+ * categories above their recent average led by the amount. The reasoning sits
+ * behind "Why?". Worded as opportunities, never as judgements ("wasted").
  */
 export function SavingsOpportunities({
   opportunities,
@@ -32,36 +34,52 @@ export function SavingsOpportunities({
     <div>
       <ul className="space-y-3">
         {shownOpportunities.map((o) => (
-          <li key={o.id} className="rounded-xl border border-ink-200/70 p-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <ProvenanceBadge kind={o.kind} />
-              {o.potentialMonthlySavingPaise !== undefined && (
-                <span className="text-xs font-medium text-positive">
-                  About {formatINR(o.potentialMonthlySavingPaise)} a month
-                </span>
-              )}
-            </div>
-            <p className="mt-2 text-sm font-medium">{o.title}</p>
-            {o.assumption && <p className="mt-1 text-sm text-ink-500">{o.assumption}</p>}
-            <p className="mt-2 text-xs text-ink-500">
-              Based on {o.supportingTransactionIds.length}{' '}
-              {o.supportingTransactionIds.length === 1 ? 'transaction' : 'transactions'}
-            </p>
-          </li>
+          <Item
+            key={o.id}
+            accent="border-l-positive"
+            figure={
+              o.potentialMonthlySavingPaise !== undefined && (
+                <p className="text-positive">
+                  <span className="sr-only">About </span>
+                  <span className="text-2xl font-bold tracking-tight">
+                    {formatINR(o.potentialMonthlySavingPaise)}
+                  </span>
+                  <span className="ml-1 text-sm font-medium"> a month</span>
+                </p>
+              )
+            }
+            tag={
+              <span className="rounded-full bg-positive/10 px-2 py-0.5 text-[11px] font-medium text-positive">
+                Saving idea
+              </span>
+            }
+            title={displayTitle(o.title).title}
+            why={o.assumption}
+            count={o.supportingTransactionIds.length}
+            kind={o.kind}
+          />
         ))}
-        {shownObservations.map((o) => (
-          <li key={o.id} className="rounded-xl border border-ink-200/70 p-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <ProvenanceBadge kind={o.kind} />
-            </div>
-            <p className="mt-2 text-sm font-medium">{o.title}</p>
-            <p className="mt-1 text-sm text-ink-500">{o.explanation}</p>
-            <p className="mt-2 text-xs text-ink-500">
-              Based on {o.supportingTransactionIds.length}{' '}
-              {o.supportingTransactionIds.length === 1 ? 'transaction' : 'transactions'}
-            </p>
-          </li>
-        ))}
+        {shownObservations.map((o) => {
+          const figure = metricText(o.metric);
+          return (
+            <Item
+              key={o.id}
+              accent="border-l-amber-400"
+              figure={
+                figure && (
+                  <p>
+                    <span className="text-2xl font-bold tracking-tight text-warning">{figure}</span>
+                    <span className="ml-1.5 text-xs text-ink-500">{o.metric.label}</span>
+                  </p>
+                )
+              }
+              title={o.title}
+              why={o.explanation}
+              count={o.supportingTransactionIds.length}
+              kind={o.kind}
+            />
+          );
+        })}
       </ul>
       <Link
         to="/insights"
@@ -70,5 +88,46 @@ export function SavingsOpportunities({
         See all insights and the evidence
       </Link>
     </div>
+  );
+}
+
+function Item({
+  accent,
+  figure,
+  tag,
+  title,
+  why,
+  count,
+  kind,
+}: {
+  accent: string;
+  figure: ReactNode;
+  tag?: ReactNode;
+  title: string;
+  why: string | undefined;
+  count: number;
+  kind: Observation['kind'];
+}) {
+  return (
+    <li className={`rounded-xl border border-l-4 border-ink-200/70 p-4 ${accent}`}>
+      <div className="flex flex-wrap items-center gap-2">
+        {tag}
+        <ProvenanceBadge kind={kind} />
+      </div>
+      {figure && <div className="mt-2">{figure}</div>}
+      <p className="mt-1 text-sm font-medium">{title}</p>
+      <details className="group mt-2 text-xs text-ink-500">
+        <summary className="inline-flex cursor-pointer list-none items-center gap-1 font-medium text-brand-600 hover:underline [&::-webkit-details-marker]:hidden underline-offset-4 hover:text-brand-700 transition-all duration-200">
+          <span aria-hidden className="inline-block transition-transform group-open:rotate-90">
+            ›
+          </span>
+          Why?
+        </summary>
+        {why && <p className="mt-1.5 text-sm text-ink-700">{why}</p>}
+        <p className="mt-1.5">
+          Based on {count} {count === 1 ? 'transaction' : 'transactions'}
+        </p>
+      </details>
+    </li>
   );
 }

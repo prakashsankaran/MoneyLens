@@ -1,29 +1,31 @@
 import { formatINR } from '@moneylens/shared';
 import type { MerchantSummaryItem } from '@moneylens/types';
 
+/** Top merchants as ranked bars, longest first. */
 export function TopMerchants({ merchants }: { merchants: MerchantSummaryItem[] }) {
   if (merchants.length === 0) {
     return <p className="text-sm text-ink-500">No merchant payments this month.</p>;
   }
+  const max = Math.max(...merchants.map((m) => m.amountPaise));
   return (
-    <ol className="divide-y divide-ink-100">
-      {merchants.map((m, i) => (
-        <li
-          key={m.merchantId ?? m.name}
-          className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
-        >
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-ink-100 text-xs font-semibold text-ink-700">
-              {i + 1}
-            </span>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium">{m.name}</p>
-              <p className="text-xs text-ink-500">
-                {m.transactionCount} {m.transactionCount === 1 ? 'payment' : 'payments'}
-              </p>
-            </div>
+    <ol className="space-y-3.5">
+      {merchants.map((m) => (
+        <li key={m.merchantId ?? m.name}>
+          <div className="flex items-baseline justify-between gap-3 text-sm">
+            <span className="min-w-0 truncate font-medium">{m.name}</span>
+            <span className="shrink-0 font-semibold tabular-nums">{formatINR(m.amountPaise)}</span>
           </div>
-          <p className="text-sm font-medium tabular-nums">{formatINR(m.amountPaise)}</p>
+          <div className="mt-1.5 flex items-center gap-2">
+            <div className="h-2 flex-1 rounded-full bg-ink-100" aria-hidden="true">
+              <div
+                className="h-full rounded-full bg-series-1 transition-[width] duration-500"
+                style={{ width: `${Math.max((m.amountPaise / max) * 100, 2)}%` }}
+              />
+            </div>
+            <span className="w-20 shrink-0 text-right text-xs whitespace-nowrap text-ink-500">
+              {m.transactionCount} {m.transactionCount === 1 ? 'payment' : 'payments'}
+            </span>
+          </div>
         </li>
       ))}
     </ol>

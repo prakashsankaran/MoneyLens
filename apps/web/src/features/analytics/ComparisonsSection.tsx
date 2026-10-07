@@ -1,4 +1,4 @@
-import { formatINR } from '@moneylens/shared';
+import { formatINR, formatINRCompact } from '@moneylens/shared';
 import type { ComparisonsResponse, PeriodComparisonRow } from '@moneylens/types';
 import { Card } from '../../components/Card';
 import { ProvenanceBadge } from '../../components/ProvenanceBadge';
@@ -9,6 +9,12 @@ function changeText(row: PeriodComparisonRow): string {
   const pct = Math.round(row.changePct);
   if (pct === 0) return 'About the same';
   return `${pct > 0 ? 'Up' : 'Down'} ${Math.abs(pct)}%`;
+}
+
+/** Spending going up reads as a warning, going down as good news. */
+function changeTone(row: PeriodComparisonRow): string {
+  if (row.changePct === null || Math.round(row.changePct) === 0) return 'text-ink-700';
+  return row.changePct > 0 ? 'text-negative' : 'text-positive';
 }
 
 /** Period comparisons and when-you-spend patterns for the Analytics page. */
@@ -30,46 +36,22 @@ export function ComparisonsSection({
         description="Spending after refunds against earlier periods"
         action={<ProvenanceBadge kind="CALCULATION" />}
       >
-        <div className="-mx-2 overflow-x-auto">
-          <table className="w-full min-w-[30rem] text-sm">
-            <thead className="text-left text-xs text-ink-500">
-              <tr>
-                <th scope="col" className="px-2 pb-2 font-medium">
-                  Compared with
-                </th>
-                <th scope="col" className="px-2 pb-2 text-right font-medium">
-                  This period
-                </th>
-                <th scope="col" className="px-2 pb-2 text-right font-medium">
-                  Then
-                </th>
-                <th scope="col" className="px-2 pb-2 text-right font-medium">
-                  Change
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-ink-100">
-              {data.totals.map((r) => (
-                <tr key={r.baseline}>
-                  <td className="px-2 py-2">
-                    <span className="font-medium">{r.label}</span>
-                    {r.baselineMonths > 0 && r.baseline.startsWith('avg') && (
-                      <span className="block text-xs text-ink-500">
-                        Average of {r.baselineMonths} {r.baselineMonths === 1 ? 'month' : 'months'}{' '}
-                        with data
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-2 py-2 text-right tabular-nums">{formatINR(r.currentPaise)}</td>
-                  <td className="px-2 py-2 text-right tabular-nums">
-                    {r.baselineMonths === 0 ? '–' : formatINR(r.baselinePaise)}
-                  </td>
-                  <td className="px-2 py-2 text-right tabular-nums">{changeText(r)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ul className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+          {data.totals.map((r) => (
+            <li key={r.baseline} className="flex flex-col rounded-xl bg-ink-50 p-3.5 sm:p-4">
+              <span className="text-xs font-medium text-ink-500">{r.label}</span>
+              <span
+                className={`mt-1 font-bold tracking-tight ${r.changePct === null ? 'text-sm' : 'text-xl'} ${changeTone(r)}`}
+              >
+                {changeText(r)}
+              </span>
+              <span className="mt-auto pt-1.5 text-xs text-ink-500 tabular-nums">
+                {formatINR(r.currentPaise)}
+                {r.baselineMonths > 0 && ` vs ${formatINR(r.baselinePaise)}`}
+              </span>
+            </li>
+          ))}
+        </ul>
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -81,23 +63,37 @@ export function ComparisonsSection({
               : `Per day, weekends averaged ${formatINR(p.weekendDailyAveragePaise)} and weekdays ${formatINR(p.weekdayDailyAveragePaise)} (${p.weekendRatio}x)`
           }
         >
-          <ol className="space-y-2">
+          <ol className="flex h-44 items-end gap-1.5 sm:gap-2">
             {p.byWeekday.map((d) => (
-              <li
-                key={d.weekday}
-                className="grid grid-cols-[6rem_1fr_6rem] items-center gap-2 text-sm"
-              >
-                <span>{d.label}</span>
-                <span className="h-2 rounded-full bg-ink-100" aria-hidden="true">
+              <li key={d.weekday} className="flex h-full min-w-0 flex-1 flex-col items-center">
+                <span className="text-[10px] font-medium text-ink-700 tabular-nums sm:text-xs">
+                  <span className="sr-only">
+                    {d.label}: {formatINR(d.amountPaise)}
+                  </span>
+                  <span aria-hidden="true">{formatINRCompact(d.amountPaise)}</span>
+                </span>
+                <span className="mt-1 flex w-full flex-1 items-end" aria-hidden="true">
                   <span
-                    className={`block h-full rounded-full ${d.weekday >= 5 ? 'bg-series-2' : 'bg-series-1'}`}
-                    style={{ width: `${(d.amountPaise / maxDay) * 100}%` }}
+                    className={`block w-full rounded-t-md ${d.weekday >= 5 ? 'bg-series-2' : 'bg-series-1'}`}
+                    style={{ height: `${Math.max((d.amountPaise / maxDay) * 100, 2)}%` }}
                   />
                 </span>
-                <span className="text-right tabular-nums">{formatINR(d.amountPaise)}</span>
+                <span className="mt-1.5 text-xs text-ink-500" aria-hidden="true">
+                  {d.label.slice(0, 3)}
+                </span>
               </li>
             ))}
           </ol>
+          <ul className="mt-3 flex gap-4 text-xs text-ink-700" aria-label="Legend">
+            <li className="flex items-center gap-1.5">
+              <span className="size-2.5 rounded-sm bg-series-1" />
+              Weekdays
+            </li>
+            <li className="flex items-center gap-1.5">
+              <span className="size-2.5 rounded-sm bg-series-2" />
+              Weekends
+            </li>
+          </ul>
           <h3 className="mt-5 text-sm font-semibold">By week</h3>
           <ol className="mt-2 space-y-2">
             {p.weekly.map((w) => (
@@ -155,10 +151,10 @@ export function ComparisonsSection({
               </div>
             ))}
           </dl>
-          <p className="mt-4 text-sm">
+          <p className="mt-4 text-sm text-ink-700">
             {p.monthlyVolatility === null
               ? 'Spending volatility needs at least 3 months of data.'
-              : `Monthly spending varies by about ${Math.round(p.monthlyVolatility * 100)}% across the last ${p.volatilityMonths} months (coefficient of variation ${p.monthlyVolatility}).`}
+              : `Monthly spending varies by about ${Math.round(p.monthlyVolatility * 100)}% over ${p.volatilityMonths} months.`}
           </p>
         </Card>
       </div>
