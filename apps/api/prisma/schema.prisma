@@ -136,6 +136,41 @@ model User {
   moneyPlans        MoneyPlan[]
   aiConversations   AIConversation[]
   categoryRules     UserCategoryRule[]
+  authEvents        AuthEvent[]
+}
+
+enum AuthEventType {
+  REGISTERED
+  LOGIN_SUCCEEDED
+  LOGIN_FAILED
+  /// Refused without checking the password: too many recent failures.
+  LOGIN_BLOCKED
+  /// A rotated refresh token was presented again; its session family was revoked.
+  SESSION_REUSE_DETECTED
+  LOGGED_OUT
+  PASSWORD_CHANGED
+  /// Every session was revoked at the owner's request.
+  SIGNED_OUT_EVERYWHERE
+}
+
+/// Security log of sign-in activity, also used to slow down password
+/// guessing per account. A failed sign-in for an unknown email has no user and
+/// is keyed by an HMAC of the email, so the address itself is not stored.
+/// Rows are deleted with the account and pruned after 90 days.
+model AuthEvent {
+  id        String        @id @default(cuid())
+  userId    String?
+  type      AuthEventType
+  /// HMAC-SHA256 of the normalised email (keyed with the server secret).
+  emailKey  String?
+  userAgent String?
+  createdAt DateTime      @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([emailKey, createdAt])
+  @@index([createdAt])
 }
 
 /// Refresh-token session. Only a SHA-256 hash of the token is stored, so a

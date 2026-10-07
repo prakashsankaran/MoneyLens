@@ -63,7 +63,11 @@ Body: `{ "name": string, "email": string, "password": string (10–128) }`
 Body: `{ "email", "password" }` → `200` `{ user, accessToken, expiresIn }` and
 sets the refresh cookie. A wrong password and an unknown email return the
 identical `401` with similar timing. Rate limited per IP (`AUTH_RATE_LIMIT`
-per 15 min).
+per 15 min) and per account: after `LOGIN_LOCKOUT_ATTEMPTS` (10) wrong
+passwords for one email within `LOGIN_LOCKOUT_MINUTES` (15), further attempts
+for that email get `429 RATE_LIMITED` without the password being checked,
+whether or not the account exists. Failures before the last successful
+sign-in do not count.
 
 ### `POST /api/auth/refresh`
 
@@ -79,6 +83,28 @@ Revokes the session family and clears the cookie → `200` `{ loggedOut: true }`
 ### `GET /api/auth/me` 🔒
 
 → `{ id, email, name, createdAt }`
+
+### `GET /api/auth/activity` 🔒
+
+The account's last 20 sign-in events, newest first →
+`[{ type, at, userAgent }]`. `type` is one of `REGISTERED`,
+`LOGIN_SUCCEEDED`, `LOGIN_FAILED`, `LOGIN_BLOCKED`, `SESSION_REUSE_DETECTED`,
+`LOGGED_OUT`, `PASSWORD_CHANGED`, `SIGNED_OUT_EVERYWHERE`. Events are kept
+for 90 days.
+
+### `POST /api/auth/password` 🔒
+
+Body: `{ "currentPassword", "newPassword" (10–128, different) }`. Re-checks the
+current password, revokes every session of the account, and returns a new
+session like login (cookie, or body token for mobile). A wrong current
+password → `400` with `details.fields.currentPassword`. Shares the credential
+rate limit.
+
+### `POST /api/auth/sign-out-everywhere` 🔒
+
+Revokes every session of the account on all devices and clears this
+device's cookie → `{ loggedOut: true }`. Access tokens already issued stay
+valid until they expire (at most `ACCESS_TOKEN_TTL_SECONDS`).
 
 ### `DELETE /api/auth/account` 🔒
 
@@ -247,6 +273,10 @@ optional text fields:
 - The same bytes already imported or awaiting review → `409` with
   `details.importId`.
 - Too large → `413`.
+- Parsing takes longer than `PARSE_TIMEOUT_MS` (20 s) → recorded as a
+  `FAILED` import asking for a shorter date range.
+- An `.xlsx` whose ZIP directory declares more than 100 MB of content or
+  2,000 parts is refused before it is unzipped, as a `FAILED` import.
 
 ### `GET /api/imports` 🔒
 

@@ -3,7 +3,7 @@
 Financial data is sensitive. MoneyLens stores as little as it can and keeps
 every user's data isolated.
 
-## What is implemented (Phases 1–3)
+## What is implemented
 
 ### Authentication
 
@@ -27,6 +27,23 @@ Path=/api/auth` cookie (`Secure` in production). Only its SHA-256 hash is
   reuse detection and revocation are identical, and a body token is ignored
   without the header so a web page cannot opt out of the `HttpOnly` cookie.
   Sign-out deletes the stored token even when the API is unreachable.
+- **Sign-in throttling per account:** after 10 wrong passwords for one email
+  within 15 minutes (`LOGIN_LOCKOUT_ATTEMPTS`, `LOGIN_LOCKOUT_MINUTES`),
+  further attempts for that email are refused with `429` without checking the
+  password. It applies to unknown emails too, so it does not reveal which
+  accounts exist, and failures before the last successful sign-in do not
+  count. The pause expires on its own, so an attacker can at most delay the
+  owner's sign-in for 15 minutes; the per-IP limit still applies on top.
+- **Sign-in activity:** registrations, sign-ins (successful, failed and
+  paused), refresh-token reuse, sign-outs, password changes and "sign out
+  everywhere" are recorded in `AuthEvent` with the user agent. Emails are not
+  stored there: failed attempts are keyed by an HMAC of the email with a key
+  derived from the server secret. Owners see their last 20 events in
+  Settings. Events are deleted with the account (including failures for that
+  email before it was registered) and pruned after 90 days.
+- **Password change** re-checks the current password and revokes every
+  session; **sign out on all devices** revokes every session without a
+  password change. Both are in Settings on the web and the phone.
 
 ### Authorisation
 
@@ -52,6 +69,13 @@ Path=/api/auth` cookie (`Secure` in production). Only its SHA-256 hash is
   than opened.
 - Filenames are reduced to a base name without control characters before
   being stored or shown.
+- **Parse deadline:** each statement must be parsed within
+  `PARSE_TIMEOUT_MS` (20 s). The request is answered when the deadline
+  passes, and the PDF reader is told to stop and free its memory; it checks
+  between pages.
+- **Excel ZIP bombs:** before an `.xlsx` is unzipped, its ZIP directory is
+  read and the file is refused if it declares more than 100 MB of content,
+  more than 2,000 parts, or ZIP64. The Excel library has no limit of its own.
 - **Raw files are never written to disk or kept.** Only metadata and the
   SHA-256 are stored, and staged rows are committed only after the user
   confirms. A row cap (20,000) bounds the work per upload.
@@ -63,6 +87,20 @@ Path=/api/auth` cookie (`Secure` in production). Only its SHA-256 hash is
   (`403`). This backs up the cookie's `SameSite=Strict` setting.
 
 - `helmet` security headers. `x-powered-by` is disabled.
+- **Web app headers (nginx):** a Content-Security-Policy that allows scripts
+  only from the app's own origin (no inline scripts, no `eval`), styles from
+  the app and Google Fonts, fonts from Google Fonts, and API calls only to
+  the same origin; `frame-ancestors 'none'`, `object-src 'none'`,
+  `base-uri 'self'` and `form-action 'self'`. Also `X-Frame-Options`,
+  `X-Content-Type-Options`, `Referrer-Policy: no-referrer`,
+  `Cross-Origin-Opener-Policy` and a `Permissions-Policy` that turns off the
+  camera, microphone, location and payments. The headers are in
+  `infrastructure/docker/security-headers.conf` and are included in every
+  nginx location (nginx does not inherit `add_header` into a location that
+  sets its own, which had left the cached `/assets/` responses without them).
+  Inline style attributes are allowed because the chart library uses them.
+  Zod runs in `jitless` mode so it never probes for `eval`. The built app was
+  checked page by page under this policy with no violations.
 - CORS allowlist from `CORS_ORIGINS`, with credentials only for listed origins.
 - JSON bodies are limited to 100 kB. Malformed JSON returns a 400 envelope.
 - Rate limits: `API_RATE_LIMIT` per minute per IP across the API,
@@ -112,20 +150,35 @@ aggregates → AI`. Raw documents, transaction lists, UPI IDs, references and
   15-minute expiry but finds no data; refresh tokens are deleted with the
   account.
 
-## Planned hardening
+## Remaining risks and future work
 
-| Phase | Item                                                                                                                                      |
-| ----- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| 8     | Parser time limits (a worker thread with a deadline for PDF and Excel parsing)                                                            |
-| 8     | Account lockout/backoff per email, audit log of auth events, CSP review for the web build, dependency scanning in CI, threat-model review |
+| Item                                                      | Why it is not done yet                                                                                                                                                                         |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Parsing in a separate worker thread or process            | The deadline stops PDF parsing between pages and always answers the request on time, but a CPU-bound step inside one page or inside the Excel reader can keep running until it finishes.       |
+| Two-factor sign-in                                        | Not in the V1 scope. The activity log and "sign out on all devices" cover detection and response.                                                                                              |
+| Email notifications for new sign-ins and password changes | MoneyLens sends no email yet.                                                                                                                                                                  |
+| Revoking access tokens before they expire                 | Access tokens are stateless and live 15 minutes. Signing out everywhere ends sessions at once, but a token already issued works until it expires.                                              |
+| Per-IP rate limits are kept in memory                     | The per-account pause is stored in PostgreSQL and works across instances; the per-IP limits use memory and would need a shared store (for example Redis) if the API runs on several instances. |
+
+See [THREAT_MODEL.md](THREAT_MODEL.md) for the full list of threats and how
+each one is handled.
 
 ## Known advisories
 
-`npm audit` reports advisories in development-only tooling (as of
-2026-10-04): esbuild inside `tsup`, which affects only its dev server on
-Windows and is not used, and `deepmerge-ts` inside the Prisma 6 CLI. Neither
-ships in the API runtime bundle. Both are tracked for the phase 8 dependency
-review.
+`scripts/audit-runtime.mjs` runs in CI and fails on any high or critical
+advisory in the API's or web app's runtime dependencies. As of 2026-10-07 it
+accepts one, with a review date of 2027-01-31:
+
+- **GHSA-ggr8-5vv4-36mx** in `deepmerge-ts`, used by the Prisma CLI to merge
+  its own configuration file. No request data reaches it. Prisma 6 pins
+  `deepmerge-ts` 7, and forcing version 8 breaks the CLI.
+
+`npm audit` also lists advisories in development-only tooling: the Expo CLI
+(`node-forge`, `@expo/config-plugins`), Jest (`braces`, `micromatch`) and
+`esbuild` inside `tsup`. None of them runs in the API or ships in the web
+bundle, and most have no fixed version yet. `shell-quote` (used by the
+`concurrently` dev runner and React Native's dev tools) is pinned to the
+fixed 1.12 with an npm override.
 
 ## Reporting
 

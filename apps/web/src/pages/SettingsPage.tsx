@@ -13,6 +13,8 @@ import {
   useCategoryMutations,
 } from '../features/categories/useCategories';
 import { MerchantsCard } from '../features/merchants/MerchantsCard';
+import { ActivityCard } from '../features/account/ActivityCard';
+import { PasswordCard } from '../features/account/PasswordCard';
 
 export function SettingsPage() {
   const { user, logout } = useAuth();
@@ -34,6 +36,8 @@ export function SettingsPage() {
           Sign out
         </Button>
       </Card>
+      <PasswordCard />
+      <ActivityCard />
       <CategoriesCard />
       <MerchantsCard />
       <DataCard />

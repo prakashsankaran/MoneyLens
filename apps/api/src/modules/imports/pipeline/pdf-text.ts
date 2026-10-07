@@ -1,4 +1,4 @@
-import { StatementParseError } from './types';
+import { StatementParseError, TOO_SLOW } from './types';
 
 /** One line of text on a page: its words with their x positions. */
 export interface PdfLine {
@@ -45,7 +45,11 @@ const INCORRECT_PASSWORD = 2;
  * Extract positioned text lines from a PDF held in memory. The password, if
  * any, is passed straight to the PDF reader and never stored or logged.
  */
-export async function extractPdfLines(buffer: Buffer, password?: string): Promise<PdfLine[]> {
+export async function extractPdfLines(
+  buffer: Buffer,
+  password?: string,
+  signal?: AbortSignal,
+): Promise<PdfLine[]> {
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
   const task = pdfjs.getDocument({
     data: new Uint8Array(buffer),
@@ -56,10 +60,14 @@ export async function extractPdfLines(buffer: Buffer, password?: string): Promis
     stopAtErrors: false,
     verbosity: 0,
   });
+  // Stop pdf.js (and free its memory) as soon as the deadline passes.
+  const stop = () => void task.destroy();
+  signal?.addEventListener('abort', stop, { once: true });
   let doc: Awaited<typeof task.promise>;
   try {
     doc = await task.promise;
   } catch (err) {
+    if (signal?.aborted) throw new StatementParseError(TOO_SLOW);
     const e = err as { name?: string; code?: number };
     if (e.name === 'PasswordException') {
       if (e.code === INCORRECT_PASSWORD || (e.code !== NEED_PASSWORD && password)) {
@@ -84,6 +92,7 @@ export async function extractPdfLines(buffer: Buffer, password?: string): Promis
     }
     const lines: PdfLine[] = [];
     for (let n = 1; n <= doc.numPages; n += 1) {
+      if (signal?.aborted) throw new StatementParseError(TOO_SLOW);
       const page = await doc.getPage(n);
       const { height } = page.getViewport({ scale: 1 });
       const content = await page.getTextContent();
@@ -99,7 +108,11 @@ export async function extractPdfLines(buffer: Buffer, password?: string): Promis
       );
     }
     return lines;
+  } catch (err) {
+    if (signal?.aborted) throw new StatementParseError(TOO_SLOW);
+    throw err;
   } finally {
+    signal?.removeEventListener('abort', stop);
     await task.destroy();
   }
 }

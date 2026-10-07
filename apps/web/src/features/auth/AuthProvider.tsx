@@ -65,6 +65,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           signOutLocally();
         }
       },
+      async changePassword(input) {
+        accept(
+          await api<AuthResult>('/auth/password', { method: 'POST', body: JSON.stringify(input) }),
+        );
+      },
+      async signOutEverywhere() {
+        try {
+          await api('/auth/sign-out-everywhere', { method: 'POST' });
+        } finally {
+          signOutLocally();
+        }
+      },
       async deleteAccount(password) {
         await api('/auth/account', { method: 'DELETE', body: JSON.stringify({ password }) });
         signOutLocally();

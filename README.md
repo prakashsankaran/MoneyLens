@@ -9,7 +9,7 @@ tracker. Every number on screen is computed by a deterministic analytics engine,
 and every statement is labelled as a fact, calculation, observation, AI
 interpretation or recommendation.
 
-> **Status: Phase 7 of 8.** Authentication, the dashboard, statement import
+> **Status: all 8 phases complete.** Authentication, the dashboard, statement import
 > (Google Pay PDF including password-protected ones, bank CSV and Excel) with
 > a review step and duplicate detection, the transaction list with editing,
 > category and merchant management, analytics with period comparisons,
@@ -18,8 +18,10 @@ interpretation or recommendation.
 > the personal money plan, monthly budgets, the what-if simulator, MoneyLens
 > AI (chat and the AI Money Brief, with figure-checking guardrails) and data
 > deletion are working on the web, and the Expo mobile app covers the same
-> flows on Android and iOS. Security hardening follows.
-> See [docs/PLAN.md](docs/PLAN.md) and [docs/PHASE7_SUMMARY.md](docs/PHASE7_SUMMARY.md).
+> flows on Android and iOS. Phase 8 added sign-in activity, per-account
+> sign-in throttling, password change, parser limits, a strict CSP and an
+> end-to-end suite in CI.
+> See [docs/PLAN.md](docs/PLAN.md) and [docs/PHASE8_SUMMARY.md](docs/PHASE8_SUMMARY.md).
 
 ## Repository layout
 
@@ -95,6 +97,9 @@ They are validated at startup and the API refuses to start if they are invalid.
 | `TRUST_PROXY`              | no       | `0`                     | Proxy hops to trust for client IPs                                                                                          |
 | `LOG_LEVEL`                | no       | `info`                  | pino log level                                                                                                              |
 | `MAX_UPLOAD_MB`            | no       | `10`                    | Statement upload size limit                                                                                                 |
+| `PARSE_TIMEOUT_MS`         | no       | `20000`                 | Longest time one statement may take to parse                                                                                |
+| `LOGIN_LOCKOUT_ATTEMPTS`   | no       | `10`                    | Wrong passwords for one account before its sign-in is paused                                                                |
+| `LOGIN_LOCKOUT_MINUTES`    | no       | `15`                    | How long those failures count, and the pause                                                                                |
 | `AI_PROVIDER`              | no       | `none`                  | `none`, `anthropic`, `openai-compatible` or `mock`. With `none`, MoneyLens AI shows calculated figures only                 |
 | `AI_API_KEY`               | for AI   |                         | Provider API key (anthropic, openai-compatible)                                                                             |
 | `AI_MODEL`                 | no       | `claude-sonnet-5-5`     | Model id; required for openai-compatible                                                                                    |
@@ -145,6 +150,7 @@ npm run lint         # ESLint
 npm run typecheck    # strict TypeScript, every workspace
 npm run format       # Prettier
 npm run check        # format check + lint + typecheck + tests (including mobile)
+node scripts/audit-runtime.mjs  # high/critical advisories in API and web runtime dependencies
 ```
 
 API integration tests need PostgreSQL with the `moneylens_test` database.
@@ -166,13 +172,15 @@ built app with nginx and proxies `/api` to the API.
 - [ARCHITECTURE.md](docs/ARCHITECTURE.md): system design and key decisions
 - [API.md](docs/API.md): endpoints and error format
 - [DATABASE.md](docs/DATABASE.md): schema and conventions
-- [SECURITY.md](docs/SECURITY.md): auth, privacy and threat model
+- [SECURITY.md](docs/SECURITY.md): auth, privacy and hardening
+- [THREAT_MODEL.md](docs/THREAT_MODEL.md): assets, threats and how each is handled
 - [DEVELOPMENT.md](docs/DEVELOPMENT.md): workflow and conventions
 - [IMPORT_PIPELINE.md](docs/IMPORT_PIPELINE.md): statement import pipeline, supported formats and duplicate detection
 - [AI_ARCHITECTURE.md](docs/AI_ARCHITECTURE.md): MoneyLens AI: providers, context, guardrails
 - [PLAN.md](docs/PLAN.md): architecture proposal and phased plan
 - [PHASE4_SUMMARY.md](docs/PHASE4_SUMMARY.md): insights, recurring payments, health score and monthly report
 - [PHASE7_SUMMARY.md](docs/PHASE7_SUMMARY.md): the mobile app
+- [PHASE8_SUMMARY.md](docs/PHASE8_SUMMARY.md): security hardening, testing and performance
 - [apps/mobile/README.md](apps/mobile/README.md): running the mobile app on a phone
 
 MoneyLens provides educational analysis, not regulated financial advice.

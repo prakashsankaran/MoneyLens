@@ -69,6 +69,8 @@ export function buildTransactionWhere(
   return { AND: and };
 }
 
+const EPOCH = new Date(0);
+
 export class TransactionsService {
   constructor(
     private readonly prisma: PrismaClient,
@@ -86,24 +88,18 @@ export class TransactionsService {
         take: q.pageSize,
       }),
       this.prisma.transaction.count({ where }),
-      // Totals cover every match, not just this page; only the columns the
-      // engine needs are read.
+      // Totals cover every match, not just this page; only the three
+      // columns the summary reads are fetched.
       this.prisma.transaction.findMany({
         where,
-        select: {
-          id: true,
-          transactionDate: true,
-          amount: true,
-          transactionType: true,
-          flow: true,
-        },
+        select: { amount: true, transactionType: true, flow: true },
       }),
     ]);
 
     const summary = summarizePeriod(
       all.map((t) => ({
-        id: t.id,
-        date: t.transactionDate,
+        id: '',
+        date: EPOCH,
         amountPaise: decimalToPaise(t.amount),
         type: t.transactionType,
         flow: t.flow,

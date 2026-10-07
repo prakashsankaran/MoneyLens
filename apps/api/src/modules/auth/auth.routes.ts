@@ -1,6 +1,7 @@
 import { Router, type CookieOptions, type Request, type Response } from 'express';
 import { MOBILE_CLIENT_HEADER, type AuthResult } from '@moneylens/types';
 import {
+  changePasswordSchema,
   deleteAccountSchema,
   loginSchema,
   refreshTokenSchema,
@@ -90,6 +91,7 @@ export function authRoutes(deps: {
       isMobileClient(req)
         ? refreshTokenSchema.safeParse(req.body).data?.refreshToken
         : readRefreshCookie(req.cookies),
+      req.get('user-agent'),
     );
     res.clearCookie(REFRESH_COOKIE, cookieOptions());
     ok(res, { loggedOut: true });
@@ -97,6 +99,26 @@ export function authRoutes(deps: {
 
   router.get('/me', authenticate(tokens), async (req, res) => {
     ok(res, await auth.getUser(requireUserId(req)));
+  });
+
+  router.get('/activity', authenticate(tokens), async (req, res) => {
+    ok(res, await auth.activity(requireUserId(req)));
+  });
+
+  // Re-checks the current password, so it shares the credential rate limit.
+  router.post('/password', authenticate(tokens), credentialLimiter, async (req, res) => {
+    const input = parseInput(changePasswordSchema, req.body);
+    sendSession(
+      req,
+      res,
+      await auth.changePassword(requireUserId(req), input, req.get('user-agent')),
+    );
+  });
+
+  router.post('/sign-out-everywhere', authenticate(tokens), async (req, res) => {
+    await auth.signOutEverywhere(requireUserId(req), req.get('user-agent'));
+    res.clearCookie(REFRESH_COOKIE, cookieOptions());
+    ok(res, { loggedOut: true });
   });
 
   // Account deletion lives here so the refresh cookie (scoped to /api/auth)

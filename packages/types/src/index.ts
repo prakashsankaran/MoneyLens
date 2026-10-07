@@ -93,6 +93,25 @@ export interface PublicUser {
   createdAt: string;
 }
 
+/** Sign-in activity shown to the account owner (newest first). */
+export type AuthEventKind =
+  | 'REGISTERED'
+  | 'LOGIN_SUCCEEDED'
+  | 'LOGIN_FAILED'
+  | 'LOGIN_BLOCKED'
+  | 'SESSION_REUSE_DETECTED'
+  | 'LOGGED_OUT'
+  | 'PASSWORD_CHANGED'
+  | 'SIGNED_OUT_EVERYWHERE';
+
+export interface AuthActivityItem {
+  type: AuthEventKind;
+  /** ISO instant. */
+  at: string;
+  /** The browser or app that made the request, as it described itself; may be null. */
+  userAgent: string | null;
+}
+
 export interface AuthResult {
   user: PublicUser;
   accessToken: string;

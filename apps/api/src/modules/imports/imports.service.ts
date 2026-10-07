@@ -23,7 +23,13 @@ import { categorize, type CategorizationContext } from './pipeline/categorize';
 import { findDuplicates, type ExistingTransaction } from './pipeline/duplicates';
 import { extractMerchantText, merchantKey } from './pipeline/merchants';
 import { selectParser } from './pipeline/registry';
-import { StatementParseError, type ParseResult, type UploadedFile } from './pipeline/types';
+import {
+  StatementParseError,
+  TOO_SLOW,
+  type ParseResult,
+  type TransactionParser,
+  type UploadedFile,
+} from './pipeline/types';
 import { ignoreChanges, type TransactionsChanged } from '../../lib/change-hooks';
 
 const SUPPORTED = new Set(['csv', 'xlsx', 'pdf']);
@@ -146,10 +152,39 @@ function statsOf(
   );
 }
 
+export const DEFAULT_PARSE_TIMEOUT_MS = 20_000;
+
+/**
+ * Run a parser with a deadline. The parser gets an AbortSignal and stops at
+ * its next check (PDFs check between pages); the race makes sure the request
+ * is answered on time even if a parser is between checks.
+ */
+export async function parseWithDeadline(
+  parser: TransactionParser,
+  file: UploadedFile,
+  timeoutMs: number,
+): Promise<ParseResult> {
+  const controller = new AbortController();
+  let timer: NodeJS.Timeout | undefined;
+  const deadline = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      controller.abort();
+      reject(new StatementParseError(TOO_SLOW));
+    }, timeoutMs);
+  });
+  try {
+    return await Promise.race([parser.parse({ ...file, signal: controller.signal }), deadline]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export class ImportsService {
   constructor(
     private readonly prisma: PrismaClient,
     private readonly onChange: TransactionsChanged = ignoreChanges,
+    /** How long a statement may take to parse before the upload is refused. */
+    private readonly parseTimeoutMs = DEFAULT_PARSE_TIMEOUT_MS,
   ) {}
 
   /**
@@ -207,7 +242,7 @@ export class ImportsService {
 
     let parsed: ParseResult;
     try {
-      parsed = await parser.parse({ ...file, filename });
+      parsed = await parseWithDeadline(parser, { ...file, filename }, this.parseTimeoutMs);
       if (parsed.rows.length === 0) {
         throw new StatementParseError('No transactions were found in this file.');
       }

@@ -8,6 +8,8 @@ export interface UploadedFile {
   password?: string;
   /** User-chosen columns for a spreadsheet whose headings were not recognised. */
   mapping?: ColumnMapping;
+  /** Aborted when parsing has taken too long; parsers stop at the next check. */
+  signal?: AbortSignal;
 }
 
 /** Spreadsheet fields MoneyLens reads. */
@@ -95,3 +97,7 @@ export class StatementParseError extends Error {
     this.name = 'StatementParseError';
   }
 }
+
+/** Shown when a statement takes longer than the parse deadline. */
+export const TOO_SLOW =
+  'This file took too long to read. Download a shorter date range and try again.';

@@ -12,7 +12,7 @@ nothing is calculated on the phone except formatting.
 | Transactions | Search and filter, open a transaction, change its category (and teach it for that merchant), add notes |
 | Insights     | Patterns and saving opportunities with their evidence, recurring payments, the financial health score  |
 | Plan         | Your monthly numbers and the money plan, budgets, and the what-if simulator                            |
-| More         | Import a statement, MoneyLens AI, settings and data deletion, sign out                                 |
+| More         | Import a statement, MoneyLens AI, settings (password, sign-in activity, data deletion), sign out       |
 
 Statements are imported with the phone's file picker: a Google Pay PDF
 (password-protected ones too), a bank CSV, or an Excel `.xlsx` file. You

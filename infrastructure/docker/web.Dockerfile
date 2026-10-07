@@ -12,5 +12,6 @@ RUN npm run build -w @moneylens/web
 
 FROM nginx:1.27-alpine AS runtime
 COPY infrastructure/docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY infrastructure/docker/security-headers.conf /etc/nginx/snippets/security-headers.conf
 COPY --from=build /app/apps/web/dist /usr/share/nginx/html
 EXPOSE 80

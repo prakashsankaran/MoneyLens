@@ -1,4 +1,5 @@
 import readXlsxFile from 'read-excel-file/node';
+import { assertSafeZip } from './zip-guard';
 import { HEADER_SEARCH_ROWS, isUsableHeader, mapColumns, parseTable } from './tabular';
 import {
   StatementParseError,
@@ -41,6 +42,8 @@ export class XlsxTransactionParser implements TransactionParser {
   }
 
   async parse(file: UploadedFile): Promise<ParseResult> {
+    // The declared sizes are checked before unzipping; read-excel-file has no limit of its own.
+    assertSafeZip(file.buffer);
     let sheets: { sheet: string; data: Cell[][] }[];
     try {
       sheets = (await readXlsxFile(file.buffer)) as unknown as typeof sheets;

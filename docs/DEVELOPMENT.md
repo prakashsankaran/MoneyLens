@@ -20,12 +20,25 @@ typecheck of every workspace, and all tests.
 | `build`                                                         | `tsup` bundle of the API, Vite build of the web app |
 | `test`, `test:watch`                                            | Vitest across `packages`, `api` and `web` projects  |
 | `test:e2e`                                                      | Playwright (desktop + mobile viewports)             |
+| `test:mobile`, `dev:mobile`                                     | Jest tests and the Expo dev server for the app      |
 | `lint`, `format`, `format:check`, `typecheck`, `check`          | Code quality                                        |
 | `db:migrate`, `db:deploy`, `db:seed`, `db:reset`, `db:generate` | Prisma                                              |
 | `docker:up`, `docker:down`                                      | Compose stack                                       |
 
 Run one test project with `npx vitest run --project api` (or `packages` or
 `web`).
+
+CI (`.github/workflows/ci.yml`) runs two jobs on every pull request: `check`
+(format, lint, typecheck, unit and integration tests, mobile tests, build,
+and `scripts/audit-runtime.mjs`) and `e2e` (migrates and seeds a fresh
+database, then runs the Playwright suite). Dependabot proposes weekly npm and
+monthly GitHub Actions updates; Expo and React Native major versions are
+upgraded by hand, one SDK at a time.
+
+`scripts/audit-runtime.mjs` fails on any high or critical advisory in the
+API's or web app's runtime dependencies. An advisory that does not affect
+MoneyLens can be accepted in the script's `ACCEPTED` list with a reason and a
+review date; it fails again once the date passes.
 
 ## Tests
 
@@ -34,7 +47,8 @@ Run one test project with `npx vitest run --project api` (or `packages` or
 | `packages` | node                    | money parsing/formatting, IST dates, masking, classification, aggregation, trends, observations                                                                                                                                                                                                 |
 | `api`      | node + PostgreSQL       | env validation, enum drift between Prisma and shared types, demo data generator, auth (register/login/refresh rotation/reuse detection/logout/token tampering/rate limit), dashboard API (totals consistency, month selection, validation, cross-user isolation), error envelope, CORS, headers |
 | `web`      | jsdom + Testing Library | overview tiles, category list folding, observations, dashboard page with mocked API, login validation, IST greeting                                                                                                                                                                             |
-| e2e        | Playwright              | demo sign-in to dashboard, protected-route redirect                                                                                                                                                                                                                                             |
+| mobile     | Jest + RNTL (jest-expo) | API client and token refresh, incoming-file routing, upload errors, components, sign-in screen                                                                                                                                                                                                  |
+| e2e        | Playwright              | sign-in, dashboard, imports (CSV, Google Pay PDF, Excel), review, insights, report, analytics, money plan, what-if, MoneyLens AI, at desktop and phone sizes                                                                                                                                    |
 
 API tests run `prisma migrate deploy` against the `moneylens_test` database
 named in `apps/api/.env.test`, then isolate themselves with unique emails. They

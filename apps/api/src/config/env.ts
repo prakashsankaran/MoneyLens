@@ -22,8 +22,13 @@ const envSchema = z.object({
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   MAX_UPLOAD_MB: z.coerce.number().positive().default(10),
+  /** How long one statement may take to parse before the upload is refused. */
+  PARSE_TIMEOUT_MS: z.coerce.number().int().min(1000).max(120_000).default(20_000),
   /** Requests per 15 minutes per IP on credential endpoints. */
   AUTH_RATE_LIMIT: z.coerce.number().int().positive().default(20),
+  /** Failed sign-ins for one account within LOGIN_LOCKOUT_MINUTES before it is paused. */
+  LOGIN_LOCKOUT_ATTEMPTS: z.coerce.number().int().positive().default(10),
+  LOGIN_LOCKOUT_MINUTES: z.coerce.number().int().positive().default(15),
   /** Requests per minute per IP across the API. */
   API_RATE_LIMIT: z.coerce.number().int().positive().default(300),
   /** Set when running behind a reverse proxy so client IPs are correct. */
