@@ -7,6 +7,7 @@
   "workspaces": [
     "apps/api",
     "apps/web",
+    "apps/mobile",
     "packages/*"
   ],
   "engines": {
@@ -17,15 +18,17 @@
     "dev:e2e": "AUTH_RATE_LIMIT=500 npm run dev",
     "dev:api": "npm run dev -w @moneylens/api",
     "dev:web": "npm run dev -w @moneylens/web",
+    "dev:mobile": "npm start -w @moneylens/mobile",
     "build": "npm run build -w @moneylens/api && npm run build -w @moneylens/web",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:mobile": "npm test -w @moneylens/mobile",
     "test:e2e": "npm run test:e2e -w @moneylens/web",
     "lint": "eslint .",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run test:mobile",
     "db:generate": "npm run db:generate -w @moneylens/api",
     "db:migrate": "npm run db:migrate -w @moneylens/api",
     "db:deploy": "npm run db:deploy -w @moneylens/api",
@@ -47,5 +50,11 @@
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.44.0",
     "vitest": "^5.0.3"
+  },
+  "overrides": {
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native-worklets": "0.10.1",
+    "react-native-reanimated": "4.5.1"
   }
 }

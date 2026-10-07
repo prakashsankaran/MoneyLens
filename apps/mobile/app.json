@@ -1,0 +1,68 @@
+{
+  "expo": {
+    "name": "MoneyLens",
+    "slug": "moneylens",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "moneylens",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "bundleIdentifier": "app.moneylens.mobile",
+      "supportsTablet": true,
+      "infoPlist": {
+        "LSSupportsOpeningDocumentsInPlace": false,
+        "CFBundleDocumentTypes": [
+          {
+            "CFBundleTypeName": "Bank or UPI statement",
+            "CFBundleTypeRole": "Viewer",
+            "LSHandlerRank": "Alternate",
+            "LSItemContentTypes": [
+              "com.adobe.pdf",
+              "public.comma-separated-values-text",
+              "org.openxmlformats.spreadsheetml.sheet"
+            ]
+          }
+        ]
+      }
+    },
+    "android": {
+      "package": "app.moneylens.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#2563eb",
+        "foregroundImage": "./assets/adaptive-icon.png"
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "category": ["DEFAULT", "BROWSABLE"],
+          "data": [
+            { "scheme": "content", "mimeType": "application/pdf" },
+            { "scheme": "content", "mimeType": "text/csv" },
+            { "scheme": "content", "mimeType": "text/comma-separated-values" },
+            {
+              "scheme": "content",
+              "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            }
+          ]
+        }
+      ]
+    },
+    "web": {
+      "output": "single",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      ["expo-document-picker", { "iCloudContainerEnvironment": "Production" }],
+      [
+        "expo-splash-screen",
+        { "backgroundColor": "#f8fafc", "image": "./assets/splash-icon.png", "imageWidth": 96 }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}

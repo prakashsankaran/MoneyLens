@@ -20,6 +20,13 @@ every user's data isolated.
 Path=/api/auth` cookie (`Secure` in production). Only its SHA-256 hash is
   stored. It is rotated on every use, and re-using a rotated token revokes the
   whole session family. Logout revokes the family.
+- **Mobile app:** the refresh token is returned in the response body only
+  when the request carries `X-MoneyLens-Client: mobile`, and is stored with
+  `expo-secure-store` (iOS Keychain, Android Keystore). The access token stays
+  in memory. The header only changes where the token travels; rotation,
+  reuse detection and revocation are identical, and a body token is ignored
+  without the header so a web page cannot opt out of the `HttpOnly` cookie.
+  Sign-out deletes the stored token even when the API is unreachable.
 
 ### Authorisation
 
@@ -110,7 +117,6 @@ aggregates → AI`. Raw documents, transaction lists, UPI IDs, references and
 | Phase | Item                                                                                                                                      |
 | ----- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | 8     | Parser time limits (a worker thread with a deadline for PDF and Excel parsing)                                                            |
-| 7     | Mobile refresh tokens in the body, stored in `expo-secure-store`                                                                          |
 | 8     | Account lockout/backoff per email, audit log of auth events, CSP review for the web build, dependency scanning in CI, threat-model review |
 
 ## Known advisories

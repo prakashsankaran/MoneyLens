@@ -1,4 +1,4 @@
-import { formatINR } from '@moneylens/shared';
+import { foldCategories, formatINR } from '@moneylens/shared';
 import type { CategoryBreakdownItem } from '@moneylens/types';
 import { DonutChart } from '../../../components/charts/DonutChart';
 import { categoryColour, COLOURED_CATEGORIES } from '../../../lib/category-colors';
@@ -13,22 +13,7 @@ export function WhereMoneyWent({ categories }: { categories: CategoryBreakdownIt
     return <p className="text-sm text-ink-500">No spending recorded for this month.</p>;
   }
 
-  const shown = categories.slice(0, COLOURED_CATEGORIES);
-  const rest = categories.slice(COLOURED_CATEGORIES);
-  const rows = rest.length
-    ? [
-        ...shown,
-        {
-          categoryId: '__rest__',
-          name: `Everything else (${rest.length})`,
-          slug: 'rest',
-          color: null,
-          amountPaise: rest.reduce((a, c) => a + c.amountPaise, 0),
-          sharePct: Math.round(rest.reduce((a, c) => a + c.sharePct, 0) * 10) / 10,
-          transactionCount: rest.reduce((a, c) => a + c.transactionCount, 0),
-        },
-      ]
-    : shown;
+  const rows = foldCategories(categories, COLOURED_CATEGORIES);
   const total = rows.reduce((a, r) => a + r.amountPaise, 0);
   const max = Math.max(...rows.map((r) => r.amountPaise));
 

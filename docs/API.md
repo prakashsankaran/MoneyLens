@@ -44,6 +44,14 @@ for 15 minutes by default. The refresh token is an opaque random value in the
 `ml_rt` cookie (`HttpOnly; SameSite=Strict; Path=/api/auth`, `Secure` in
 production).
 
+**Mobile clients** send `X-MoneyLens-Client: mobile` on every request. For
+them the refresh token is never put in a cookie: register, login and refresh
+return it as `refreshToken` in the response body, and refresh and logout read
+it from the request body (`{ "refreshToken": string }`, 16–256 characters).
+Without that header a `refreshToken` in the body is ignored, and web clients
+never receive the token in a body. A mobile refresh with a missing or
+malformed token → `400 VALIDATION_ERROR`; logout tolerates a missing one.
+
 ### `POST /api/auth/register`
 
 Body: `{ "name": string, "email": string, "password": string (10–128) }`

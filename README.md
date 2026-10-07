@@ -9,7 +9,7 @@ tracker. Every number on screen is computed by a deterministic analytics engine,
 and every statement is labelled as a fact, calculation, observation, AI
 interpretation or recommendation.
 
-> **Status: Phase 6 of 8.** Authentication, the dashboard, statement import
+> **Status: Phase 7 of 8.** Authentication, the dashboard, statement import
 > (Google Pay PDF including password-protected ones, bank CSV and Excel) with
 > a review step and duplicate detection, the transaction list with editing,
 > category and merchant management, analytics with period comparisons,
@@ -17,8 +17,9 @@ interpretation or recommendation.
 > opportunities, an explainable financial health score, the monthly report,
 > the personal money plan, monthly budgets, the what-if simulator, MoneyLens
 > AI (chat and the AI Money Brief, with figure-checking guardrails) and data
-> deletion are working. The mobile app follows.
-> See [docs/PLAN.md](docs/PLAN.md) and [docs/PHASE6_SUMMARY.md](docs/PHASE6_SUMMARY.md).
+> deletion are working on the web, and the Expo mobile app covers the same
+> flows on Android and iOS. Security hardening follows.
+> See [docs/PLAN.md](docs/PLAN.md) and [docs/PHASE7_SUMMARY.md](docs/PHASE7_SUMMARY.md).
 
 ## Repository layout
 
@@ -26,7 +27,7 @@ interpretation or recommendation.
 apps/
   api/        Express + TypeScript REST API, Prisma schema, migrations, seed
   web/        React + Vite + Tailwind web app
-  mobile/     Expo app (phase 7, placeholder only)
+  mobile/     Expo (React Native) app for Android and iOS
 packages/
   types/      Shared enums and API contracts
   validation/ Zod schemas shared by API and clients
@@ -126,23 +127,24 @@ drop data. See [docs/DATABASE.md](docs/DATABASE.md).
 
 ## Running
 
-| What               | Command                                                                      |
-| ------------------ | ---------------------------------------------------------------------------- |
-| API + web together | `npm run dev`                                                                |
-| API only           | `npm run dev:api`                                                            |
-| Web only           | `npm run dev:web`                                                            |
-| Production build   | `npm run build` then `npm start -w @moneylens/api` and serve `apps/web/dist` |
-| Mobile             | Not available yet (phase 7). See `apps/mobile/README.md`.                    |
+| What               | Command                                                                               |
+| ------------------ | ------------------------------------------------------------------------------------- |
+| API + web together | `npm run dev`                                                                         |
+| API only           | `npm run dev:api`                                                                     |
+| Web only           | `npm run dev:web`                                                                     |
+| Production build   | `npm run build` then `npm start -w @moneylens/api` and serve `apps/web/dist`          |
+| Mobile (Expo)      | `npm run dev:mobile`, then scan the QR code with Expo Go. See `apps/mobile/README.md` |
 
 ## Tests and quality checks
 
 ```bash
 npm test             # all unit + integration tests (packages, API, web)
+npm run test:mobile  # mobile app tests (Jest + React Native Testing Library)
 npm run test:e2e     # Playwright end-to-end (start servers with `npm run dev:e2e` and seeded demo data)
 npm run lint         # ESLint
 npm run typecheck    # strict TypeScript, every workspace
 npm run format       # Prettier
-npm run check        # format check + lint + typecheck + tests
+npm run check        # format check + lint + typecheck + tests (including mobile)
 ```
 
 API integration tests need PostgreSQL with the `moneylens_test` database.
@@ -170,5 +172,7 @@ built app with nginx and proxies `/api` to the API.
 - [AI_ARCHITECTURE.md](docs/AI_ARCHITECTURE.md): MoneyLens AI: providers, context, guardrails
 - [PLAN.md](docs/PLAN.md): architecture proposal and phased plan
 - [PHASE4_SUMMARY.md](docs/PHASE4_SUMMARY.md): insights, recurring payments, health score and monthly report
+- [PHASE7_SUMMARY.md](docs/PHASE7_SUMMARY.md): the mobile app
+- [apps/mobile/README.md](apps/mobile/README.md): running the mobile app on a phone
 
 MoneyLens provides educational analysis, not regulated financial advice.

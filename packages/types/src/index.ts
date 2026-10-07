@@ -98,7 +98,16 @@ export interface AuthResult {
   accessToken: string;
   /** Seconds until the access token expires. */
   expiresIn: number;
+  /**
+   * Mobile clients only (requests carrying `X-MoneyLens-Client: mobile`):
+   * the refresh token, for the device's secure storage. Web clients get it
+   * as an httpOnly cookie instead and never see it.
+   */
+  refreshToken?: string;
 }
+
+/** Header a native app sends so auth returns the refresh token in the body. */
+export const MOBILE_CLIENT_HEADER = 'X-MoneyLens-Client';
 
 // ---------------------------------------------------------------------------
 // Analytics input

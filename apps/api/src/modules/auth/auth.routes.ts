@@ -1,6 +1,11 @@
-import { Router, type CookieOptions, type Response } from 'express';
-import type { AuthResult } from '@moneylens/types';
-import { deleteAccountSchema, loginSchema, registerSchema } from '@moneylens/validation';
+import { Router, type CookieOptions, type Request, type Response } from 'express';
+import { MOBILE_CLIENT_HEADER, type AuthResult } from '@moneylens/types';
+import {
+  deleteAccountSchema,
+  loginSchema,
+  refreshTokenSchema,
+  registerSchema,
+} from '@moneylens/validation';
 import { unauthenticated } from '../../lib/errors';
 import { ok } from '../../lib/respond';
 import { authenticate, requireUserId } from '../../middleware/authenticate';
@@ -39,31 +44,40 @@ export function authRoutes(deps: {
     ...(expires ? { expires } : {}),
   });
 
-  const sendSession = (res: Response, session: IssuedSession, status = 200) => {
-    res.cookie(REFRESH_COOKIE, session.refreshToken, cookieOptions(session.refreshExpiresAt));
+  // Native apps have no cookie jar worth trusting, so they ask for the
+  // refresh token in the body and keep it in the device's secure storage.
+  const sendSession = (req: Request, res: Response, session: IssuedSession, status = 200) => {
     const body: AuthResult = {
       user: session.user,
       accessToken: session.accessToken,
       expiresIn: tokens.accessTokenTtlSeconds,
     };
+    if (isMobileClient(req)) body.refreshToken = session.refreshToken;
+    else res.cookie(REFRESH_COOKIE, session.refreshToken, cookieOptions(session.refreshExpiresAt));
     ok(res, body, status);
   };
 
+  /** The refresh token from the cookie (web) or the body (mobile). */
+  const readRefreshToken = (req: Request): string | undefined =>
+    isMobileClient(req)
+      ? parseInput(refreshTokenSchema, req.body ?? {}).refreshToken
+      : readRefreshCookie(req.cookies);
+
   router.post('/register', credentialLimiter, async (req, res) => {
     const input = parseInput(registerSchema, req.body);
-    sendSession(res, await auth.register(input, req.get('user-agent')), 201);
+    sendSession(req, res, await auth.register(input, req.get('user-agent')), 201);
   });
 
   router.post('/login', credentialLimiter, async (req, res) => {
     const input = parseInput(loginSchema, req.body);
-    sendSession(res, await auth.login(input, req.get('user-agent')));
+    sendSession(req, res, await auth.login(input, req.get('user-agent')));
   });
 
   router.post('/refresh', sameSiteOnly, refreshLimiter, async (req, res) => {
-    const token = readRefreshCookie(req.cookies);
     try {
+      const token = readRefreshToken(req);
       if (!token) throw unauthenticated('Your session has ended. Please sign in again.');
-      sendSession(res, await auth.refresh(token, req.get('user-agent')));
+      sendSession(req, res, await auth.refresh(token, req.get('user-agent')));
     } catch (err) {
       res.clearCookie(REFRESH_COOKIE, cookieOptions());
       throw err;
@@ -71,7 +85,12 @@ export function authRoutes(deps: {
   });
 
   router.post('/logout', sameSiteOnly, async (req, res) => {
-    await auth.logout(readRefreshCookie(req.cookies));
+    // Signing out never fails on a missing or malformed token.
+    await auth.logout(
+      isMobileClient(req)
+        ? refreshTokenSchema.safeParse(req.body).data?.refreshToken
+        : readRefreshCookie(req.cookies),
+    );
     res.clearCookie(REFRESH_COOKIE, cookieOptions());
     ok(res, { loggedOut: true });
   });
@@ -90,6 +109,10 @@ export function authRoutes(deps: {
   });
 
   return router;
+}
+
+function isMobileClient(req: Request): boolean {
+  return req.get(MOBILE_CLIENT_HEADER)?.toLowerCase() === 'mobile';
 }
 
 function readRefreshCookie(cookies: unknown): string | undefined {
