@@ -13,7 +13,9 @@ export default tseslint.config(
       '**/node_modules/**',
       '**/playwright-report/**',
       '**/test-results/**',
-      'apps/mobile/**',
+      'apps/mobile/.expo/**',
+      'apps/mobile/*.config.js',
+      'apps/mobile/expo-env.d.ts',
     ],
   },
   js.configs.recommended,
@@ -38,6 +40,17 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
+  },
+  {
+    files: ['apps/mobile/**/*.{ts,tsx}'],
+    // React Native provides fetch, FormData and Headers like a browser does.
+    languageOptions: { globals: { ...globals.browser } },
+    plugins: { 'react-hooks': reactHooks },
+    rules: reactHooks.configs.recommended.rules,
+  },
+  {
+    files: ['apps/mobile/**/*.test.{ts,tsx}', 'apps/mobile/src/test/**'],
+    languageOptions: { globals: { ...globals.jest } },
   },
   {
     // Analytics must stay pure: no I/O, no framework imports.

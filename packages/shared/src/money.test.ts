@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { formatINR, formatINRCompact, paiseToRupeeString, percentOf, rupeesToPaise } from './money';
+import {
+  formatINR,
+  formatINRCompact,
+  paiseToRupeeString,
+  percentOf,
+  rupeesToPaise,
+  toRupeeInput,
+} from './money';
 
 describe('rupeesToPaise', () => {
   it.each([
@@ -57,5 +64,13 @@ describe('percentOf', () => {
   });
   it('rounds to one decimal', () => {
     expect(percentOf(1, 3)).toBe(33.3);
+  });
+});
+
+describe('toRupeeInput', () => {
+  it('drops zero paise and keeps real ones', () => {
+    expect(toRupeeInput(1450000)).toBe('14500');
+    expect(toRupeeInput(1050)).toBe('10.50');
+    expect(toRupeeInput(null)).toBe('');
   });
 });

@@ -1,26 +1,15 @@
-import { formatINR, formatMonthKey } from '@moneylens/shared';
+import {
+  formatINR,
+  formatMonthKey,
+  pctDelta,
+  savingsRateTone,
+  type Delta,
+  type DeltaTone,
+} from '@moneylens/shared';
 import type { PeriodComparison, PeriodTotals } from '@moneylens/types';
 import { ScoreRing } from '../../../components/charts/ScoreRing';
-import type { ScoreTone } from '../../../components/charts/score-tone';
 
-type Tone = 'good' | 'bad' | 'neutral';
-interface Delta {
-  text: string;
-  tone: Tone;
-}
-
-function pctDelta(pct: number | null, previous: string, upIsGood: boolean): Delta | undefined {
-  if (pct === null) return undefined;
-  const rounded = Math.round(pct);
-  if (rounded === 0) return { text: `No change vs ${previous}`, tone: 'neutral' };
-  const up = rounded > 0;
-  return {
-    text: `${up ? '▲' : '▼'} ${Math.abs(rounded)}% vs ${previous}`,
-    tone: up === upIsGood ? 'good' : 'bad',
-  };
-}
-
-const pillClass: Record<Tone, string> = {
+const pillClass: Record<DeltaTone, string> = {
   good: 'bg-positive/10 text-positive',
   bad: 'bg-negative/10 text-negative',
   neutral: 'bg-ink-100 text-ink-500',
@@ -34,14 +23,6 @@ function DeltaPill({ delta }: { delta: Delta }) {
       {delta.text}
     </span>
   );
-}
-
-/** Savings-rate bands: keeping a fifth of income is healthy, below zero is overspending. */
-function rateTone(rate: number | null): ScoreTone {
-  if (rate === null) return 'none';
-  if (rate >= 20) return 'good';
-  if (rate >= 0) return 'fair';
-  return 'poor';
 }
 
 /**
@@ -95,7 +76,10 @@ export function OverviewTiles({
           <div className="flex flex-col items-center">
             <dt className="sr-only">Savings rate</dt>
             <dd>
-              <ScoreRing value={rate === null ? null : Math.max(0, rate)} tone={rateTone(rate)}>
+              <ScoreRing
+                value={rate === null ? null : Math.max(0, rate)}
+                tone={savingsRateTone(rate)}
+              >
                 <span
                   className={`font-bold tracking-tight ${rateText.length > 4 ? 'text-lg' : 'text-2xl'} ${overspent ? 'text-negative' : ''}`}
                 >

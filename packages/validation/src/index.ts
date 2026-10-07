@@ -180,6 +180,12 @@ export const deleteAccountSchema = z.object({
 });
 export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;
 
+/** Mobile clients send the refresh token in the body instead of a cookie. */
+export const refreshTokenSchema = z.object({
+  refreshToken: z.string().min(16).max(256),
+});
+export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;
+
 // ---------------------------------------------------------------------------
 // Categories
 // ---------------------------------------------------------------------------

@@ -48,8 +48,4 @@ export function usePutBudgets() {
   });
 }
 
-/** Paise as a rupee string for an input: 1450000 → "14500", 1050 → "10.50". */
-export function toRupeeInput(paise: number | null | undefined): string {
-  if (paise === null || paise === undefined) return '';
-  return paise % 100 === 0 ? String(paise / 100) : (paise / 100).toFixed(2);
-}
+export { toRupeeInput } from '@moneylens/shared';

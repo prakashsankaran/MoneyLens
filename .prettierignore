@@ -5,3 +5,4 @@ package-lock.json
 apps/api/prisma/migrations
 playwright-report
 test-results
+.expo

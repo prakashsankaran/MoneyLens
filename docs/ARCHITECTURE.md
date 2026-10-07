@@ -247,6 +247,28 @@ never from the model's output.
 - Screens planned for later phases render an explicit "not available yet"
   page that names the phase, rather than imitating a working screen.
 
+## Mobile application
+
+- Expo SDK 57 with Expo Router (`apps/mobile/src/app`), TanStack Query,
+  React Hook Form + Zod, `react-native-svg` for the donut and score rings.
+  Only modules that run in Expo Go are used.
+- Bottom tabs match the web: Home, Transactions, Insights, Plan, More.
+  Imports, the transaction detail, MoneyLens AI and settings are stack
+  screens above the tabs.
+- Formatting, greetings, delta tones, category folding and AI answer helpers
+  live in `@moneylens/shared` (`display.ts`) and are used by web and mobile,
+  so both show identical wording and numbers. Colours come from
+  `@moneylens/ui`.
+- **Session handling:** requests carry `X-MoneyLens-Client: mobile`, so the
+  API returns the refresh token in the body; it is kept in
+  `expo-secure-store` and the access token in memory. A 401 triggers one
+  shared refresh followed by a retry, as on the web.
+- **Imports:** `expo-document-picker` picks a PDF, CSV or XLSX file, which is
+  streamed to `POST /api/imports` from its URI. Files opened from other apps
+  arrive through `+native-intent.tsx` and land on the same import screen.
+- **API address:** `EXPO_PUBLIC_API_URL`, otherwise the host that served the
+  app on port 4000, so Expo Go on the same Wi-Fi works without setup.
+
 ## Extensibility points
 
 | Concern              | Extension point                                                     | Phase |

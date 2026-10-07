@@ -1,30 +1,22 @@
+import { ANSWER_STATUS_NOTE, textBlocks } from '@moneylens/shared';
 import type { AssistantAnswer } from '@moneylens/types';
 import { ProvenanceBadge } from '../../components/ProvenanceBadge';
-
-const STATUS_NOTE: Partial<Record<AssistantAnswer['status'], string>> = {
-  'not-configured':
-    'MoneyLens AI is not set up on this server, so only the calculated figures are shown.',
-  fallback: 'The written answer used figures that are not in your data, so it was not shown.',
-  unavailable: 'MoneyLens AI could not be reached. The calculated figures are below.',
-};
 
 /** Paragraphs and simple "- " lists from model text, rendered as plain text. */
 export function PlainText({ text }: { text: string }) {
   return (
     <div className="space-y-2">
-      {text.split(/\n{2,}/).map((block, i) => {
-        const lines = block.split('\n').filter(Boolean);
-        if (lines.length > 1 && lines.every((l) => /^\s*([-*•]|\d+\.)\s/.test(l))) {
-          return (
-            <ul key={i} className="list-disc space-y-1 pl-5">
-              {lines.map((l, j) => (
-                <li key={j}>{l.replace(/^\s*([-*•]|\d+\.)\s/, '').replace(/\*\*/g, '')}</li>
-              ))}
-            </ul>
-          );
-        }
-        return <p key={i}>{block.replace(/\*\*/g, '')}</p>;
-      })}
+      {textBlocks(text).map((block, i) =>
+        block.kind === 'list' ? (
+          <ul key={i} className="list-disc space-y-1 pl-5">
+            {block.items.map((item, j) => (
+              <li key={j}>{item}</li>
+            ))}
+          </ul>
+        ) : (
+          <p key={i}>{block.text}</p>
+        ),
+      )}
     </div>
   );
 }
@@ -40,7 +32,7 @@ export function AnswerCard({
   if (!answer || answer.status === 'refused') {
     return <p className="text-sm">{content}</p>;
   }
-  const note = STATUS_NOTE[answer.status];
+  const note = ANSWER_STATUS_NOTE[answer.status];
   return (
     <div className="space-y-4 text-sm">
       {answer.interpretation ? (

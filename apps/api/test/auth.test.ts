@@ -205,6 +205,81 @@ describe('refresh token rotation', () => {
   });
 });
 
+describe('mobile sessions', () => {
+  const MOBILE = ['X-MoneyLens-Client', 'mobile'] as const;
+
+  async function mobileSignIn() {
+    const { email, password } = await registerUser(app);
+    const res = await request(app)
+      .post('/api/auth/login')
+      .set(...MOBILE)
+      .send({ email, password })
+      .expect(200);
+    return res;
+  }
+
+  it('returns the refresh token in the body and sets no cookie', async () => {
+    const res = await mobileSignIn();
+    expect(typeof res.body.data.refreshToken).toBe('string');
+    expect(res.headers['set-cookie']).toBeUndefined();
+  });
+
+  it('web sign-in never exposes the refresh token in the body', async () => {
+    const { email, password } = await registerUser(app);
+    const res = await request(app).post('/api/auth/login').send({ email, password }).expect(200);
+    expect(res.body.data.refreshToken).toBeUndefined();
+  });
+
+  it('rotates a body refresh token and rejects reuse', async () => {
+    const first = (await mobileSignIn()).body.data.refreshToken as string;
+    const res = await request(app)
+      .post('/api/auth/refresh')
+      .set(...MOBILE)
+      .send({ refreshToken: first })
+      .expect(200);
+    const second = res.body.data.refreshToken as string;
+    expect(second).not.toBe(first);
+    expect(res.headers['set-cookie']).toBeUndefined();
+    await request(app)
+      .post('/api/auth/refresh')
+      .set(...MOBILE)
+      .send({ refreshToken: first })
+      .expect(401);
+  });
+
+  it('ignores a body token without the mobile header', async () => {
+    const token = (await mobileSignIn()).body.data.refreshToken as string;
+    await request(app).post('/api/auth/refresh').send({ refreshToken: token }).expect(401);
+  });
+
+  it('validates the body token', async () => {
+    await request(app)
+      .post('/api/auth/refresh')
+      .set(...MOBILE)
+      .send({})
+      .expect(400);
+  });
+
+  it('logout revokes a body token, and tolerates a missing one', async () => {
+    const token = (await mobileSignIn()).body.data.refreshToken as string;
+    await request(app)
+      .post('/api/auth/logout')
+      .set(...MOBILE)
+      .send({ refreshToken: token })
+      .expect(200);
+    await request(app)
+      .post('/api/auth/refresh')
+      .set(...MOBILE)
+      .send({ refreshToken: token })
+      .expect(401);
+    await request(app)
+      .post('/api/auth/logout')
+      .set(...MOBILE)
+      .send({})
+      .expect(200);
+  });
+});
+
 describe('rate limiting', () => {
   it('limits repeated credential attempts', async () => {
     const limited = createTestContext({ AUTH_RATE_LIMIT: '3' });
