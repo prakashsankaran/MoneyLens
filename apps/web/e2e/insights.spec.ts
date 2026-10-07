@@ -16,7 +16,8 @@ test('insights show their evidence, recurring payments and the health score', as
 
   await page.getByRole('tab', { name: /^Saving/ }).click();
   const first = page.getByRole('article').first();
-  await expect(first).toContainText('Potential saving opportunity');
+  await expect(first).toContainText('Saving idea');
+  await first.locator('summary', { hasText: 'Why?' }).click();
   await first.getByRole('button', { name: /Show the \d+ transactions? behind this/ }).click();
   await expect(first.getByRole('listitem').first()).toBeVisible();
 

@@ -54,7 +54,7 @@ export function InsightsPage() {
     <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:py-10">
       <PageHeader
         title="Insights"
-        description="Patterns in your spending, each with the transactions behind it."
+        description="What stood out in your spending this month."
         actions={
           hasData && (
             <label className="flex items-center gap-2 text-sm text-ink-700">
@@ -86,8 +86,12 @@ export function InsightsPage() {
         </Card>
       ) : (
         <div className="mt-6 grid gap-6 lg:grid-cols-3">
-          <div className="space-y-4 lg:col-span-2">
-            <div role="tablist" aria-label="Insight groups" className="flex flex-wrap gap-2">
+          <div className="min-w-0 space-y-4 lg:col-span-2">
+            <div
+              role="tablist"
+              aria-label="Insight groups"
+              className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0"
+            >
               {(['all', ...INSIGHT_GROUPS] as Tab[]).map((g) => (
                 <button
                   key={g}
@@ -95,10 +99,12 @@ export function InsightsPage() {
                   role="tab"
                   aria-selected={tab === g}
                   onClick={() => setTab(g)}
-                  className={`rounded-full border px-3 py-1.5 text-sm ${
+                  className={`shrink-0 rounded-full border px-3 py-1.5 text-sm whitespace-nowrap ${
                     tab === g
                       ? 'border-brand-700 bg-brand-700 text-white'
-                      : 'border-ink-300 bg-surface hover:bg-ink-100'
+                      : g !== 'all' && count(g) === 0
+                        ? 'border-ink-100 bg-surface text-ink-500 hover:bg-ink-100'
+                        : 'border-ink-300 bg-surface hover:bg-ink-100'
                   }`}
                 >
                   {g === 'all' ? 'All' : GROUP_LABELS[g]}{' '}
@@ -141,14 +147,14 @@ export function InsightsPage() {
               </details>
             )}
             <p className="text-xs text-ink-500">
-              Every insight comes from fixed rules over your confirmed transactions. Nothing here is
-              written by AI. Suggestions are educational, not professional financial advice.
+              Rule-based, from your confirmed transactions. Not written by AI, and not financial
+              advice.
             </p>
           </div>
 
           <Card
             title="How healthy are my finances?"
-            description={`Financial health score for ${formatMonthKey(data.month)}`}
+            description={formatMonthKey(data.month)}
             className="h-fit"
           >
             {health.data ? (
