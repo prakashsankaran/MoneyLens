@@ -55,7 +55,7 @@ export function AnswerCard({
         </section>
       ) : (
         note && (
-          <p role="status" className="rounded-lg bg-ink-100/60 p-3 text-ink-700">
+          <p role="status" className="rounded-xl bg-ink-100/60 p-3 text-ink-700">
             {note}
           </p>
         )
@@ -71,7 +71,7 @@ export function AnswerCard({
 
       {answer.facts.length > 0 && (
         <details
-          className="group rounded-lg border border-ink-100 p-3"
+          className="group rounded-xl border border-ink-200/70 p-3"
           open={!answer.interpretation}
         >
           <summary className="cursor-pointer text-xs font-medium text-ink-700">

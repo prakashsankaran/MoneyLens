@@ -34,7 +34,7 @@ export function MoneyBriefCard({ month }: { month: string }) {
             </p>
           )}
           {brief.data.facts.length > 0 && (
-            <details open={!brief.data.text} className="rounded-lg border border-ink-100 p-3">
+            <details open={!brief.data.text} className="rounded-xl border border-ink-200/70 p-3">
               <summary className="cursor-pointer text-xs font-medium text-ink-700">
                 Written from these figures
               </summary>
@@ -48,7 +48,10 @@ export function MoneyBriefCard({ month }: { month: string }) {
               </ul>
             </details>
           )}
-          <Link to="/assistant" className="inline-block font-medium text-brand-700 hover:underline">
+          <Link
+            to="/assistant"
+            className="inline-block font-medium text-brand-600 hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
+          >
             Ask MoneyLens AI a question
           </Link>
         </div>

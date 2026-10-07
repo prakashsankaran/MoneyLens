@@ -220,7 +220,7 @@ never from the model's output.
 ## Web application
 
 - React 19, React Router 7, TanStack Query 5, React Hook Form + Zod
-  (schemas from `@moneylens/validation`), Tailwind CSS 4, Recharts 3, lucide icons.
+  (schemas from `@moneylens/validation`), Tailwind CSS 4, Recharts 3, React Icons (Lucide set, `react-icons/lu`). See docs/DESIGN_SYSTEM.md for the visual rules.
 - `features/` holds feature folders (auth, dashboard, transactions, imports,
   analytics, categories); `components/` holds the shared UI and layout
   (`Dialog`, `PageHeader`, `Card`, …).

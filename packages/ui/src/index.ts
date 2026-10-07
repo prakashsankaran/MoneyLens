@@ -4,8 +4,16 @@
  */
 
 export const colors = {
-  ink: { 900: '#0f172a', 700: '#334155', 500: '#64748b', 300: '#cbd5e1', 100: '#f1f5f9' },
-  brand: { 700: '#0f5c4d', 600: '#13715f', 500: '#178a73', 100: '#dff3ee', 50: '#f0faf7' },
+  ink: {
+    900: '#0f172a',
+    700: '#334155',
+    500: '#64748b',
+    300: '#cbd5e1',
+    200: '#e2e8f0',
+    100: '#f1f5f9',
+    50: '#f8fafc',
+  },
+  brand: { 700: '#1d4ed8', 600: '#2563eb', 500: '#3b82f6', 100: '#dbeafe', 50: '#eff6ff' },
   positive: '#15803d',
   negative: '#b42318',
   warning: '#b45309',
@@ -25,5 +33,6 @@ export const chartSeries = {
 /** Chart surfaces the palette was validated against. */
 export const chartSurfaces = { light: '#ffffff', dark: '#0f172a' } as const;
 
-export const radii = { sm: 6, md: 10, lg: 16 } as const;
+/** Buttons use md (12px, rounded-xl); cards and containers use lg (16px, rounded-2xl). */
+export const radii = { sm: 8, md: 12, lg: 16 } as const;
 export const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 } as const;

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Plus, Send, Trash2 } from 'lucide-react';
+import { LuPlus, LuSend, LuTrash2 } from 'react-icons/lu';
 import { ASSISTANT_MESSAGE_MAX } from '@moneylens/validation';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
@@ -52,7 +52,7 @@ export function AssistantPage() {
     status.data !== undefined && status.data.messagesToday >= status.data.dailyMessageLimit;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:py-10">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8 lg:py-12">
       <PageHeader
         title="MoneyLens AI"
         description="Ask about your money. Answers are written from your calculated figures, and the figures are shown with every answer."
@@ -64,7 +64,7 @@ export function AssistantPage() {
                 <select
                   value={activeId ?? ''}
                   onChange={(e) => setActiveId(e.target.value || null)}
-                  className="h-11 max-w-56 rounded-lg border border-ink-300 bg-surface px-3 text-sm"
+                  className="h-11 max-w-56 rounded-xl border border-ink-200 bg-surface px-3 text-sm shadow-card transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
                 >
                   <option value="">New conversation</option>
                   {list.map((c) => (
@@ -76,7 +76,7 @@ export function AssistantPage() {
               </label>
             )}
             <Button type="button" variant="secondary" onClick={() => setActiveId(null)}>
-              <Plus className="size-4" aria-hidden />
+              <LuPlus className="size-4" aria-hidden />
               New conversation
             </Button>
           </>
@@ -107,10 +107,10 @@ export function AssistantPage() {
                     type="button"
                     onClick={() => setActiveId(c.id)}
                     aria-current={c.id === activeId ? 'true' : undefined}
-                    className={`min-w-0 flex-1 truncate rounded-lg px-3 py-2 text-left text-sm ${
+                    className={`min-w-0 flex-1 truncate rounded-xl px-3 py-2 text-left text-sm transition-all duration-200 ${
                       c.id === activeId
                         ? 'bg-brand-50 font-medium text-brand-700'
-                        : 'hover:bg-ink-100'
+                        : 'text-ink-700 hover:bg-ink-100 hover:text-ink-900'
                     }`}
                   >
                     {c.title}
@@ -123,9 +123,9 @@ export function AssistantPage() {
                         onSuccess: () => c.id === activeId && setActiveId(null),
                       })
                     }
-                    className="rounded-lg p-2 text-ink-500 hover:bg-ink-100 hover:text-negative"
+                    className="rounded-xl p-2 text-ink-500 hover:bg-ink-100 hover:text-negative transition-all duration-200"
                   >
-                    <Trash2 className="size-4" aria-hidden />
+                    <LuTrash2 className="size-4" aria-hidden />
                   </button>
                 </li>
               ))}
@@ -152,7 +152,7 @@ export function AssistantPage() {
                     type="button"
                     disabled={chat.isPending || limitReached}
                     onClick={() => ask(q)}
-                    className="rounded-full border border-ink-300 px-3 py-1.5 text-left text-sm hover:bg-ink-100 disabled:opacity-50"
+                    className="rounded-xl border border-ink-200 px-3.5 py-2 text-left text-sm hover:bg-ink-50 disabled:opacity-50 bg-surface shadow-card transition-all duration-200 hover:border-ink-300 active:scale-[0.98]"
                   >
                     {q}
                   </button>
@@ -164,7 +164,7 @@ export function AssistantPage() {
               {messages.map((m) =>
                 m.role === 'user' ? (
                   <li key={m.id} className="flex justify-end">
-                    <p className="max-w-[85%] rounded-2xl rounded-br-sm bg-brand-700 px-4 py-2 text-sm text-white">
+                    <p className="max-w-[85%] rounded-2xl rounded-br-sm bg-brand-600 px-4 py-2 text-sm text-white">
                       {m.content}
                     </p>
                   </li>
@@ -224,7 +224,7 @@ export function AssistantPage() {
                 aria-label="Send"
                 disabled={!draft.trim() || chat.isPending || limitReached}
               >
-                <Send className="size-4" aria-hidden />
+                <LuSend className="size-4" aria-hidden />
               </Button>
             </div>
             {chat.isError && (

@@ -1,4 +1,4 @@
-import { Ellipsis, LogOut, X } from 'lucide-react';
+import { LuEllipsis, LuLogOut, LuX } from 'react-icons/lu';
 import { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router';
 import { useAuth } from '../../features/auth/useAuth';
@@ -6,9 +6,13 @@ import { Logo } from '../Logo';
 import { NAV_ITEMS } from './nav';
 
 const linkBase =
-  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors';
+  'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200';
 const linkClass = ({ isActive }: { isActive: boolean }) =>
-  `${linkBase} ${isActive ? 'bg-brand-50 text-brand-700' : 'text-ink-700 hover:bg-ink-100'}`;
+  `${linkBase} ${
+    isActive
+      ? 'bg-brand-50 text-brand-700 shadow-[inset_0_0_0_1px] shadow-brand-100'
+      : 'text-ink-500 hover:bg-ink-100 hover:text-ink-900'
+  }`;
 
 /**
  * Responsive application frame: a sidebar on large screens and a bottom tab bar
@@ -29,13 +33,13 @@ export function AppShell() {
     <div className="min-h-dvh lg:flex">
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-surface focus:px-3 focus:py-2"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-surface focus:shadow-card focus:px-3 focus:py-2"
       >
         Skip to content
       </a>
 
       {/* Desktop sidebar */}
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-ink-100 bg-surface px-4 py-6 lg:sticky lg:top-0 lg:flex lg:h-dvh">
+      <aside className="hidden w-68 shrink-0 flex-col border-r border-ink-200/70 bg-surface px-4 py-7 lg:sticky lg:top-0 lg:flex lg:h-dvh">
         <Logo className="px-3" />
         <nav aria-label="Main" className="mt-10 flex-1 space-y-1">
           {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
@@ -45,22 +49,22 @@ export function AppShell() {
             </NavLink>
           ))}
         </nav>
-        <div className="border-t border-ink-100 pt-4">
-          <p className="truncate px-3 text-sm font-medium">{user?.name}</p>
+        <div className="rounded-2xl border border-ink-200/70 bg-ink-50 p-2 pt-3">
+          <p className="truncate px-3 text-sm font-semibold text-ink-900">{user?.name}</p>
           <p className="truncate px-3 text-xs text-ink-500">{user?.email}</p>
           <button
             type="button"
             onClick={() => void logout()}
-            className={`${linkBase} mt-3 w-full text-ink-700 hover:bg-ink-100`}
+            className={`${linkBase} mt-2 w-full text-ink-500 hover:bg-surface hover:text-ink-900 hover:shadow-card`}
           >
-            <LogOut className="size-[18px]" aria-hidden="true" />
+            <LuLogOut className="size-[18px]" aria-hidden="true" />
             Sign out
           </button>
         </div>
       </aside>
 
       {/* Mobile header */}
-      <header className="sticky top-0 z-20 flex h-14 items-center border-b border-ink-100 bg-surface/95 px-4 backdrop-blur lg:hidden">
+      <header className="sticky top-0 z-20 flex h-14 items-center border-b border-ink-200/70 bg-surface/90 px-4 backdrop-blur-md lg:hidden">
         <Logo />
       </header>
 
@@ -71,7 +75,7 @@ export function AppShell() {
       {/* Mobile bottom navigation */}
       <nav
         aria-label="Main"
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-ink-100 bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-ink-200/70 bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
       >
         <ul className="grid grid-cols-5">
           {primary.map(({ to, label, shortLabel, icon: Icon }) => (
@@ -80,8 +84,8 @@ export function AppShell() {
                 to={to}
                 end={to === '/'}
                 className={({ isActive }) =>
-                  `flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium ${
-                    isActive ? 'text-brand-700' : 'text-ink-500'
+                  `flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium transition-all duration-200 active:scale-95 ${
+                    isActive ? 'text-brand-600' : 'text-ink-500 hover:text-ink-900'
                   }`
                 }
               >
@@ -96,11 +100,11 @@ export function AppShell() {
               aria-expanded={moreOpen}
               aria-controls="more-sheet"
               onClick={() => setMoreOpen(!moreOpen)}
-              className={`flex h-16 w-full flex-col items-center justify-center gap-1 text-[11px] font-medium ${
-                moreOpen ? 'text-brand-700' : 'text-ink-500'
+              className={`flex h-16 w-full flex-col items-center justify-center gap-1 text-[11px] font-medium transition-all duration-200 active:scale-95 ${
+                moreOpen ? 'text-brand-600' : 'text-ink-500 hover:text-ink-900'
               }`}
             >
-              <Ellipsis className="size-5" aria-hidden="true" />
+              <LuEllipsis className="size-5" aria-hidden="true" />
               More
             </button>
           </li>
@@ -117,22 +121,22 @@ export function AppShell() {
           <button
             type="button"
             aria-label="Close menu"
-            className="absolute inset-0 bg-ink-900/30"
+            className="absolute inset-0 bg-ink-900/30 backdrop-blur-[2px]"
             onClick={() => setMoreOpen(false)}
           />
           <div
             id="more-sheet"
-            className="absolute inset-x-0 bottom-0 rounded-t-2xl bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
+            className="absolute inset-x-0 bottom-0 rounded-t-2xl bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-2xl ring-1 ring-ink-900/5"
           >
             <div className="mb-2 flex items-center justify-between px-3">
-              <p className="text-sm font-semibold">More</p>
+              <p className="text-base font-semibold tracking-tight">More</p>
               <button
                 type="button"
                 onClick={() => setMoreOpen(false)}
-                className="rounded-lg p-2 text-ink-500 hover:bg-ink-100"
+                className="rounded-xl p-2 text-ink-500 transition-all duration-200 hover:bg-ink-100 hover:text-ink-900"
                 aria-label="Close"
               >
-                <X className="size-5" aria-hidden="true" />
+                <LuX className="size-5" aria-hidden="true" />
               </button>
             </div>
             <div className="space-y-1">
@@ -145,9 +149,9 @@ export function AppShell() {
               <button
                 type="button"
                 onClick={() => void logout()}
-                className={`${linkBase} w-full text-ink-700 hover:bg-ink-100`}
+                className={`${linkBase} w-full text-ink-500 hover:bg-ink-100 hover:text-ink-900`}
               >
-                <LogOut className="size-[18px]" aria-hidden="true" />
+                <LuLogOut className="size-[18px]" aria-hidden="true" />
                 Sign out
               </button>
             </div>

@@ -1,4 +1,4 @@
-import { FileUp, Trash2 } from 'lucide-react';
+import { LuFileUp, LuTrash2 } from 'react-icons/lu';
 import { useCallback, useRef, useState, type DragEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import type { ImportNeedsInputDetails, ImportRecord, ImportStatus } from '@moneylens/types';
@@ -73,7 +73,7 @@ export function ImportsPage() {
       : undefined;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:py-10">
+    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-8 lg:py-12">
       <PageHeader
         title="Imports"
         description="Upload a statement. You will review every row before anything is saved."
@@ -87,13 +87,15 @@ export function ImportsPage() {
           }}
           onDragLeave={() => setDragging(false)}
           onDrop={onDrop}
-          className={`flex flex-col items-center rounded-xl border-2 border-dashed px-4 py-10 text-center transition-colors ${
-            dragging ? 'border-brand-600 bg-brand-50' : 'border-ink-300'
+          className={`flex flex-col items-center rounded-2xl border-2 border-dashed px-4 py-12 text-center transition-all duration-200 ${
+            dragging
+              ? 'border-brand-600 bg-brand-50'
+              : 'border-ink-200 bg-ink-50/60 hover:border-ink-300'
           }`}
         >
-          <FileUp className="size-8 text-ink-500" aria-hidden="true" />
+          <LuFileUp className="size-8 text-ink-500" aria-hidden="true" />
           <p className="mt-3 text-sm font-medium">Drop a statement here, or</p>
-          <label className="mt-3 inline-flex h-11 cursor-pointer items-center rounded-lg bg-brand-700 px-4 text-sm font-medium text-white hover:bg-brand-600 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand-600">
+          <label className="mt-3 inline-flex h-11 cursor-pointer items-center rounded-xl bg-brand-600 px-4 text-sm font-medium text-white hover:bg-brand-700 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand-600 shadow-sm shadow-brand-600/20 transition-all duration-200 hover:shadow-md active:scale-[0.98]">
             {upload.isPending ? 'Reading file…' : 'Choose file'}
             <input
               ref={inputRef}
@@ -160,7 +162,7 @@ export function ImportsPage() {
           ) : history.data.length === 0 ? (
             <p className="text-sm text-ink-500">No statements imported yet.</p>
           ) : (
-            <ul className="divide-y divide-ink-100 rounded-2xl border border-ink-100 bg-surface">
+            <ul className="divide-y divide-ink-100 rounded-2xl border border-ink-200/70 bg-surface shadow-card">
               {history.data.map((record) => (
                 <HistoryRow key={record.id} record={record} />
               ))}
@@ -187,7 +189,7 @@ function HistoryRow({ record }: { record: ImportRecord }) {
         <div className="min-w-0">
           <Link
             to={`/imports/${record.id}`}
-            className="block truncate text-sm font-medium hover:text-brand-700 hover:underline"
+            className="block truncate text-sm font-medium hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
           >
             {record.filename}
           </Link>
@@ -211,15 +213,15 @@ function HistoryRow({ record }: { record: ImportRecord }) {
           <button
             type="button"
             onClick={() => setConfirming(true)}
-            className="rounded-lg p-2 text-ink-500 hover:bg-ink-100 hover:text-negative"
+            className="rounded-xl p-2 text-ink-500 hover:bg-ink-100 hover:text-negative transition-all duration-200"
             aria-label={`Delete ${record.filename}`}
           >
-            <Trash2 className="size-4" aria-hidden="true" />
+            <LuTrash2 className="size-4" aria-hidden="true" />
           </button>
         </div>
       </div>
       {confirming && (
-        <div className="mt-3 rounded-lg border border-negative/30 p-3 text-sm">
+        <div className="mt-3 rounded-xl border border-negative/30 p-3 text-sm">
           <p>
             {record.status === 'CONFIRMED'
               ? `Delete this import and the ${record.committedCount} transactions it added?`
@@ -231,14 +233,14 @@ function HistoryRow({ record }: { record: ImportRecord }) {
               type="button"
               disabled={remove.isPending}
               onClick={() => remove.mutate(record.id)}
-              className="h-10 rounded-lg bg-negative px-4 font-medium text-white"
+              className="h-10 rounded-xl bg-negative px-4 font-medium text-white shadow-sm transition-all duration-200 hover:bg-red-800 active:scale-[0.98]"
             >
               Delete
             </button>
             <button
               type="button"
               onClick={() => setConfirming(false)}
-              className="h-10 rounded-lg border border-ink-300 px-4 font-medium"
+              className="h-10 rounded-xl border border-ink-200 px-4 font-medium bg-surface shadow-card transition-all duration-200 hover:border-ink-300 hover:bg-ink-50 active:scale-[0.98]"
             >
               Cancel
             </button>

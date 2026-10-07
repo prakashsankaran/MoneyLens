@@ -146,7 +146,7 @@ export function ComparisonsSection({
                 ['Transfers in', p.transfersIn],
               ] as const
             ).map(([name, t]) => (
-              <div key={name} className="rounded-lg bg-ink-100/60 p-3">
+              <div key={name} className="rounded-xl bg-ink-100/60 p-3">
                 <dt className="text-xs text-ink-500">{name}</dt>
                 <dd className="font-medium tabular-nums">
                   {formatINR(t.amountPaise)}

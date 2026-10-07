@@ -45,7 +45,7 @@ function PlanTab() {
 export function MoneyPlanPage() {
   const [tab, setTab] = useState<Tab>('plan');
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:py-10">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8 lg:py-12">
       <PageHeader
         title="Money Plan"
         description="An educational planning tool built from your figures and your transactions."
@@ -64,9 +64,9 @@ export function MoneyPlanPage() {
             aria-selected={tab === t.id}
             aria-controls={`panel-${t.id}`}
             onClick={() => setTab(t.id)}
-            className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium ${
+            className={`-mb-px border-b-2 px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
               tab === t.id
-                ? 'border-brand-700 text-brand-700'
+                ? 'border-brand-600 text-brand-600'
                 : 'border-transparent text-ink-500 hover:text-ink-900'
             }`}
           >
