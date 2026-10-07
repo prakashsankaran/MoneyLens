@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Trash2 } from 'lucide-react';
+import { LuPlus, LuTrash2 } from 'react-icons/lu';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { formatINR } from '@moneylens/shared';
 import type { FinancialProfileData, ObservedBaseline } from '@moneylens/types';
@@ -166,7 +166,7 @@ export function PlanForm({
                 onClick={() => upcoming.remove(i)}
                 aria-label={`Remove upcoming expense ${i + 1}`}
               >
-                <Trash2 className="size-4" aria-hidden="true" />
+                <LuTrash2 className="size-4" aria-hidden="true" />
               </Button>
             </li>
           ))}
@@ -178,7 +178,7 @@ export function PlanForm({
             className="mt-3"
             onClick={() => upcoming.append({ label: '', amount: '', dueMonth: '' })}
           >
-            <Plus className="size-4" aria-hidden="true" /> Add an expense
+            <LuPlus className="size-4" aria-hidden="true" /> Add an expense
           </Button>
         )}
       </fieldset>

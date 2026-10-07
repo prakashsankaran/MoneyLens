@@ -31,7 +31,10 @@ export function HealthScoreSummary({ health }: { health: HealthScore }) {
           {health.score === null
             ? 'More months of data are needed for a score. '
             : 'A weighted average of the components above, calculated from your transactions. '}
-          <Link to="/insights" className="font-medium text-brand-700 hover:underline">
+          <Link
+            to="/insights"
+            className="font-medium text-brand-600 hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
+          >
             See how it is calculated
           </Link>
         </p>

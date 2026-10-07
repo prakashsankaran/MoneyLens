@@ -44,13 +44,13 @@ export function RecurringList() {
   return (
     <div className="space-y-4">
       <dl className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col-reverse rounded-lg bg-ink-100/60 p-3">
+        <div className="flex flex-col-reverse rounded-xl bg-ink-100/60 p-3">
           <dt className="text-xs text-ink-500">Active recurring payments</dt>
           <dd className="text-lg font-semibold tabular-nums">
             {formatINR(data.monthlyOutgoingPaise)} a month
           </dd>
         </div>
-        <div className="flex flex-col-reverse rounded-lg bg-ink-100/60 p-3">
+        <div className="flex flex-col-reverse rounded-xl bg-ink-100/60 p-3">
           <dt className="text-xs text-ink-500">Over a year</dt>
           <dd className="text-lg font-semibold tabular-nums">
             {formatINR(data.annualOutgoingPaise)}
@@ -141,7 +141,7 @@ function Section({
                 type="button"
                 onClick={() => onToggle(i)}
                 disabled={busyId === i.id}
-                className="text-xs font-medium text-brand-700 hover:underline disabled:opacity-50"
+                className="text-xs font-medium text-brand-600 hover:underline disabled:opacity-50 underline-offset-4 hover:text-brand-700 transition-all duration-200"
                 aria-label={`${i.dismissed ? 'Restore' : 'Not recurring:'} ${i.label}`}
               >
                 {i.dismissed ? 'Restore' : 'Not recurring'}

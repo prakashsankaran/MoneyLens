@@ -10,13 +10,16 @@
   --color-ink-700: #334155;
   --color-ink-500: #64748b;
   --color-ink-300: #cbd5e1;
+  --color-ink-200: #e2e8f0;
   --color-ink-100: #f1f5f9;
+  --color-ink-50: #f8fafc;
 
-  --color-brand-700: #0f5c4d;
-  --color-brand-600: #13715f;
-  --color-brand-500: #178a73;
-  --color-brand-100: #dff3ee;
-  --color-brand-50: #f0faf7;
+  /* Enterprise blue accent (Tailwind blue scale). Use for active states and primary actions only. */
+  --color-brand-700: #1d4ed8;
+  --color-brand-600: #2563eb;
+  --color-brand-500: #3b82f6;
+  --color-brand-100: #dbeafe;
+  --color-brand-50: #eff6ff;
 
   --color-positive: #15803d;
   --color-negative: #b42318;
@@ -26,7 +29,10 @@
   --color-series-2: #eb6834;
 
   --color-surface: #ffffff;
-  --color-canvas: #f7f8fa;
+  --color-canvas: #f8fafc;
+
+  --shadow-card: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.03);
+  --shadow-card-hover: 0 4px 12px -2px rgb(15 23 42 / 0.08), 0 2px 4px -2px rgb(15 23 42 / 0.04);
 }
 
 @layer base {
@@ -35,10 +41,24 @@
     text-rendering: optimizeLegibility;
   }
   body {
-    @apply bg-canvas text-ink-900 font-sans;
+    @apply bg-canvas font-sans text-ink-900;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+  h1,
+  h2,
+  h3 {
+    @apply tracking-tight text-ink-900;
+  }
+  a,
+  button,
+  input,
+  select,
+  textarea,
+  summary {
+    @apply transition-all duration-200;
   }
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-brand-600;
+    @apply outline-2 outline-offset-2 outline-brand-600/70;
   }
 }
 

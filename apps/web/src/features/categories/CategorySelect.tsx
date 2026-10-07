@@ -18,7 +18,7 @@ export const CategorySelect = forwardRef<HTMLSelectElement, CategorySelectProps>
     return (
       <select
         ref={ref}
-        className={`h-11 w-full rounded-lg border border-ink-300 bg-surface px-3 text-sm ${className}`}
+        className={`h-11 w-full rounded-xl border border-ink-200 bg-surface px-3 text-sm shadow-card transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100 ${className}`}
         {...props}
       >
         <option value="">{emptyLabel}</option>

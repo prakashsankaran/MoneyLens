@@ -1,4 +1,4 @@
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { LuPencil, LuPlus, LuTrash2 } from 'react-icons/lu';
 import { useState, type FormEvent } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { CategoryNode } from '@moneylens/types';
@@ -17,8 +17,8 @@ import { MerchantsCard } from '../features/merchants/MerchantsCard';
 export function SettingsPage() {
   const { user, logout } = useAuth();
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-4 py-8 sm:px-6 lg:py-10">
-      <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
+    <div className="mx-auto max-w-3xl space-y-6 px-4 py-8 sm:px-8 lg:py-12">
+      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Settings</h1>
       <Card title="Account">
         <dl className="grid gap-4 text-sm sm:grid-cols-2">
           <div>
@@ -78,7 +78,7 @@ function CategoriesCard() {
           <select
             value={parentId}
             onChange={(e) => setParentId(e.target.value)}
-            className="mt-1.5 h-11 w-full rounded-lg border border-ink-300 bg-surface px-3 text-sm"
+            className="mt-1.5 h-11 w-full rounded-xl border border-ink-200 bg-surface px-3 text-sm shadow-card transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
           >
             <option value="">Top level</option>
             {(data ?? []).map((c) => (
@@ -89,7 +89,7 @@ function CategoriesCard() {
           </select>
         </label>
         <Button type="submit" disabled={create.isPending || !name.trim()}>
-          <Plus className="size-4" aria-hidden="true" /> Add
+          <LuPlus className="size-4" aria-hidden="true" /> Add
         </Button>
       </form>
 
@@ -174,7 +174,7 @@ function CategoryLine({
           value={draft}
           maxLength={40}
           onChange={(e) => setDraft(e.target.value)}
-          className="h-9 flex-1 rounded-lg border border-ink-300 px-2"
+          className="h-9 flex-1 rounded-xl border border-ink-200 px-2 shadow-card transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
         />
         <Button type="submit" className="!h-9" disabled={!draft.trim() || rename.isPending}>
           Save
@@ -214,17 +214,17 @@ function CategoryLine({
             type="button"
             aria-label={`Rename ${category.name}`}
             onClick={() => setEditing(true)}
-            className="rounded p-1.5 text-ink-500 hover:bg-ink-100"
+            className="rounded-xl p-1.5 text-ink-500 hover:bg-ink-100 transition-all duration-200 hover:text-ink-900"
           >
-            <Pencil className="size-4" aria-hidden="true" />
+            <LuPencil className="size-4" aria-hidden="true" />
           </button>
           <button
             type="button"
             aria-label={`Delete ${category.name}`}
             onClick={() => setConfirming(true)}
-            className="rounded p-1.5 text-ink-500 hover:bg-ink-100 hover:text-negative"
+            className="rounded-xl p-1.5 text-ink-500 hover:bg-ink-100 hover:text-negative transition-all duration-200"
           >
-            <Trash2 className="size-4" aria-hidden="true" />
+            <LuTrash2 className="size-4" aria-hidden="true" />
           </button>
         </span>
       )}

@@ -162,7 +162,7 @@ export function BudgetsPanel() {
           <select
             value={data.month}
             onChange={(e) => setMonth(e.target.value)}
-            className="h-10 rounded-lg border border-ink-300 bg-surface px-3 text-sm"
+            className="h-10 rounded-xl border border-ink-200 bg-surface px-3 text-sm shadow-card transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
           >
             {[...data.availableMonths].reverse().map((m) => (
               <option key={m} value={m}>

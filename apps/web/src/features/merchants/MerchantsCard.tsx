@@ -1,4 +1,4 @@
-import { GitMerge, Pencil } from 'lucide-react';
+import { LuGitMerge, LuPencil } from 'react-icons/lu';
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { MerchantOption } from '@moneylens/types';
@@ -53,7 +53,7 @@ export function MerchantsCard() {
             placeholder="Find a merchant"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="h-10 w-full rounded-lg border border-ink-300 bg-surface px-3 text-sm"
+            className="h-10 w-full rounded-xl border border-ink-200 bg-surface px-3 text-sm shadow-card transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
           />
           <ul className="mt-3 divide-y divide-ink-100 text-sm">
             {matches.slice(0, SHOWN).map((m) => (
@@ -105,7 +105,7 @@ function MerchantLine({
           value={name}
           maxLength={80}
           onChange={(e) => setName(e.target.value)}
-          className="h-9 min-w-0 flex-1 rounded-lg border border-ink-300 px-2"
+          className="h-9 min-w-0 flex-1 rounded-xl border border-ink-200 px-2 shadow-card transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
         />
         <Button type="submit" className="!h-9" disabled={!name.trim() || rename.isPending}>
           Save
@@ -126,7 +126,7 @@ function MerchantLine({
           <select
             value={intoId}
             onChange={(e) => setIntoId(e.target.value)}
-            className="mt-1 h-10 w-full rounded-lg border border-ink-300 bg-surface px-3"
+            className="mt-1 h-10 w-full rounded-xl border border-ink-200 bg-surface px-3 shadow-card transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
           >
             <option value="">Choose a merchant</option>
             {others.map((o) => (
@@ -175,18 +175,18 @@ function MerchantLine({
             setName(merchant.name);
             setMode('rename');
           }}
-          className="rounded p-1.5 text-ink-500 hover:bg-ink-100"
+          className="rounded-xl p-1.5 text-ink-500 hover:bg-ink-100 transition-all duration-200 hover:text-ink-900"
         >
-          <Pencil className="size-4" aria-hidden="true" />
+          <LuPencil className="size-4" aria-hidden="true" />
         </button>
         {others.length > 0 && (
           <button
             type="button"
             aria-label={`Merge ${merchant.name}`}
             onClick={() => setMode('merge')}
-            className="rounded p-1.5 text-ink-500 hover:bg-ink-100"
+            className="rounded-xl p-1.5 text-ink-500 hover:bg-ink-100 transition-all duration-200 hover:text-ink-900"
           >
-            <GitMerge className="size-4" aria-hidden="true" />
+            <LuGitMerge className="size-4" aria-hidden="true" />
           </button>
         )}
       </span>

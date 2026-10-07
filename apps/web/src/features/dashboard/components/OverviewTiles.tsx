@@ -70,8 +70,11 @@ export function OverviewTiles({
   return (
     <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
       {tiles.map((t) => (
-        <div key={t.label} className="rounded-2xl border border-ink-100 bg-surface p-4 sm:p-5">
-          <dt className="text-sm text-ink-500">{t.label}</dt>
+        <div
+          key={t.label}
+          className="rounded-2xl border border-ink-200/70 bg-surface p-5 shadow-card sm:p-6"
+        >
+          <dt className="text-sm font-medium text-ink-500">{t.label}</dt>
           <dd className="mt-2 text-2xl font-semibold tracking-tight sm:text-[28px]">{t.value}</dd>
           <dd className="mt-1 text-xs text-ink-500">{t.note}</dd>
           {t.delta && (

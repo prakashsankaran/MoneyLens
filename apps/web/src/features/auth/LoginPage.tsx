@@ -61,12 +61,15 @@ export function LoginPage() {
       </form>
       <p className="mt-6 text-sm text-ink-500">
         New to MoneyLens?{' '}
-        <Link to="/register" className="font-medium text-brand-700 hover:underline">
+        <Link
+          to="/register"
+          className="font-medium text-brand-600 hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
+        >
           Create an account
         </Link>
       </p>
       {import.meta.env.DEV && (
-        <p className="mt-8 rounded-lg bg-brand-50 p-3 text-xs text-ink-700">
+        <p className="mt-8 rounded-xl bg-brand-50 p-3 text-xs text-ink-700">
           Demo account: <span className="font-medium">demo@moneylens.app</span> /{' '}
           <span className="font-medium">moneylens-demo</span>
         </p>
