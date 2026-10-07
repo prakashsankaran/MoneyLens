@@ -58,7 +58,7 @@ export function DonutChart({
             endAngle={-270}
             stroke="var(--color-surface)"
             strokeWidth={2}
-            animationDuration={600}
+            isAnimationActive={false}
           >
             {slices.map((s) => (
               <Cell key={s.key} fill={s.color} />
