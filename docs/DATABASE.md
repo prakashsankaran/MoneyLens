@@ -65,6 +65,13 @@ expenses as JSON with rupee-string amounts), `MoneyPlan` keeps one snapshot of
 the last saved inputs and result, and `Budget` holds the monthly budgets.
 Deleting all transactions keeps all three; deleting the account removes them.
 
+Since Phase 6, `AIConversation` and `AIMessage` hold MoneyLens AI history. A
+question is stored after identifiers are masked (a refused message only as a
+placeholder); an answer stores its text, the provider/model in `provider`,
+and the calculated facts, status and data limitations in `contextRef`.
+Deleting all transactions also deletes conversations, since they quote those
+figures.
+
 Composite indexes lead with `userId` because every query is scoped to one
 user. That is also the authorisation boundary (see SECURITY.md).
 

@@ -22,8 +22,8 @@ export const FormField = forwardRef<HTMLInputElement, FormFieldProps>(function F
         id={id}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
-        className={`mt-1.5 block h-11 w-full rounded-lg border bg-surface px-3 text-sm outline-none transition-colors placeholder:text-ink-500 focus:border-brand-600 focus:ring-2 focus:ring-brand-100 ${
-          error ? 'border-negative' : 'border-ink-300'
+        className={`mt-2 block h-11 w-full rounded-xl border bg-surface px-3.5 text-sm text-ink-900 shadow-card outline-none transition-all duration-200 placeholder:text-ink-500/80 hover:border-ink-300 focus:border-brand-600 focus:ring-4 focus:ring-brand-100 ${
+          error ? 'border-negative' : 'border-ink-200'
         }`}
         {...props}
       />

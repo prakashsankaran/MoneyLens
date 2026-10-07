@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { LuPlus, LuTrash2 } from 'react-icons/lu';
 import { formatINR } from '@moneylens/shared';
 import type { CategoryNode } from '@moneylens/types';
 import type { ScenarioAdjustmentInput } from '@moneylens/validation';
@@ -134,7 +134,7 @@ export function SimulatorPanel() {
             {drafts.map((d, i) => (
               <li
                 key={d.key}
-                className="grid gap-2 rounded-xl border border-ink-100 p-3 sm:grid-cols-[1fr_1fr_8rem_auto] sm:items-end"
+                className="grid gap-2 rounded-xl border border-ink-200/70 p-3 sm:grid-cols-[1fr_1fr_8rem_auto] sm:items-end"
               >
                 <label className="text-sm">
                   <span className="mb-1 block text-xs text-ink-500">Change {i + 1}</span>
@@ -180,7 +180,7 @@ export function SimulatorPanel() {
                   aria-label={`Remove change ${i + 1}`}
                   onClick={() => setDrafts((ds) => ds.filter((x) => x.key !== d.key))}
                 >
-                  <Trash2 className="size-4" aria-hidden />
+                  <LuTrash2 className="size-4" aria-hidden />
                 </Button>
               </li>
             ))}
@@ -192,7 +192,7 @@ export function SimulatorPanel() {
               disabled={drafts.length >= 10}
               onClick={() => setDrafts((ds) => [...ds, draft('save-more')])}
             >
-              <Plus className="size-4" aria-hidden />
+              <LuPlus className="size-4" aria-hidden />
               Add a change
             </Button>
             <label className="text-sm">
@@ -314,7 +314,7 @@ export function SimulatorPanel() {
             </section>
           )}
 
-          <section aria-label="Assumptions" className="mt-6 rounded-lg bg-ink-100/60 p-3">
+          <section aria-label="Assumptions" className="mt-6 rounded-xl bg-ink-100/60 p-3">
             <h3 className="text-xs font-semibold">Assumptions</h3>
             <ul className="mt-1 list-disc space-y-1 pl-4 text-xs text-ink-700">
               {result.assumptions.map((a) => (

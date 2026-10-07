@@ -7,6 +7,9 @@ import type { PrismaClient } from '@prisma/client';
 import type { Logger } from 'pino';
 import type { Env } from './config/env';
 import { AnalyticsDataSource } from './lib/analytics-data';
+import { AIService } from './modules/ai/ai.service';
+import { aiRoutes } from './modules/ai/ai.routes';
+import { createAIProvider, type AIProvider } from './modules/ai/providers';
 import { authenticate } from './middleware/authenticate';
 import { errorHandler, notFoundHandler } from './middleware/error-handler';
 import { apiRateLimit } from './middleware/rate-limit';
@@ -36,10 +39,12 @@ export interface AppDeps {
   env: Env;
   prisma: PrismaClient;
   logger: Logger;
+  /** Overrides the provider chosen by AI_PROVIDER (tests). */
+  aiProvider?: AIProvider;
 }
 
 /** Build the Express app. Dependencies are injected so tests can supply their own. */
-export function createApp({ env, prisma, logger }: AppDeps): Express {
+export function createApp({ env, prisma, logger, aiProvider }: AppDeps): Express {
   const app = express();
   app.disable('x-powered-by');
   if (env.TRUST_PROXY > 0) app.set('trust proxy', env.TRUST_PROXY);
@@ -49,7 +54,7 @@ export function createApp({ env, prisma, logger }: AppDeps): Express {
     cors({
       origin: env.CORS_ORIGINS,
       credentials: true,
-      methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     }),
   );
   app.use(express.json({ limit: '100kb' }));
@@ -115,6 +120,15 @@ export function createApp({ env, prisma, logger }: AppDeps): Express {
   const plan = new PlanService(prisma, analyticsData);
   api.use('/money-plan', requireAuth, moneyPlanRoutes(plan));
   api.use('/budgets', requireAuth, budgetRoutes(plan));
+  const ai = new AIService(
+    prisma,
+    insights,
+    plan,
+    aiProvider ?? createAIProvider(env),
+    { maxOutputTokens: env.AI_MAX_OUTPUT_TOKENS, dailyMessageLimit: env.AI_DAILY_MESSAGE_LIMIT },
+    logger,
+  );
+  api.use('/ai', requireAuth, aiRoutes(ai, { chatPerMinute: env.AI_CHAT_RATE_LIMIT }));
 
   app.use('/api', api);
   app.use(notFoundHandler);

@@ -1,4 +1,4 @@
-import { FileUp, SlidersHorizontal } from 'lucide-react';
+import { LuFileUp, LuSlidersHorizontal } from 'react-icons/lu';
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { formatINR } from '@moneylens/shared';
@@ -47,16 +47,16 @@ export function TransactionsPage() {
   const filtered = activeFilterCount(params) > 0 || !!q;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:py-10">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8 lg:py-12">
       <PageHeader
         title="Transactions"
         description="Everything you have imported. Select a transaction to correct it."
         actions={
           <Link
             to="/imports"
-            className="inline-flex h-11 items-center gap-2 rounded-lg bg-brand-700 px-4 text-sm font-medium text-white hover:bg-brand-600"
+            className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-600 px-4 text-sm font-medium text-white hover:bg-brand-700 shadow-sm shadow-brand-600/20 transition-all duration-200 hover:shadow-md active:scale-[0.98]"
           >
-            <FileUp className="size-4" aria-hidden="true" />
+            <LuFileUp className="size-4" aria-hidden="true" />
             Import statement
           </Link>
         }
@@ -109,15 +109,15 @@ export function TransactionsPage() {
             type="button"
             onClick={() => setShowMore((v) => !v)}
             aria-expanded={showMore}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-ink-300 bg-surface px-4 text-sm font-medium hover:bg-ink-100"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-ink-200 bg-surface px-4 text-sm font-medium hover:bg-ink-50 shadow-card transition-all duration-200 hover:border-ink-300 active:scale-[0.98]"
           >
-            <SlidersHorizontal className="size-4" aria-hidden="true" />
+            <LuSlidersHorizontal className="size-4" aria-hidden="true" />
             More filters
           </button>
         </div>
 
         {showMore && (
-          <div className="grid gap-3 rounded-2xl border border-ink-100 bg-surface p-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 rounded-2xl border border-ink-200/70 bg-surface p-4 sm:grid-cols-2 lg:grid-cols-4 shadow-card">
             <SelectFilter
               label="Direction"
               value={params.get('flow') ?? ''}
@@ -183,7 +183,7 @@ export function TransactionsPage() {
                   setSearch('');
                   setParams(new URLSearchParams());
                 }}
-                className="h-11 text-sm font-medium text-brand-700 hover:underline"
+                className="h-11 text-sm font-medium text-brand-600 hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
               >
                 Clear all filters
               </button>
@@ -207,7 +207,10 @@ export function TransactionsPage() {
               ) : (
                 <>
                   Import a bank or UPI statement to get started.{' '}
-                  <Link to="/imports" className="font-medium text-brand-700 hover:underline">
+                  <Link
+                    to="/imports"
+                    className="font-medium text-brand-600 hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
+                  >
                     Go to Imports
                   </Link>
                 </>
@@ -231,7 +234,7 @@ export function TransactionsPage() {
             </div>
 
             {/* Desktop table */}
-            <div className="hidden overflow-hidden rounded-2xl border border-ink-100 bg-surface md:block">
+            <div className="hidden overflow-hidden rounded-2xl border border-ink-200/70 bg-surface md:block shadow-card">
               <table className="w-full text-sm">
                 <thead className="bg-ink-100/60 text-left text-xs uppercase tracking-wide text-ink-500">
                   <tr>
@@ -259,7 +262,7 @@ export function TransactionsPage() {
                         <button
                           type="button"
                           onClick={() => setSelectedId(t.id)}
-                          className="block max-w-full truncate text-left font-medium hover:text-brand-700 hover:underline"
+                          className="block max-w-full truncate text-left font-medium hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
                         >
                           {t.merchantName ?? t.description ?? 'Unknown'}
                         </button>
@@ -281,7 +284,7 @@ export function TransactionsPage() {
             </div>
 
             {/* Mobile cards */}
-            <ul className="divide-y divide-ink-100 rounded-2xl border border-ink-100 bg-surface md:hidden">
+            <ul className="divide-y divide-ink-100 rounded-2xl border border-ink-200/70 bg-surface md:hidden shadow-card">
               {data.items.map((t) => (
                 <li key={t.id}>
                   <button
@@ -309,7 +312,7 @@ export function TransactionsPage() {
                   type="button"
                   disabled={page <= 1}
                   onClick={() => set('page', String(page - 1))}
-                  className="h-11 rounded-lg border border-ink-300 bg-surface px-4 text-sm font-medium disabled:opacity-40"
+                  className="h-11 rounded-xl border border-ink-200 bg-surface px-4 text-sm font-medium disabled:opacity-40 shadow-card transition-all duration-200 hover:border-ink-300 hover:bg-ink-50 active:scale-[0.98]"
                 >
                   Previous
                 </button>
@@ -320,7 +323,7 @@ export function TransactionsPage() {
                   type="button"
                   disabled={page >= pages}
                   onClick={() => set('page', String(page + 1))}
-                  className="h-11 rounded-lg border border-ink-300 bg-surface px-4 text-sm font-medium disabled:opacity-40"
+                  className="h-11 rounded-xl border border-ink-200 bg-surface px-4 text-sm font-medium disabled:opacity-40 shadow-card transition-all duration-200 hover:border-ink-300 hover:bg-ink-50 active:scale-[0.98]"
                 >
                   Next
                 </button>

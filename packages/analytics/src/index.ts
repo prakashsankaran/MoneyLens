@@ -12,3 +12,4 @@ export * from './report';
 export * from './budgets';
 export * from './plan';
 export * from './simulator';
+export * from './assistant';

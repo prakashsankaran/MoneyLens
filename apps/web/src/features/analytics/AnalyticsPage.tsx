@@ -1,4 +1,4 @@
-import { ChevronRight } from 'lucide-react';
+import { LuChevronRight } from 'react-icons/lu';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { formatINR, formatMonthKey, monthRangeUtc } from '@moneylens/shared';
@@ -41,7 +41,7 @@ export function AnalyticsPage() {
   if (monthly.isPending) return <FullPageSpinner />;
   if (monthly.isError) {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-8">
         <ErrorCard message={monthly.error.message} onRetry={() => void monthly.refetch()} />
       </div>
     );
@@ -53,7 +53,7 @@ export function AnalyticsPage() {
   const hasData = data.availableMonths.length > 0;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:py-10">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8 lg:py-12">
       <PageHeader
         title="Analytics"
         description="Your spending by category, merchant and month."
@@ -67,7 +67,7 @@ export function AnalyticsPage() {
                   setMonth(e.target.value);
                   setParent(null);
                 }}
-                className="h-10 rounded-lg border border-ink-300 bg-surface px-3 text-sm"
+                className="h-10 rounded-xl border border-ink-200 bg-surface px-3 text-sm shadow-card transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
               >
                 {[...data.availableMonths].reverse().map((m) => (
                   <option key={m} value={m}>
@@ -84,7 +84,10 @@ export function AnalyticsPage() {
         <Card className="mt-8" title="Nothing to analyse yet">
           <p className="text-sm text-ink-500">
             Analytics appear once you import transactions.{' '}
-            <Link to="/imports" className="font-medium text-brand-700 hover:underline">
+            <Link
+              to="/imports"
+              className="font-medium text-brand-600 hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
+            >
               Import a statement
             </Link>
           </p>
@@ -111,7 +114,7 @@ export function AnalyticsPage() {
                   <button
                     type="button"
                     onClick={() => setParent(null)}
-                    className="shrink-0 text-sm font-medium text-brand-700 hover:underline"
+                    className="shrink-0 text-sm font-medium text-brand-600 hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
                   >
                     All categories
                   </button>
@@ -165,7 +168,7 @@ export function AnalyticsPage() {
                           {m.merchantId ? (
                             <Link
                               to={`/transactions?from=${days.from}&to=${days.to}&merchantId=${m.merchantId}`}
-                              className="hover:text-brand-700 hover:underline"
+                              className="hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
                             >
                               {m.name}
                             </Link>
@@ -215,7 +218,10 @@ export function AnalyticsPage() {
           <p className="text-xs text-ink-500">
             Every figure here is calculated from your confirmed transactions; transfers between your
             own accounts are not counted. Recurring payments are on the{' '}
-            <Link to="/insights" className="font-medium text-brand-700 hover:underline">
+            <Link
+              to="/insights"
+              className="font-medium text-brand-600 hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
+            >
               Insights
             </Link>{' '}
             page.
@@ -273,7 +279,7 @@ function CategoryList({
               <button
                 type="button"
                 onClick={() => onSelect(item)}
-                className="min-w-0 flex-1 rounded-lg px-2 py-2 text-left hover:bg-ink-100"
+                className="min-w-0 flex-1 rounded-xl px-2 py-2 text-left hover:bg-ink-100 transition-all duration-200"
                 aria-label={`${item.name}: ${formatINR(item.amountPaise)}. Show subcategories`}
               >
                 {body}
@@ -281,13 +287,13 @@ function CategoryList({
             ) : (
               <Link
                 to={linkFor(item)}
-                className="block min-w-0 flex-1 rounded-lg px-2 py-2 hover:bg-ink-100"
+                className="block min-w-0 flex-1 rounded-xl px-2 py-2 hover:bg-ink-100 transition-all duration-200"
               >
                 {body}
               </Link>
             )}
             {canDrill && (
-              <ChevronRight className="size-4 shrink-0 text-ink-500" aria-hidden="true" />
+              <LuChevronRight className="size-4 shrink-0 text-ink-500" aria-hidden="true" />
             )}
           </li>
         );

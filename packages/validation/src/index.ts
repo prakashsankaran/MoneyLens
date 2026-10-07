@@ -338,3 +338,24 @@ export const putBudgetsSchema = z.object({
     .max(100),
 });
 export type PutBudgetsInput = z.input<typeof putBudgetsSchema>;
+
+// ---------------------------------------------------------------------------
+// MoneyLens AI (Phase 6)
+// ---------------------------------------------------------------------------
+
+export const ASSISTANT_MESSAGE_MAX = 500;
+
+export const chatSchema = z.object({
+  message: z
+    .string()
+    .trim()
+    .min(1, 'Type a question')
+    .max(ASSISTANT_MESSAGE_MAX, `Keep questions under ${ASSISTANT_MESSAGE_MAX} characters`),
+  /** Continue an existing conversation; omit to start a new one. */
+  conversationId: idSchema.optional(),
+  /** The month to explain; defaults to the latest month with data. */
+  month: monthKeySchema.optional(),
+});
+export type ChatInput = z.input<typeof chatSchema>;
+
+export const briefQuerySchema = z.object({ month: monthKeySchema.optional() });

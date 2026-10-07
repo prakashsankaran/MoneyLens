@@ -21,7 +21,7 @@ const SERIES = [
 function TrendTooltip({ active, payload, label }: TooltipContentProps<ValueType, NameType>) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border border-ink-100 bg-surface px-3 py-2 text-xs shadow-sm">
+    <div className="rounded-xl border border-ink-200/70 bg-surface px-3 py-2 text-xs shadow-sm">
       <p className="mb-1 font-medium">{formatMonthKey(String(label))}</p>
       {payload.map((p) => (
         <p key={String(p.dataKey)} className="flex items-center gap-2 text-ink-700">
@@ -51,7 +51,7 @@ export function SpendingTrendChart({ trend }: { trend: MonthlyTrendPoint[] }) {
         <button
           type="button"
           onClick={() => setShowTable((v) => !v)}
-          className="text-xs font-medium text-brand-700 hover:underline"
+          className="text-xs font-medium text-brand-600 hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
         >
           {showTable ? 'Show chart' : 'Show as table'}
         </button>

@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import { LuX } from 'react-icons/lu';
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 
 interface DialogProps {
@@ -40,7 +40,7 @@ export function Dialog({ title, onClose, children, variant = 'center' }: DialogP
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex justify-center bg-ink-900/40 ${variant === 'center' ? 'sm:p-4' : ''}`}
+      className={`fixed inset-0 z-50 flex justify-center bg-ink-900/30 backdrop-blur-[2px] ${variant === 'center' ? 'sm:p-4' : ''}`}
     >
       <button
         type="button"
@@ -55,22 +55,22 @@ export function Dialog({ title, onClose, children, variant = 'center' }: DialogP
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`relative flex flex-col overflow-hidden bg-surface shadow-xl outline-none ${panel}`}
+        className={`relative flex flex-col overflow-hidden bg-surface shadow-2xl ring-1 ring-ink-900/5 outline-none ${panel}`}
       >
-        <header className="flex items-center justify-between gap-4 border-b border-ink-100 px-5 py-4">
-          <h2 id={titleId} className="text-base font-semibold">
+        <header className="flex items-center justify-between gap-4 border-b border-ink-100 px-5 py-4 sm:px-6">
+          <h2 id={titleId} className="text-lg font-semibold tracking-tight">
             {title}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="-mr-2 rounded-lg p-2 text-ink-500 hover:bg-ink-100"
+            className="-mr-2 rounded-xl p-2 text-ink-500 transition-all duration-200 hover:bg-ink-100 hover:text-ink-900"
             aria-label="Close"
           >
-            <X className="size-5" aria-hidden="true" />
+            <LuX className="size-5" aria-hidden="true" />
           </button>
         </header>
-        <div className="overflow-y-auto px-5 py-5">{children}</div>
+        <div className="overflow-y-auto px-5 py-6 sm:px-6">{children}</div>
       </div>
     </div>
   );

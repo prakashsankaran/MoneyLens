@@ -9,15 +9,16 @@ tracker. Every number on screen is computed by a deterministic analytics engine,
 and every statement is labelled as a fact, calculation, observation, AI
 interpretation or recommendation.
 
-> **Status: Phase 5 of 8.** Authentication, the dashboard, statement import
+> **Status: Phase 6 of 8.** Authentication, the dashboard, statement import
 > (Google Pay PDF including password-protected ones, bank CSV and Excel) with
 > a review step and duplicate detection, the transaction list with editing,
 > category and merchant management, analytics with period comparisons,
 > recurring payment detection, behaviour insights, potential saving
 > opportunities, an explainable financial health score, the monthly report,
-> the personal money plan, monthly budgets, the what-if simulator and data
-> deletion are working. The AI assistant and the mobile app follow.
-> See [docs/PLAN.md](docs/PLAN.md) and [docs/PHASE5_SUMMARY.md](docs/PHASE5_SUMMARY.md).
+> the personal money plan, monthly budgets, the what-if simulator, MoneyLens
+> AI (chat and the AI Money Brief, with figure-checking guardrails) and data
+> deletion are working. The mobile app follows.
+> See [docs/PLAN.md](docs/PLAN.md) and [docs/PHASE6_SUMMARY.md](docs/PHASE6_SUMMARY.md).
 
 ## Repository layout
 
@@ -40,7 +41,14 @@ docs/                    Architecture and engineering docs
 ## Prerequisites
 
 - Node.js 22.13 or newer (see `.nvmrc`; the PDF reader needs it) and npm 10
-- PostgreSQL 16, either local or via Docker Compose
+- PostgreSQL 16, either local or via Docker Compose. With a local install,
+  create the role and database the template `.env` expects (the role needs
+  `CREATEDB` because `prisma migrate dev` uses a temporary shadow database):
+
+  ```bash
+  psql -U postgres -c "CREATE ROLE moneylens LOGIN PASSWORD 'moneylens' CREATEDB"
+  psql -U postgres -c "CREATE DATABASE moneylens OWNER moneylens"
+  ```
 
 ## Quick start
 
@@ -86,6 +94,14 @@ They are validated at startup and the API refuses to start if they are invalid.
 | `TRUST_PROXY`              | no       | `0`                     | Proxy hops to trust for client IPs                                                                                          |
 | `LOG_LEVEL`                | no       | `info`                  | pino log level                                                                                                              |
 | `MAX_UPLOAD_MB`            | no       | `10`                    | Statement upload size limit                                                                                                 |
+| `AI_PROVIDER`              | no       | `none`                  | `none`, `anthropic`, `openai-compatible` or `mock`. With `none`, MoneyLens AI shows calculated figures only                 |
+| `AI_API_KEY`               | for AI   |                         | Provider API key (anthropic, openai-compatible)                                                                             |
+| `AI_MODEL`                 | no       | `claude-sonnet-5-5`     | Model id; required for openai-compatible                                                                                    |
+| `AI_BASE_URL`              | no       |                         | Base URL for openai-compatible (e.g. `https://host/v1`)                                                                     |
+| `AI_MAX_OUTPUT_TOKENS`     | no       | `700`                   | Output token cap per answer                                                                                                 |
+| `AI_TIMEOUT_MS`            | no       | `30000`                 | Provider request timeout                                                                                                    |
+| `AI_DAILY_MESSAGE_LIMIT`   | no       | `50`                    | Questions per user per 24 hours                                                                                             |
+| `AI_CHAT_RATE_LIMIT`       | no       | `10`                    | Questions per user per minute                                                                                               |
 
 Web variables (optional, `apps/web/.env`): `VITE_API_BASE_URL` (default `/api`)
 and `VITE_API_PROXY_TARGET` for the dev proxy (default `http://localhost:4000`).
@@ -122,7 +138,7 @@ drop data. See [docs/DATABASE.md](docs/DATABASE.md).
 
 ```bash
 npm test             # all unit + integration tests (packages, API, web)
-npm run test:e2e     # Playwright end-to-end (needs the API running with demo data)
+npm run test:e2e     # Playwright end-to-end (start servers with `npm run dev:e2e` and seeded demo data)
 npm run lint         # ESLint
 npm run typecheck    # strict TypeScript, every workspace
 npm run format       # Prettier
@@ -151,7 +167,7 @@ built app with nginx and proxies `/api` to the API.
 - [SECURITY.md](docs/SECURITY.md): auth, privacy and threat model
 - [DEVELOPMENT.md](docs/DEVELOPMENT.md): workflow and conventions
 - [IMPORT_PIPELINE.md](docs/IMPORT_PIPELINE.md): statement import pipeline, supported formats and duplicate detection
-- [AI_ARCHITECTURE.md](docs/AI_ARCHITECTURE.md): AIProvider and guardrails design (phase 6)
+- [AI_ARCHITECTURE.md](docs/AI_ARCHITECTURE.md): MoneyLens AI: providers, context, guardrails
 - [PLAN.md](docs/PLAN.md): architecture proposal and phased plan
 - [PHASE4_SUMMARY.md](docs/PHASE4_SUMMARY.md): insights, recurring payments, health score and monthly report
 

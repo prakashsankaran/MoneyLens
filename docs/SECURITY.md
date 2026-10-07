@@ -86,9 +86,18 @@ Path=/api/auth` cookie (`Secure` in production). Only its SHA-256 hash is
   narrations shown as descriptions.
 - Raw statement files are processed into normalised rows in memory and then
   discarded.
-- The AI pipeline (phase 6) is `document → parser → normalised data → sanitised
-aggregates → AI`. Raw documents and raw transaction lists are not sent to an
-  AI provider.
+- The AI pipeline is `document → parser → normalised data → sanitised
+aggregates → AI`. Raw documents, transaction lists, UPI IDs, references and
+  account numbers are never sent to an AI provider; only monthly aggregates
+  are (see AI_ARCHITECTURE.md). With `AI_PROVIDER=none` (the default) nothing
+  is sent anywhere.
+- MoneyLens AI refuses messages containing a PIN, password, OTP, CVV or card
+  number before they are stored or sent, keeping only a placeholder, and
+  masks UPI IDs and long numbers in every other question. Every amount and
+  percentage in an AI answer is checked against the calculated figures before
+  it is shown. Questions are limited per user per minute and per 24 hours.
+- The AI provider key lives only in the API's environment. Provider errors
+  are reported by HTTP status only; response bodies are never logged.
 - Deletion: every user-owned table cascades from `User`. Users can delete a
   transaction, an import (with the transactions it added), all transactions
   (typed `DELETE` confirmation), and their account (password re-check).

@@ -26,4 +26,15 @@ describe('loadEnv', () => {
       }),
     ).toThrow(/example value/);
   });
+
+  it('defaults MoneyLens AI to off and checks provider settings', () => {
+    expect(loadEnv(base).AI_PROVIDER).toBe('none');
+    expect(() => loadEnv({ ...base, AI_PROVIDER: 'anthropic' })).toThrow(/AI_API_KEY/);
+    expect(() => loadEnv({ ...base, AI_PROVIDER: 'openai-compatible', AI_API_KEY: 'k' })).toThrow(
+      /AI_BASE_URL/,
+    );
+    expect(loadEnv({ ...base, AI_PROVIDER: 'anthropic', AI_API_KEY: 'k' }).AI_PROVIDER).toBe(
+      'anthropic',
+    );
+  });
 });

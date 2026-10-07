@@ -32,7 +32,7 @@ export function SavingsOpportunities({
     <div>
       <ul className="space-y-3">
         {shownOpportunities.map((o) => (
-          <li key={o.id} className="rounded-xl border border-ink-100 p-4">
+          <li key={o.id} className="rounded-xl border border-ink-200/70 p-4">
             <div className="flex flex-wrap items-center gap-2">
               <ProvenanceBadge kind={o.kind} />
               {o.potentialMonthlySavingPaise !== undefined && (
@@ -50,7 +50,7 @@ export function SavingsOpportunities({
           </li>
         ))}
         {shownObservations.map((o) => (
-          <li key={o.id} className="rounded-xl border border-ink-100 p-4">
+          <li key={o.id} className="rounded-xl border border-ink-200/70 p-4">
             <div className="flex flex-wrap items-center gap-2">
               <ProvenanceBadge kind={o.kind} />
             </div>
@@ -65,7 +65,7 @@ export function SavingsOpportunities({
       </ul>
       <Link
         to="/insights"
-        className="mt-4 inline-block text-sm font-medium text-brand-700 hover:underline"
+        className="mt-4 inline-block text-sm font-medium text-brand-600 hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
       >
         See all insights and the evidence
       </Link>

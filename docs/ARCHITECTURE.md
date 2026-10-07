@@ -193,6 +193,14 @@ Phase 5 added, also pure:
 each saved plan in `MoneyPlan`, and budgets in `Budget`; the plan itself is
 recalculated on every read.
 
+Phase 6 added `assistantContext` and `spendingDriver` (`assistant.ts`): the
+figures MoneyLens AI may use for a month, with every difference, average per
+payment, running total and frequency-or-size driver calculated in advance.
+The API's `ai` module routes a question to topics, words the matching
+figures as labelled statements, sends only that aggregated slice to the
+configured `AIProvider`, and checks every amount and percentage in the reply
+against the context before showing it. See AI_ARCHITECTURE.md.
+
 In the API, `RecurringService` stores one `RecurringPayment` row per series
 (keyed so dismissals survive re-detection) and flags its transactions. It
 re-runs after an import is confirmed or deleted, a transaction is edited or
@@ -212,7 +220,7 @@ never from the model's output.
 ## Web application
 
 - React 19, React Router 7, TanStack Query 5, React Hook Form + Zod
-  (schemas from `@moneylens/validation`), Tailwind CSS 4, Recharts 3, lucide icons.
+  (schemas from `@moneylens/validation`), Tailwind CSS 4, Recharts 3, React Icons (Lucide set, `react-icons/lu`). See docs/DESIGN_SYSTEM.md for the visual rules.
 - `features/` holds feature folders (auth, dashboard, transactions, imports,
   analytics, categories); `components/` holds the shared UI and layout
   (`Dialog`, `PageHeader`, `Card`, …).
@@ -245,7 +253,7 @@ never from the model's output.
 | -------------------- | ------------------------------------------------------------------- | ----- |
 | New statement source | `TransactionParser` implementations + `TransactionSource` enum      | 2–3   |
 | OCR for scanned PDFs | `OcrEngine` interface behind the PDF parser                         | later |
-| LLM vendor           | `AIProvider` interface, chosen by env var                           | 6     |
+| LLM vendor           | `AIProvider` interface (`anthropic`, `openai-compatible`), env var  | 6     |
 | File storage         | Not needed yet: files are parsed in memory and discarded            | 3     |
 | Mobile auth          | Refresh token returned in body when the client identifies as mobile | 7     |
 

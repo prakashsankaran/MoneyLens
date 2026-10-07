@@ -3,6 +3,7 @@ import { AppShell } from './components/layout/AppShell';
 import { LoginPage } from './features/auth/LoginPage';
 import { RegisterPage } from './features/auth/RegisterPage';
 import { RequireAuth } from './features/auth/RequireAuth';
+import { AssistantPage } from './features/assistant/AssistantPage';
 import { AnalyticsPage } from './features/analytics/AnalyticsPage';
 import { DashboardPage } from './features/dashboard/DashboardPage';
 import { ImportReviewPage } from './features/imports/ImportReviewPage';
@@ -11,7 +12,6 @@ import { InsightsPage } from './features/insights/InsightsPage';
 import { MoneyPlanPage } from './features/plan/MoneyPlanPage';
 import { MonthlyReportPage } from './features/reports/MonthlyReportPage';
 import { TransactionsPage } from './features/transactions/TransactionsPage';
-import { PlannedFeaturePage } from './pages/PlannedFeaturePage';
 import { SettingsPage } from './pages/SettingsPage';
 
 export function App() {
@@ -27,21 +27,7 @@ export function App() {
           <Route path="plan" element={<MoneyPlanPage />} />
           <Route path="insights" element={<InsightsPage />} />
           <Route path="reports" element={<MonthlyReportPage />} />
-          <Route
-            path="assistant"
-            element={
-              <PlannedFeaturePage
-                title="MoneyLens AI"
-                phase={6}
-                purpose="Ask questions about your money, answered from your calculated figures."
-                plannedCapabilities={[
-                  'Answers grounded in structured analytics, never raw documents',
-                  'Clear labels separating facts from AI interpretation',
-                  'Says so when there is not enough data to answer',
-                ]}
-              />
-            }
-          />
+          <Route path="assistant" element={<AssistantPage />} />
           <Route path="imports" element={<ImportsPage />} />
           <Route path="imports/:id" element={<ImportReviewPage />} />
           <Route path="settings" element={<SettingsPage />} />

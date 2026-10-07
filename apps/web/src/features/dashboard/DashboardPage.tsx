@@ -22,13 +22,13 @@ export function DashboardPage() {
   if (isPending) return <FullPageSpinner />;
   if (isError) {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-8">
         <Card title="We couldn't load your dashboard">
           <p className="text-sm text-ink-500">{error.message}</p>
           <button
             type="button"
             onClick={() => void refetch()}
-            className="mt-4 text-sm font-medium text-brand-700 hover:underline"
+            className="mt-4 text-sm font-medium text-brand-600 hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
           >
             Try again
           </button>
@@ -42,14 +42,14 @@ export function DashboardPage() {
   const hasData = data.availableMonths.length > 0;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:py-10">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8 lg:py-12">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm text-ink-500">
             {greetingFor(new Date())}
             {firstName && `, ${firstName}`}
           </p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+          <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
             Your money in {monthName}
           </h1>
         </div>
@@ -59,7 +59,7 @@ export function DashboardPage() {
             <select
               value={data.month}
               onChange={(e) => setMonth(e.target.value)}
-              className="h-10 rounded-lg border border-ink-300 bg-surface px-3 text-sm"
+              className="h-10 rounded-xl border border-ink-200 bg-surface px-3 text-sm shadow-card transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
             >
               {[...data.availableMonths].reverse().map((m) => (
                 <option key={m} value={m}>
@@ -79,13 +79,15 @@ export function DashboardPage() {
           </p>
           <Link
             to="/imports"
-            className="mt-4 inline-flex h-11 items-center rounded-lg bg-brand-700 px-4 text-sm font-medium text-white hover:bg-brand-600"
+            className="mt-4 inline-flex h-11 items-center rounded-xl bg-brand-600 px-4 text-sm font-medium text-white hover:bg-brand-700 shadow-sm shadow-brand-600/20 transition-all duration-200 hover:shadow-md active:scale-[0.98]"
           >
             Import a statement
           </Link>
         </Card>
       ) : (
-        <div className={`mt-6 space-y-6 transition-opacity ${isFetching ? 'opacity-60' : ''}`}>
+        <div
+          className={`mt-8 space-y-6 transition-opacity lg:space-y-8 ${isFetching ? 'opacity-60' : ''}`}
+        >
           <section aria-label="Financial overview">
             <OverviewTiles totals={data.totals} comparison={data.comparison} />
             <p className="mt-2 text-xs text-ink-500">
@@ -139,7 +141,7 @@ export function DashboardPage() {
             <HealthScoreSummary health={data.health} />
           </Card>
 
-          <MoneyBriefCard />
+          <MoneyBriefCard month={data.month} />
         </div>
       )}
     </div>

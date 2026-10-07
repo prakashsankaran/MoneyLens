@@ -1,4 +1,4 @@
-import { Printer } from 'lucide-react';
+import { LuPrinter } from 'react-icons/lu';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { Link } from 'react-router';
@@ -28,7 +28,7 @@ export function MonthlyReportPage() {
   if (isPending) return <FullPageSpinner />;
   if (isError) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+      <div className="mx-auto max-w-5xl px-4 py-12 sm:px-8">
         <ErrorCard message={error.message} onRetry={() => void refetch()} />
       </div>
     );
@@ -39,7 +39,7 @@ export function MonthlyReportPage() {
   const compareOptions = data.availableMonths.filter((m) => m !== data.month).reverse();
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:py-10">
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-8 lg:py-12">
       <PageHeader
         title={`Monthly report: ${label}`}
         description="Everything that happened with your money this month, in one place."
@@ -54,7 +54,7 @@ export function MonthlyReportPage() {
                     setMonth(e.target.value);
                     setCompare(undefined);
                   }}
-                  className="h-10 rounded-lg border border-ink-300 bg-surface px-3 text-sm"
+                  className="h-10 rounded-xl border border-ink-200 bg-surface px-3 text-sm shadow-card transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
                 >
                   {[...data.availableMonths].reverse().map((m) => (
                     <option key={m} value={m}>
@@ -68,7 +68,7 @@ export function MonthlyReportPage() {
                 <select
                   value={compare ?? data.compareMonth ?? ''}
                   onChange={(e) => setCompare(e.target.value || undefined)}
-                  className="h-10 rounded-lg border border-ink-300 bg-surface px-3 text-sm"
+                  className="h-10 rounded-xl border border-ink-200 bg-surface px-3 text-sm shadow-card transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
                 >
                   {!data.compareMonth && !compare && <option value="">No earlier month</option>}
                   {compareOptions.map((m) => (
@@ -81,9 +81,9 @@ export function MonthlyReportPage() {
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="inline-flex h-10 items-center gap-2 rounded-lg border border-ink-300 px-3 text-sm hover:bg-ink-100 print:hidden"
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-ink-200 px-3 text-sm hover:bg-ink-50 print:hidden bg-surface shadow-card transition-all duration-200 hover:border-ink-300 active:scale-[0.98]"
               >
-                <Printer className="size-4" aria-hidden="true" /> Print
+                <LuPrinter className="size-4" aria-hidden="true" /> Print
               </button>
             </>
           )
@@ -94,7 +94,10 @@ export function MonthlyReportPage() {
         <Card className="mt-8" title="No report yet">
           <p className="text-sm text-ink-500">
             Your monthly report appears once you import transactions.{' '}
-            <Link to="/imports" className="font-medium text-brand-700 hover:underline">
+            <Link
+              to="/imports"
+              className="font-medium text-brand-600 hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
+            >
               Import a statement
             </Link>
           </p>

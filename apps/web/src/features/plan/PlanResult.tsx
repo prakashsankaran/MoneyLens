@@ -182,7 +182,7 @@ export function PlanResult({ plan }: { plan: MoneyPlanResult }) {
         </section>
       )}
 
-      <p className="rounded-lg bg-ink-100/60 p-3 text-xs text-ink-700">{plan.disclaimer}</p>
+      <p className="rounded-xl bg-ink-100/60 p-3 text-xs text-ink-700">{plan.disclaimer}</p>
     </div>
   );
 }

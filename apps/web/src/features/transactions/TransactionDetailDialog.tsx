@@ -172,7 +172,7 @@ function TransactionDetailBody({ tx, onClose }: { tx: TransactionDetail; onClose
           <textarea
             rows={2}
             maxLength={500}
-            className="mt-1.5 block w-full rounded-lg border border-ink-300 bg-surface px-3 py-2 text-sm"
+            className="mt-1.5 block w-full rounded-xl border border-ink-200 bg-surface px-3 py-2 text-sm shadow-card transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
             {...register('notes')}
           />
         </label>
@@ -206,7 +206,7 @@ function TransactionDetailBody({ tx, onClose }: { tx: TransactionDetail; onClose
           {excluded ? 'Include in totals again' : 'Exclude from totals'}
         </Button>
         {confirmDelete ? (
-          <div className="rounded-lg border border-negative/30 p-3 text-sm">
+          <div className="rounded-xl border border-negative/30 p-3 text-sm">
             <p>Delete this transaction permanently? This cannot be undone.</p>
             <div className="mt-3 flex gap-2">
               <Button

@@ -4,15 +4,19 @@ import type { Express } from 'express';
 import { createApp } from '../src/app';
 import { loadEnv } from '../src/config/env';
 import { createLogger } from '../src/lib/logger';
+import type { AIProvider } from '../src/modules/ai/providers';
 
-export function createTestContext(overrides: Record<string, string> = {}) {
+export function createTestContext(
+  overrides: Record<string, string> = {},
+  deps: { aiProvider?: AIProvider } = {},
+) {
   const env = loadEnv({
     ...process.env,
     ...overrides,
     ...(process.env.TEST_DATABASE_URL ? { DATABASE_URL: process.env.TEST_DATABASE_URL } : {}),
   });
   const prisma = new PrismaClient({ datasourceUrl: env.DATABASE_URL });
-  const app = createApp({ env, prisma, logger: createLogger(env) });
+  const app = createApp({ env, prisma, logger: createLogger(env), ...deps });
   return { env, prisma, app };
 }
 
