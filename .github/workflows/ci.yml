@@ -68,7 +68,7 @@ jobs:
         working-directory: apps/web
       # Playwright starts the API and web dev servers (npm run dev:e2e).
       - run: npm run test:e2e
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: failure()
         with:
           name: playwright-report
