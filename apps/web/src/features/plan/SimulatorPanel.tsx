@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LuPlus, LuTrash2 } from 'react-icons/lu';
+import { LuChartColumn, LuPlus, LuSlidersHorizontal, LuTrash2 } from 'react-icons/lu';
 import { formatINR } from '@moneylens/shared';
 import type { CategoryNode } from '@moneylens/types';
 import type { ScenarioAdjustmentInput } from '@moneylens/validation';
@@ -101,6 +101,7 @@ export function SimulatorPanel() {
     <div className="space-y-6">
       <Card
         title="What if I changed something?"
+        icon={LuSlidersHorizontal}
         description="Try a change against your average month. Nothing is saved."
       >
         <div className="flex flex-wrap gap-2" aria-label="Examples">
@@ -134,7 +135,7 @@ export function SimulatorPanel() {
             {drafts.map((d, i) => (
               <li
                 key={d.key}
-                className="grid gap-2 rounded-xl border border-ink-200/70 p-3 sm:grid-cols-[1fr_1fr_8rem_auto] sm:items-end"
+                className="grid gap-2 rounded-xl border border-ink-200 p-3 sm:grid-cols-[1fr_1fr_8rem_auto] sm:items-end"
               >
                 <label className="text-sm">
                   <span className="mb-1 block text-xs text-ink-500">Change {i + 1}</span>
@@ -228,7 +229,11 @@ export function SimulatorPanel() {
       </Card>
 
       {result && (
-        <Card title="What this would change" action={<ProvenanceBadge kind="CALCULATION" />}>
+        <Card
+          title="What this would change"
+          icon={LuChartColumn}
+          action={<ProvenanceBadge kind="CALCULATION" />}
+        >
           <dl className="grid gap-4 sm:grid-cols-3">
             <div>
               <dt className="text-xs text-ink-500">Each month</dt>

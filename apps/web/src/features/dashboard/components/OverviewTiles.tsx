@@ -6,19 +6,21 @@ import {
   type Delta,
   type DeltaTone,
 } from '@moneylens/shared';
+import type { IconType } from 'react-icons';
+import { LuArrowDownLeft, LuPiggyBank, LuWallet } from 'react-icons/lu';
 import type { PeriodComparison, PeriodTotals } from '@moneylens/types';
 import { ScoreRing } from '../../../components/charts/ScoreRing';
 
 const pillClass: Record<DeltaTone, string> = {
-  good: 'bg-positive/10 text-positive',
-  bad: 'bg-negative/10 text-negative',
-  neutral: 'bg-ink-100 text-ink-500',
+  good: 'bg-positive-50 text-positive',
+  bad: 'bg-negative-50 text-negative',
+  neutral: 'bg-ink-100 text-ink-700',
 };
 
 function DeltaPill({ delta }: { delta: Delta }) {
   return (
     <span
-      className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ${pillClass[delta.tone]}`}
+      className={`inline-flex h-6 items-center rounded-full px-2.5 text-xs font-semibold whitespace-nowrap ${pillClass[delta.tone]}`}
     >
       {delta.text}
     </span>
@@ -54,12 +56,15 @@ export function OverviewTiles({
   const rateText = rate === null ? '—' : rate < -999 ? '< −999%' : `${Math.round(rate)}%`;
 
   return (
-    <dl className="grid grid-cols-2 gap-3 lg:gap-4 xl:grid-cols-4">
-      <div className="@container col-span-2 rounded-2xl border border-ink-200/70 bg-surface p-5 shadow-card sm:p-6">
+    <dl className="list-rise grid grid-cols-2 gap-3 md:gap-4 lg:gap-6 xl:grid-cols-4">
+      <div className="@container col-span-2 rounded-2xl border border-ink-200 bg-surface p-4 shadow-card sm:p-5 lg:p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="min-w-0">
-            <dt className="text-sm font-medium text-ink-500">Spending</dt>
-            <dd className="mt-1 text-3xl leading-none font-bold tracking-tight [overflow-wrap:anywhere] @sm:text-4xl @md:text-5xl">
+            <dt className="flex items-center gap-2 text-xs font-medium text-ink-500">
+              <TileIcon icon={LuWallet} />
+              Spending
+            </dt>
+            <dd className="mt-3 text-3xl leading-none font-bold tracking-tight [overflow-wrap:anywhere] @sm:text-4xl @md:text-5xl">
               {formatINR(totals.spendingPaise)}
             </dd>
             <dd className="mt-2 text-xs text-ink-500">
@@ -85,7 +90,7 @@ export function OverviewTiles({
                 >
                   {rateText}
                 </span>
-                <span className="text-[11px] text-ink-500">
+                <span className="text-2xs text-ink-500">
                   {rate === null ? 'No income' : 'kept'}
                 </span>
               </ScoreRing>
@@ -97,9 +102,15 @@ export function OverviewTiles({
         </div>
       </div>
 
-      <Tile label="Income" value={formatINR(totals.incomePaise)} delta={incomeDelta} />
+      <Tile
+        label="Income"
+        icon={LuArrowDownLeft}
+        value={formatINR(totals.incomePaise)}
+        delta={incomeDelta}
+      />
       <Tile
         label={overspent ? 'Overspent' : 'Saved'}
+        icon={LuPiggyBank}
         value={formatINR(Math.abs(totals.savedPaise))}
         valueClass={overspent ? 'text-negative' : 'text-positive'}
         delta={savedDelta}
@@ -108,21 +119,36 @@ export function OverviewTiles({
   );
 }
 
+function TileIcon({ icon: Icon }: { icon: IconType }) {
+  return (
+    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-ink-100 text-ink-700">
+      <Icon className="size-4" aria-hidden="true" />
+    </span>
+  );
+}
+
 function Tile({
   label,
+  icon,
   value,
   valueClass = '',
   delta,
 }: {
   label: string;
+  icon: IconType;
   value: string;
   valueClass?: string;
   delta: Delta | undefined;
 }) {
   return (
-    <div className="flex flex-col rounded-2xl border border-ink-200/70 bg-surface p-5 shadow-card sm:p-6">
-      <dt className="text-sm font-medium text-ink-500">{label}</dt>
-      <dd className={`mt-1 text-2xl font-bold tracking-tight sm:text-[28px] ${valueClass}`}>
+    <div className="flex min-w-0 flex-col rounded-2xl border border-ink-200 bg-surface p-4 shadow-card sm:p-5 lg:p-6">
+      <dt className="flex items-center justify-between gap-2 text-xs font-medium text-ink-500">
+        {label}
+        <TileIcon icon={icon} />
+      </dt>
+      <dd
+        className={`mt-2 text-2xl font-bold tracking-tight [overflow-wrap:anywhere] ${valueClass}`}
+      >
         {value}
       </dd>
       {delta && (

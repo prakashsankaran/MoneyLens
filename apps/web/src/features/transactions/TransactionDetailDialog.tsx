@@ -96,7 +96,7 @@ function TransactionDetailBody({ tx, onClose }: { tx: TransactionDetail; onClose
         <Amount paise={tx.amountPaise} flow={tx.flow} className="text-2xl" />
         <p className="mt-1 text-sm text-ink-700">{tx.merchantName ?? 'Unknown merchant'}</p>
         {excluded && (
-          <p className="mt-2 inline-block rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-warning">
+          <p className="mt-2 inline-block rounded-full bg-warning-50 px-2.5 py-0.5 text-xs font-medium text-warning">
             Excluded from your totals
           </p>
         )}
@@ -172,7 +172,7 @@ function TransactionDetailBody({ tx, onClose }: { tx: TransactionDetail; onClose
           <textarea
             rows={2}
             maxLength={500}
-            className="mt-1.5 block w-full rounded-xl border border-ink-200 bg-surface px-3 py-2 text-sm shadow-card transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
+            className="mt-1.5 block w-full rounded-xl border border-ink-200 bg-surface px-3 py-2 text-sm transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
             {...register('notes')}
           />
         </label>

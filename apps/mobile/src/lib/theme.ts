@@ -1,4 +1,4 @@
-import { chartSeries, colors as tokens, radii, spacing } from '@moneylens/ui';
+import { chartSeries, colors as tokens, radii, spacing, trendSeries } from '@moneylens/ui';
 
 /** React Native styles built from the shared design tokens (packages/ui). */
 export const colors = {
@@ -22,10 +22,10 @@ export function categoryColour(index: number): string {
   return (index < COLOURED_CATEGORIES && chartSeries.light[index]) || tokens.ink[300];
 }
 
-/** Fixed slots: income is always slot 1, spending slot 2 (see packages/ui). */
+/** Income and spending trends use the blue family (see packages/ui). */
 export const seriesColour = {
-  income: chartSeries.light[0],
-  spending: chartSeries.light[1],
+  income: trendSeries.income,
+  spending: trendSeries.spending,
 } as const;
 
 export const toneColour = {
@@ -37,10 +37,10 @@ export const toneColour = {
 
 export const shadow = {
   shadowColor: '#0f172a',
-  shadowOpacity: 0.06,
-  shadowRadius: 8,
-  shadowOffset: { width: 0, height: 2 },
-  elevation: 1,
+  shadowOpacity: 0.07,
+  shadowRadius: 14,
+  shadowOffset: { width: 0, height: 4 },
+  elevation: 2,
 } as const;
 
 export const type = {

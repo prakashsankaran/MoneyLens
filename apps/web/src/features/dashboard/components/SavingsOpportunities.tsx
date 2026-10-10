@@ -49,7 +49,7 @@ export function SavingsOpportunities({
               )
             }
             tag={
-              <span className="rounded-full bg-positive/10 px-2 py-0.5 text-[11px] font-medium text-positive">
+              <span className="rounded-full bg-positive-50 px-2 py-0.5 text-2xs font-medium text-positive">
                 Saving idea
               </span>
             }
@@ -83,7 +83,7 @@ export function SavingsOpportunities({
       </ul>
       <Link
         to="/insights"
-        className="mt-4 inline-block text-sm font-medium text-brand-600 hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
+        className="mt-4 inline-block text-sm font-medium text-brand-700 hover:underline underline-offset-4 hover:text-brand-800 transition-all duration-200"
       >
         See all insights and the evidence
       </Link>
@@ -109,7 +109,7 @@ function Item({
   kind: Observation['kind'];
 }) {
   return (
-    <li className={`rounded-xl border border-l-4 border-ink-200/70 p-4 ${accent}`}>
+    <li className={`rounded-xl border border-l-4 border-ink-200 p-4 ${accent}`}>
       <div className="flex flex-wrap items-center gap-2">
         {tag}
         <ProvenanceBadge kind={kind} />
@@ -117,7 +117,7 @@ function Item({
       {figure && <div className="mt-2">{figure}</div>}
       <p className="mt-1 text-sm font-medium">{title}</p>
       <details className="group mt-2 text-xs text-ink-500">
-        <summary className="inline-flex cursor-pointer list-none items-center gap-1 font-medium text-brand-600 hover:underline [&::-webkit-details-marker]:hidden underline-offset-4 hover:text-brand-700 transition-all duration-200">
+        <summary className="inline-flex cursor-pointer list-none items-center gap-1 font-medium text-brand-700 hover:underline [&::-webkit-details-marker]:hidden underline-offset-4 hover:text-brand-800 transition-all duration-200">
           <span aria-hidden className="inline-block transition-transform group-open:rotate-90">
             ›
           </span>

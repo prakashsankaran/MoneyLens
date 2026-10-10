@@ -34,9 +34,9 @@ function needsInput(err: unknown, request: UploadRequest): NeedsInput | null {
 const STATUS_LABELS: Record<ImportStatus, { label: string; className: string }> = {
   UPLOADED: { label: 'Uploaded', className: 'bg-ink-100 text-ink-700' },
   PARSING: { label: 'Processing', className: 'bg-ink-100 text-ink-700' },
-  READY_FOR_REVIEW: { label: 'Needs review', className: 'bg-amber-50 text-warning' },
+  READY_FOR_REVIEW: { label: 'Needs review', className: 'bg-warning-50 text-warning' },
   CONFIRMED: { label: 'Imported', className: 'bg-brand-50 text-brand-700' },
-  FAILED: { label: 'Could not read', className: 'bg-red-50 text-negative' },
+  FAILED: { label: 'Could not read', className: 'bg-negative-50 text-negative' },
   CANCELLED: { label: 'Cancelled', className: 'bg-ink-100 text-ink-700' },
 };
 
@@ -73,13 +73,13 @@ export function ImportsPage() {
       : undefined;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-8 lg:py-12">
+    <div className="mx-auto max-w-4xl px-4 py-5 md:px-6 lg:px-8 lg:py-8">
       <PageHeader
         title="Imports"
         description="Upload a statement. You will review every row before anything is saved."
       />
 
-      <Card className="mt-6" title="Upload a statement">
+      <Card className="mt-6" title="Upload a statement" icon={LuFileUp}>
         <div
           onDragOver={(e) => {
             e.preventDefault();
@@ -95,7 +95,7 @@ export function ImportsPage() {
         >
           <LuFileUp className="size-8 text-ink-500" aria-hidden="true" />
           <p className="mt-3 text-sm font-medium">Drop a statement here, or</p>
-          <label className="mt-3 inline-flex h-11 cursor-pointer items-center rounded-xl bg-brand-600 px-4 text-sm font-medium text-white hover:bg-brand-700 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand-600 shadow-sm shadow-brand-600/20 transition-all duration-200 hover:shadow-md active:scale-[0.98]">
+          <label className="mt-3 inline-flex h-11 cursor-pointer items-center rounded-full bg-brand-600 px-5 text-sm font-semibold text-white hover:bg-brand-700 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand-600 transition-all duration-200 active:scale-[0.98]">
             {upload.isPending ? 'Reading file…' : 'Choose file'}
             <input
               ref={inputRef}
@@ -162,7 +162,7 @@ export function ImportsPage() {
           ) : history.data.length === 0 ? (
             <p className="text-sm text-ink-500">No statements imported yet.</p>
           ) : (
-            <ul className="divide-y divide-ink-100 rounded-2xl border border-ink-200/70 bg-surface shadow-card">
+            <ul className="divide-y divide-ink-100 rounded-2xl border border-ink-200 bg-surface shadow-card">
               {history.data.map((record) => (
                 <HistoryRow key={record.id} record={record} />
               ))}
@@ -189,7 +189,7 @@ function HistoryRow({ record }: { record: ImportRecord }) {
         <div className="min-w-0">
           <Link
             to={`/imports/${record.id}`}
-            className="block truncate text-sm font-medium hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
+            className="block truncate text-sm font-medium hover:underline underline-offset-4 hover:text-brand-800 transition-all duration-200"
           >
             {record.filename}
           </Link>
@@ -213,7 +213,7 @@ function HistoryRow({ record }: { record: ImportRecord }) {
           <button
             type="button"
             onClick={() => setConfirming(true)}
-            className="rounded-xl p-2 text-ink-500 hover:bg-ink-100 hover:text-negative transition-all duration-200"
+            className="rounded-full p-2 text-ink-500 hover:bg-ink-100 hover:text-negative transition-all duration-200"
             aria-label={`Delete ${record.filename}`}
           >
             <LuTrash2 className="size-4" aria-hidden="true" />
@@ -233,14 +233,14 @@ function HistoryRow({ record }: { record: ImportRecord }) {
               type="button"
               disabled={remove.isPending}
               onClick={() => remove.mutate(record.id)}
-              className="h-10 rounded-xl bg-negative px-4 font-medium text-white shadow-sm transition-all duration-200 hover:bg-red-800 active:scale-[0.98]"
+              className="h-10 rounded-full bg-negative px-4 font-semibold text-white transition-all duration-200 hover:bg-red-800 active:scale-[0.98]"
             >
               Delete
             </button>
             <button
               type="button"
               onClick={() => setConfirming(false)}
-              className="h-10 rounded-xl border border-ink-200 px-4 font-medium bg-surface shadow-card transition-all duration-200 hover:border-ink-300 hover:bg-ink-50 active:scale-[0.98]"
+              className="h-10 rounded-full border border-ink-200 px-5 font-semibold bg-surface transition-all duration-200 hover:bg-ink-100 active:scale-[0.98]"
             >
               Cancel
             </button>

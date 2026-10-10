@@ -1,4 +1,4 @@
-import { LuPencil, LuPlus, LuTrash2 } from 'react-icons/lu';
+import { LuDatabase, LuPencil, LuPlus, LuTags, LuTrash2, LuUser } from 'react-icons/lu';
 import { useState, type FormEvent } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { CategoryNode } from '@moneylens/types';
@@ -19,9 +19,9 @@ import { PasswordCard } from '../features/account/PasswordCard';
 export function SettingsPage() {
   const { user, logout } = useAuth();
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-4 py-8 sm:px-8 lg:py-12">
-      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Settings</h1>
-      <Card title="Account">
+    <div className="mx-auto max-w-3xl space-y-6 px-4 py-5 md:px-6 lg:px-8 lg:py-8">
+      <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+      <Card title="Account" icon={LuUser}>
         <dl className="grid gap-4 text-sm sm:grid-cols-2">
           <div>
             <dt className="text-ink-500">Name</dt>
@@ -64,6 +64,7 @@ function CategoriesCard() {
   return (
     <Card
       title="Categories"
+      icon={LuTags}
       description="Built-in categories cannot be changed, but you can add your own and subcategories under any category."
     >
       <form onSubmit={onCreate} className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
@@ -82,7 +83,7 @@ function CategoriesCard() {
           <select
             value={parentId}
             onChange={(e) => setParentId(e.target.value)}
-            className="mt-1.5 h-11 w-full rounded-xl border border-ink-200 bg-surface px-3 text-sm shadow-card transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
+            className="mt-1.5 h-11 w-full rounded-xl border border-ink-200 bg-surface px-3 text-sm transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
           >
             <option value="">Top level</option>
             {(data ?? []).map((c) => (
@@ -178,7 +179,7 @@ function CategoryLine({
           value={draft}
           maxLength={40}
           onChange={(e) => setDraft(e.target.value)}
-          className="h-9 flex-1 rounded-xl border border-ink-200 px-2 shadow-card transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
+          className="h-9 flex-1 rounded-xl border border-ink-200 px-2 transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
         />
         <Button type="submit" className="!h-9" disabled={!draft.trim() || rename.isPending}>
           Save
@@ -218,7 +219,7 @@ function CategoryLine({
             type="button"
             aria-label={`Rename ${category.name}`}
             onClick={() => setEditing(true)}
-            className="rounded-xl p-1.5 text-ink-500 hover:bg-ink-100 transition-all duration-200 hover:text-ink-900"
+            className="rounded-full p-1.5 text-ink-500 hover:bg-ink-100 transition-all duration-200 hover:text-ink-900"
           >
             <LuPencil className="size-4" aria-hidden="true" />
           </button>
@@ -226,7 +227,7 @@ function CategoryLine({
             type="button"
             aria-label={`Delete ${category.name}`}
             onClick={() => setConfirming(true)}
-            className="rounded-xl p-1.5 text-ink-500 hover:bg-ink-100 hover:text-negative transition-all duration-200"
+            className="rounded-full p-1.5 text-ink-500 hover:bg-ink-100 hover:text-negative transition-all duration-200"
           >
             <LuTrash2 className="size-4" aria-hidden="true" />
           </button>
@@ -278,7 +279,11 @@ function DataCard() {
   };
 
   return (
-    <Card title="Your data" description="Deletion is permanent. There is no undo.">
+    <Card
+      title="Your data"
+      icon={LuDatabase}
+      description="Deletion is permanent. There is no undo."
+    >
       <form onSubmit={deleteAll} className="space-y-3">
         <h3 className="text-sm font-semibold">Delete all transactions</h3>
         <p className="text-sm text-ink-500">
@@ -310,7 +315,7 @@ function DataCard() {
         )}
       </form>
 
-      <form onSubmit={onDeleteAccount} className="mt-8 space-y-3 border-t border-ink-100 pt-6">
+      <form onSubmit={onDeleteAccount} className="mt-8 space-y-3 border-t border-ink-200 pt-6">
         <h3 className="text-sm font-semibold">Delete account</h3>
         <p className="text-sm text-ink-500">
           Deletes your account and everything linked to it: transactions, imports, categories,

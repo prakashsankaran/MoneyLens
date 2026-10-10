@@ -2,47 +2,136 @@
 
 /*
  * Design tokens. Values mirror packages/ui so web and mobile share one palette.
+ * Look and feel: "RevLens" style (see docs/DESIGN_SYSTEM.md).
  */
 @theme {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: 'Poppins', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-weight-extrabold: 700;
+  --font-weight-black: 700;
 
-  --color-ink-900: #0f172a;
-  --color-ink-700: #334155;
-  --color-ink-500: #64748b;
-  --color-ink-300: #cbd5e1;
-  --color-ink-200: #e2e8f0;
-  --color-ink-100: #f1f5f9;
-  --color-ink-50: #f8fafc;
+  /* Fluid type scale: phone → desktop. */
+  --text-2xs: clamp(11px, 0.1vw + 10.5px, 12px);
+  --text-2xs--line-height: 1.3;
+  --text-xs: clamp(12px, 0.1vw + 11.5px, 13px);
+  --text-xs--line-height: 1.35;
+  --text-sm: clamp(13px, 0.1vw + 12.5px, 14px);
+  --text-sm--line-height: 1.42;
+  --text-base: clamp(15px, 0.1vw + 14.5px, 16px);
+  --text-base--line-height: 1.47;
+  --text-lg: clamp(17px, 0.1vw + 16.5px, 18px);
+  --text-lg--line-height: 1.42;
+  --text-xl: clamp(19px, 0.25vw + 18px, 22px);
+  --text-xl--line-height: 1.37;
+  --text-2xl: clamp(23px, 0.5vw + 20px, 28px);
+  --text-2xl--line-height: 1.27;
+  --text-3xl: clamp(30px, 1vw + 24px, 40px);
+  --text-3xl--line-height: 1.2;
 
-  /* Enterprise blue accent (Tailwind blue scale). Use for active states and primary actions only. */
-  --color-brand-700: #1d4ed8;
-  --color-brand-600: #2563eb;
-  --color-brand-500: #3b82f6;
-  --color-brand-100: #dbeafe;
-  --color-brand-50: #eff6ff;
+  /* Ink: text, borders and neutral surfaces. */
+  --color-ink-900: #111827;
+  --color-ink-700: #4b5563;
+  --color-ink-500: #6b7280;
+  --color-ink-300: #d3dae6;
+  --color-ink-200: #e3e8f0;
+  --color-ink-100: #f1f4f9;
+  --color-ink-50: #f6f8fc;
+
+  /* Electric blue accent. Use for the primary action, active states, links and key highlights only.
+     Small text uses brand-700, which keeps AA contrast on white. */
+  --color-brand-800: #1a4bc2;
+  --color-brand-700: #1f5be6;
+  --color-brand-600: #3874ff;
+  --color-brand-500: #6a97ff;
+  --color-brand-100: #dce6ff;
+  --color-brand-50: #ebf1ff;
 
   --color-positive: #15803d;
-  --color-negative: #b42318;
-  --color-warning: #b45309;
+  --color-positive-50: #e6f6ec;
+  --color-negative: #b91c1c;
+  --color-negative-50: #feeaea;
+  --color-warning: #a16207;
+  --color-warning-50: #fef3d6;
 
-  --color-series-1: #2a78d6;
-  --color-series-2: #eb6834;
+  /* Charts: one blue family. Category charts keep the categorical palette (packages/ui). */
+  --color-series-1: #3874ff;
+  --color-series-2: #1e3a8a;
+  --color-series-3: #93c5fd;
+  --color-series-4: #94a3b8;
+  --color-chart-grid: #eef1f6;
 
   --color-surface: #ffffff;
-  --color-canvas: #f8fafc;
+  --color-canvas: #f6f8fc;
 
-  --shadow-card: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.03);
-  --shadow-card-hover: 0 4px 12px -2px rgb(15 23 42 / 0.08), 0 2px 4px -2px rgb(15 23 42 / 0.04);
+  /* Shape: inputs 12px (rounded-xl), cards 20px (rounded-2xl), sheets 28px (rounded-3xl).
+     Buttons, chips, nav items and badges are rounded-full. */
+  --radius-2xl: 20px;
+  --radius-3xl: 28px;
+
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.05), 0 4px 14px rgb(15 23 42 / 0.06);
+  --shadow-card-hover: 0 10px 30px rgb(15 23 42 / 0.14), 0 2px 6px rgb(15 23 42 / 0.07);
+  --shadow-lg: 0 10px 30px rgb(15 23 42 / 0.14), 0 2px 6px rgb(15 23 42 / 0.07);
+  --shadow-xl: 0 10px 30px rgb(15 23 42 / 0.14), 0 2px 6px rgb(15 23 42 / 0.07);
+  --shadow-2xl: 0 10px 30px rgb(15 23 42 / 0.14), 0 2px 6px rgb(15 23 42 / 0.07);
+
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  --animate-page-enter: page-enter 220ms var(--ease-out) backwards;
+  --animate-pop: pop 200ms ease-out;
+  --animate-sheet-up: sheet-up 280ms var(--ease-out);
+  --animate-fade-in: fade 200ms ease-out;
+  --animate-float-slow: float 6s ease-in-out infinite;
+  --animate-float-slower: float 8s ease-in-out 1s infinite;
+
+  @keyframes page-enter {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+  @keyframes pop {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+  }
+  @keyframes sheet-up {
+    from {
+      transform: translateY(100%);
+    }
+  }
+  @keyframes fade {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+  @keyframes float {
+    50% {
+      transform: translateY(-8px);
+    }
+  }
 }
 
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+    scrollbar-gutter: stable;
   }
   body {
     @apply bg-canvas font-sans text-ink-900;
-    font-feature-settings: 'cv11', 'ss01';
+    /* Same face for numbers, with tabular figures so amounts line up. */
+    font-variant-numeric: tabular-nums;
+  }
+  ::selection {
+    @apply bg-brand-600 text-white;
   }
   h1,
   h2,
@@ -58,8 +147,76 @@
     @apply transition-all duration-200;
   }
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-brand-600/70;
+    outline: 2px solid rgb(56 116 255 / 0.7);
+    outline-offset: 2px;
   }
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: none;
+    border-color: var(--color-brand-600);
+    box-shadow: 0 0 0 4px rgb(56 116 255 / 0.12);
+  }
+  ::placeholder {
+    color: var(--color-ink-500);
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+}
+
+/* Collapsible sections open smoothly. */
+details[open] > :not(summary) {
+  animation: rise 260ms var(--ease-out);
+}
+
+/* Card grids rise in one after another. "backwards" (not "both") so no transform
+   lingers afterwards: a lingering transform would trap fixed-position dialogs inside the card. */
+.list-rise > * {
+  animation: rise 350ms var(--ease-out) backwards;
+}
+.list-rise > :nth-child(2) {
+  animation-delay: 30ms;
+}
+.list-rise > :nth-child(3) {
+  animation-delay: 60ms;
+}
+.list-rise > :nth-child(4) {
+  animation-delay: 90ms;
+}
+.list-rise > :nth-child(5) {
+  animation-delay: 120ms;
+}
+.list-rise > :nth-child(n + 6) {
+  animation-delay: 150ms;
+}
+
+@media (hover: hover) {
+  button:not(:disabled):active {
+    transform: scale(0.98);
+  }
+}
+
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-ink-100);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-ink-300);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-ink-500);
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -67,6 +224,8 @@
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

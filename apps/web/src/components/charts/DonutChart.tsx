@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Cell, Pie, PieChart, Tooltip, type TooltipContentProps } from 'recharts';
 import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
 import { formatINR } from '@moneylens/shared';
+import { chartTooltipClass } from './chart-theme';
 
 export interface DonutSlice {
   key: string;
@@ -15,7 +16,7 @@ function SliceTooltip({ active, payload }: TooltipContentProps<ValueType, NameTy
   const p = payload?.[0];
   if (!active || !p) return null;
   return (
-    <div className="rounded-xl border border-ink-200/70 bg-surface px-3 py-2 text-xs shadow-sm">
+    <div className={chartTooltipClass}>
       <p className="flex items-center gap-2 text-ink-700">
         <span
           className="size-2 rounded-full"

@@ -1,3 +1,5 @@
+import { LuArrowLeftRight, LuCalendarDays, LuListChecks } from 'react-icons/lu';
+import { rankColour } from '../../components/charts/chart-theme';
 import { formatINR, formatINRCompact } from '@moneylens/shared';
 import type { ComparisonsResponse, PeriodComparisonRow } from '@moneylens/types';
 import { Card } from '../../components/Card';
@@ -33,6 +35,7 @@ export function ComparisonsSection({
     <>
       <Card
         title={`How does ${monthName} compare?`}
+        icon={LuArrowLeftRight}
         description="Spending after refunds against earlier periods"
         action={<ProvenanceBadge kind="CALCULATION" />}
       >
@@ -54,9 +57,10 @@ export function ComparisonsSection({
         </ul>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="list-rise grid gap-4 lg:grid-cols-2 lg:gap-6">
         <Card
           title="When do I spend?"
+          icon={LuCalendarDays}
           description={
             p.weekendRatio === null
               ? 'Spending by day of the week'
@@ -106,8 +110,11 @@ export function ComparisonsSection({
                 </span>
                 <span className="h-2 rounded-full bg-ink-100" aria-hidden="true">
                   <span
-                    className="block h-full rounded-full bg-series-1"
-                    style={{ width: `${(w.amountPaise / maxWeek) * 100}%` }}
+                    className="block h-full rounded-full"
+                    style={{
+                      width: `${(w.amountPaise / maxWeek) * 100}%`,
+                      background: rankColour(w.amountPaise / maxWeek),
+                    }}
                   />
                 </span>
                 <span className="text-right tabular-nums">{formatINR(w.amountPaise)}</span>
@@ -116,7 +123,11 @@ export function ComparisonsSection({
           </ol>
         </Card>
 
-        <Card title="What else happened?" description="Largest payments, money back and transfers">
+        <Card
+          title="What else happened?"
+          icon={LuListChecks}
+          description="Largest payments, money back and transfers"
+        >
           <h3 className="text-sm font-semibold">Largest payments</h3>
           {p.largest.length === 0 ? (
             <p className="mt-2 text-sm text-ink-500">No payments this month.</p>

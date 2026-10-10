@@ -111,7 +111,7 @@ export function ColumnMappingDialog({
           <span className="font-medium">{filename}</span> hold what.
         </p>
 
-        <div className="max-h-48 overflow-auto rounded-xl border border-ink-200/70">
+        <div className="max-h-48 overflow-auto rounded-xl border border-ink-200">
           <table className="w-max min-w-full text-left text-xs">
             <thead className="sticky top-0 bg-ink-100">
               <tr>
@@ -147,7 +147,7 @@ export function ColumnMappingDialog({
           <select
             value={headerRow}
             onChange={(e) => setHeaderRow(Number(e.target.value))}
-            className="mt-1.5 h-11 w-full rounded-xl border border-ink-200 bg-surface px-3 text-sm shadow-card transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
+            className="mt-1.5 h-11 w-full rounded-xl border border-ink-200 bg-surface px-3 text-sm transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
           >
             {preview.map((row, r) => (
               <option key={r} value={r}>
@@ -171,7 +171,7 @@ export function ColumnMappingDialog({
                       : { ...rest, [f.key]: Number(e.target.value) };
                   })
                 }
-                className="mt-1.5 h-11 w-full rounded-xl border border-ink-200 bg-surface px-3 text-sm shadow-card transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
+                className="mt-1.5 h-11 w-full rounded-xl border border-ink-200 bg-surface px-3 text-sm transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
               >
                 <option value="">Not in this file</option>
                 {Array.from({ length: width }, (_, i) => (

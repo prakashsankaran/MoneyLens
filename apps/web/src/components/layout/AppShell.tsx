@@ -1,83 +1,153 @@
-import { LuEllipsis, LuLogOut, LuX } from 'react-icons/lu';
+import { LuChevronDown, LuEllipsis, LuLogOut, LuSettings, LuX } from 'react-icons/lu';
 import { Suspense, useState } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router';
+import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import { useAuth } from '../../features/auth/useAuth';
 import { Logo } from '../Logo';
 import { NAV_ITEMS } from './nav';
 
 const linkBase =
-  'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200';
+  'flex h-11 items-center gap-3 rounded-full px-3 text-sm font-medium transition-all duration-200';
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   `${linkBase} ${
     isActive
-      ? 'bg-brand-50 text-brand-700 shadow-[inset_0_0_0_1px] shadow-brand-100'
-      : 'text-ink-500 hover:bg-ink-100 hover:text-ink-900'
+      ? 'bg-brand-50 font-semibold text-brand-700'
+      : 'text-ink-700 hover:bg-ink-100 hover:text-ink-900'
   }`;
 
 /**
- * Responsive application frame: a sidebar on large screens and a bottom tab bar
- * with a "More" sheet on small screens.
+ * Responsive application frame: a sticky header on every size, a sidebar from
+ * md (a 72px icon rail, expanded from lg), and a bottom tab bar with a "More"
+ * sheet on phones.
  */
 export function AppShell() {
   const { user, logout } = useAuth();
   const location = useLocation();
-  // The sheet remembers the page it was opened on, so navigating closes it.
+  // The sheet and the account menu remember the page they were opened on, so navigating closes them.
   const [moreOpenOn, setMoreOpenOn] = useState<string | null>(null);
   const moreOpen = moreOpenOn === location.pathname;
   const setMoreOpen = (open: boolean) => setMoreOpenOn(open ? location.pathname : null);
+  const [menuOpenOn, setMenuOpenOn] = useState<string | null>(null);
+  const menuOpen = menuOpenOn === location.pathname;
 
   const primary = NAV_ITEMS.filter((i) => i.mobilePrimary);
   const secondary = NAV_ITEMS.filter((i) => !i.mobilePrimary);
+  const initials = (user?.name ?? '')
+    .split(/\s+/)
+    .filter((p) => /^[A-Za-z0-9]/.test(p))
+    .map((p) => p[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
-    <div className="min-h-dvh lg:flex">
+    <div className="flex min-h-dvh flex-col">
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-surface focus:shadow-card focus:px-3 focus:py-2"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-surface focus:shadow-card focus:px-4 focus:py-2"
       >
         Skip to content
       </a>
 
-      {/* Desktop sidebar */}
-      <aside className="hidden w-68 shrink-0 flex-col border-r border-ink-200/70 bg-surface px-4 py-7 lg:sticky lg:top-0 lg:flex lg:h-dvh">
-        <Logo className="px-3" />
-        <nav aria-label="Main" className="mt-10 flex-1 space-y-1">
-          {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
-            <NavLink key={to} to={to} end={to === '/'} className={linkClass}>
-              <Icon className="size-[18px]" aria-hidden="true" />
-              {label}
-            </NavLink>
-          ))}
-        </nav>
-        <div className="rounded-2xl border border-ink-200/70 bg-ink-50 p-2 pt-3">
-          <p className="truncate px-3 text-sm font-semibold text-ink-900">{user?.name}</p>
-          <p className="truncate px-3 text-xs text-ink-500">{user?.email}</p>
+      <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-ink-200 bg-surface/95 px-4 backdrop-blur-md md:px-6 lg:h-16 lg:px-8">
+        <Link to="/" aria-label="MoneyLens home" className="rounded-full">
+          <Logo />
+        </Link>
+        <div className="relative">
           <button
             type="button"
-            onClick={() => void logout()}
-            className={`${linkBase} mt-2 w-full text-ink-500 hover:bg-surface hover:text-ink-900 hover:shadow-card`}
+            aria-label="Account menu"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpenOn(menuOpen ? null : location.pathname)}
+            className="flex h-10 items-center gap-2 rounded-full p-1 text-xs transition-all duration-200 hover:bg-ink-100 lg:h-11 lg:border lg:border-ink-200 lg:pr-3"
           >
-            <LuLogOut className="size-[18px]" aria-hidden="true" />
-            Sign out
+            <span className="flex size-8 items-center justify-center rounded-full bg-brand-600 text-2xs font-semibold text-white">
+              {initials || 'ML'}
+            </span>
+            <span className="hidden text-left lg:block">
+              <span className="block max-w-40 truncate font-medium leading-tight text-ink-900">
+                {user?.name}
+              </span>
+              <span className="block max-w-40 truncate text-2xs leading-tight text-ink-500">
+                {user?.email}
+              </span>
+            </span>
+            <LuChevronDown className="hidden size-4 text-ink-500 lg:block" aria-hidden="true" />
           </button>
+          {menuOpen && (
+            <>
+              <button
+                type="button"
+                aria-hidden="true"
+                tabIndex={-1}
+                className="fixed inset-0 z-40 cursor-default"
+                onClick={() => setMenuOpenOn(null)}
+              />
+              <div className="absolute right-0 z-50 mt-2 w-[min(18rem,calc(100vw-2rem))] animate-pop rounded-2xl border border-ink-200 bg-surface p-2 shadow-lg">
+                <div className="px-3 py-3">
+                  <p className="truncate text-sm font-semibold text-ink-900">{user?.name}</p>
+                  <p className="truncate text-xs text-ink-500">{user?.email}</p>
+                </div>
+                <Link
+                  to="/settings"
+                  className={`${linkBase} text-ink-700 hover:bg-ink-100 hover:text-ink-900`}
+                >
+                  <LuSettings className="size-[18px]" aria-hidden="true" />
+                  Settings
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => void logout()}
+                  className={`${linkBase} w-full text-negative hover:bg-negative-50`}
+                >
+                  <LuLogOut className="size-[18px]" aria-hidden="true" />
+                  Sign out
+                </button>
+              </div>
+            </>
+          )}
         </div>
-      </aside>
-
-      {/* Mobile header */}
-      <header className="sticky top-0 z-20 flex h-14 items-center border-b border-ink-200/70 bg-surface/90 px-4 backdrop-blur-md lg:hidden">
-        <Logo />
       </header>
 
-      <main id="main" className="min-w-0 flex-1 pb-24 lg:pb-0">
-        <Suspense fallback={<PageLoading />}>
-          <Outlet />
-        </Suspense>
-      </main>
+      <div className="flex min-w-0 flex-1">
+        {/* Sidebar: icon rail from md, expanded from lg */}
+        <aside className="hidden w-[72px] shrink-0 border-r border-ink-200 bg-surface p-3 md:sticky md:top-14 md:block md:h-[calc(100dvh-3.5rem)] lg:top-16 lg:h-[calc(100dvh-4rem)] lg:w-[248px] lg:p-4">
+          <p className="mb-2 hidden px-3 text-2xs font-semibold tracking-[.06em] text-ink-500 uppercase lg:block">
+            Menu
+          </p>
+          <nav aria-label="Main">
+            <ul className="space-y-1">
+              {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+                <li key={to}>
+                  <NavLink
+                    to={to}
+                    end={to === '/'}
+                    title={label}
+                    className={(s) => `${linkClass(s)} md:justify-center lg:justify-start`}
+                  >
+                    <Icon className="size-5 shrink-0" aria-hidden="true" />
+                    <span className="truncate md:sr-only lg:not-sr-only">{label}</span>
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </aside>
+
+        <main
+          id="main"
+          key={location.pathname}
+          className="min-w-0 flex-1 animate-page-enter pb-24 md:pb-0"
+        >
+          <Suspense fallback={<PageLoading />}>
+            <Outlet />
+          </Suspense>
+        </main>
+      </div>
 
       {/* Mobile bottom navigation */}
       <nav
         aria-label="Main"
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-ink-200/70 bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-ink-200 bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
       >
         <ul className="grid grid-cols-5">
           {primary.map(({ to, label, shortLabel, icon: Icon }) => (
@@ -86,13 +156,21 @@ export function AppShell() {
                 to={to}
                 end={to === '/'}
                 className={({ isActive }) =>
-                  `flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium transition-all duration-200 active:scale-95 ${
-                    isActive ? 'text-brand-600' : 'text-ink-500 hover:text-ink-900'
+                  `flex h-16 flex-col items-center justify-center gap-1 text-2xs font-medium transition-all duration-200 active:scale-95 ${
+                    isActive ? 'text-brand-700' : 'text-ink-500 hover:text-ink-900'
                   }`
                 }
               >
-                <Icon className="size-5" aria-hidden="true" />
-                {shortLabel ?? label}
+                {({ isActive }) => (
+                  <>
+                    <span
+                      className={`flex h-7 w-12 items-center justify-center rounded-full transition-all duration-200 ${isActive ? 'bg-brand-50' : ''}`}
+                    >
+                      <Icon className="size-5" aria-hidden="true" />
+                    </span>
+                    {shortLabel ?? label}
+                  </>
+                )}
               </NavLink>
             </li>
           ))}
@@ -102,11 +180,15 @@ export function AppShell() {
               aria-expanded={moreOpen}
               aria-controls="more-sheet"
               onClick={() => setMoreOpen(!moreOpen)}
-              className={`flex h-16 w-full flex-col items-center justify-center gap-1 text-[11px] font-medium transition-all duration-200 active:scale-95 ${
-                moreOpen ? 'text-brand-600' : 'text-ink-500 hover:text-ink-900'
+              className={`flex h-16 w-full flex-col items-center justify-center gap-1 text-2xs font-medium transition-all duration-200 active:scale-95 ${
+                moreOpen ? 'text-brand-700' : 'text-ink-500 hover:text-ink-900'
               }`}
             >
-              <LuEllipsis className="size-5" aria-hidden="true" />
+              <span
+                className={`flex h-7 w-12 items-center justify-center rounded-full transition-all duration-200 ${moreOpen ? 'bg-brand-50' : ''}`}
+              >
+                <LuEllipsis className="size-5" aria-hidden="true" />
+              </span>
               More
             </button>
           </li>
@@ -115,7 +197,7 @@ export function AppShell() {
 
       {moreOpen && (
         <div
-          className="fixed inset-0 z-40 lg:hidden"
+          className="fixed inset-0 z-40 md:hidden"
           role="dialog"
           aria-modal="true"
           aria-label="More"
@@ -123,19 +205,19 @@ export function AppShell() {
           <button
             type="button"
             aria-label="Close menu"
-            className="absolute inset-0 bg-ink-900/30 backdrop-blur-[2px]"
+            className="absolute inset-0 animate-fade-in bg-black/40"
             onClick={() => setMoreOpen(false)}
           />
           <div
             id="more-sheet"
-            className="absolute inset-x-0 bottom-0 rounded-t-2xl bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-2xl ring-1 ring-ink-900/5"
+            className="absolute inset-x-0 bottom-0 animate-sheet-up rounded-t-3xl bg-surface px-4 pt-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-2xl"
           >
             <div className="mb-2 flex items-center justify-between px-3">
               <p className="text-base font-semibold tracking-tight">More</p>
               <button
                 type="button"
                 onClick={() => setMoreOpen(false)}
-                className="rounded-xl p-2 text-ink-500 transition-all duration-200 hover:bg-ink-100 hover:text-ink-900"
+                className="-mr-2 flex size-10 items-center justify-center rounded-full text-ink-700 transition-all duration-200 hover:bg-ink-100 hover:text-ink-900"
                 aria-label="Close"
               >
                 <LuX className="size-5" aria-hidden="true" />
@@ -144,16 +226,16 @@ export function AppShell() {
             <div className="space-y-1">
               {secondary.map(({ to, label, icon: Icon }) => (
                 <NavLink key={to} to={to} className={linkClass}>
-                  <Icon className="size-[18px]" aria-hidden="true" />
+                  <Icon className="size-5" aria-hidden="true" />
                   {label}
                 </NavLink>
               ))}
               <button
                 type="button"
                 onClick={() => void logout()}
-                className={`${linkBase} w-full text-ink-500 hover:bg-ink-100 hover:text-ink-900`}
+                className={`${linkBase} w-full text-ink-700 hover:bg-ink-100 hover:text-ink-900`}
               >
-                <LuLogOut className="size-[18px]" aria-hidden="true" />
+                <LuLogOut className="size-5" aria-hidden="true" />
                 Sign out
               </button>
             </div>

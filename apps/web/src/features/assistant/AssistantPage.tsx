@@ -60,7 +60,7 @@ export function AssistantPage() {
     status.data !== undefined && status.data.messagesToday >= status.data.dailyMessageLimit;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8 lg:py-12">
+    <div className="mx-auto max-w-[1200px] px-4 py-5 md:px-6 lg:px-8 lg:py-8">
       <PageHeader
         title="MoneyLens AI"
         description="Ask about your money. Answers are written from your calculated figures, and the figures are shown with every answer."
@@ -72,7 +72,7 @@ export function AssistantPage() {
                 <select
                   value={activeId ?? ''}
                   onChange={(e) => setActiveId(e.target.value || null)}
-                  className="h-11 max-w-56 rounded-xl border border-ink-200 bg-surface px-3 text-sm shadow-card transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
+                  className="h-11 max-w-56 rounded-xl border border-ink-200 bg-surface px-3 text-sm transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
                 >
                   <option value="">New conversation</option>
                   {list.map((c) => (
@@ -131,7 +131,7 @@ export function AssistantPage() {
                         onSuccess: () => c.id === activeId && setActiveId(null),
                       })
                     }
-                    className="rounded-xl p-2 text-ink-500 hover:bg-ink-100 hover:text-negative transition-all duration-200"
+                    className="rounded-full p-2 text-ink-500 hover:bg-ink-100 hover:text-negative transition-all duration-200"
                   >
                     <LuTrash2 className="size-4" aria-hidden />
                   </button>

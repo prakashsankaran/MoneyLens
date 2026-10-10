@@ -1,4 +1,5 @@
-import { LuChevronRight } from 'react-icons/lu';
+import { rankColour } from '../../components/charts/chart-theme';
+import { LuChartColumn, LuChartPie, LuChevronRight, LuStore } from 'react-icons/lu';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { formatINR, formatMonthKey, monthRangeUtc } from '@moneylens/shared';
@@ -43,7 +44,7 @@ export function AnalyticsPage() {
   if (monthly.isPending) return <FullPageSpinner />;
   if (monthly.isError) {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-8">
+      <div className="mx-auto max-w-[1200px] px-4 py-10 md:px-6 lg:px-8">
         <ErrorCard message={monthly.error.message} onRetry={() => void monthly.refetch()} />
       </div>
     );
@@ -55,7 +56,7 @@ export function AnalyticsPage() {
   const hasData = data.availableMonths.length > 0;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8 lg:py-12">
+    <div className="mx-auto max-w-[1200px] px-4 py-5 md:px-6 lg:px-8 lg:py-8">
       <PageHeader
         title="Analytics"
         description="Your spending by category, merchant and month."
@@ -69,7 +70,7 @@ export function AnalyticsPage() {
                   setMonth(e.target.value);
                   setParent(null);
                 }}
-                className="h-10 rounded-xl border border-ink-200 bg-surface px-3 text-sm shadow-card transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
+                className="h-10 rounded-xl border border-ink-200 bg-surface px-3 text-sm transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
               >
                 {[...data.availableMonths].reverse().map((m) => (
                   <option key={m} value={m}>
@@ -88,19 +89,20 @@ export function AnalyticsPage() {
             Analytics appear once you import transactions.{' '}
             <Link
               to="/imports"
-              className="font-medium text-brand-600 hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
+              className="font-medium text-brand-700 hover:underline underline-offset-4 hover:text-brand-800 transition-all duration-200"
             >
               Import a statement
             </Link>
           </p>
         </Card>
       ) : (
-        <div className="mt-6 space-y-6">
+        <div className="mt-5 space-y-4 md:space-y-6 lg:mt-6">
           <OverviewTiles totals={data.totals} comparison={data.comparison} />
 
-          <div className="grid gap-6 lg:grid-cols-5">
+          <div className="list-rise grid gap-4 lg:grid-cols-5 lg:gap-6">
             <Card
               className="lg:col-span-3"
+              icon={LuChartPie}
               title={
                 parent
                   ? `What made up ${parent.name} in ${monthName}?`
@@ -116,7 +118,7 @@ export function AnalyticsPage() {
                   <button
                     type="button"
                     onClick={() => setParent(null)}
-                    className="shrink-0 text-sm font-medium text-brand-600 hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
+                    className="shrink-0 text-sm font-medium text-brand-700 hover:underline underline-offset-4 hover:text-brand-800 transition-all duration-200"
                   >
                     All categories
                   </button>
@@ -146,6 +148,7 @@ export function AnalyticsPage() {
             <Card
               className="lg:col-span-2"
               title={`Who did I pay in ${monthName}?`}
+              icon={LuStore}
               description="Merchants ranked by spending"
             >
               {merchants.data && merchants.data.items.length > 0 ? (
@@ -163,6 +166,7 @@ export function AnalyticsPage() {
 
           <Card
             title={`How has my spending changed over the last ${trendMonths} months?`}
+            icon={LuChartColumn}
             description="Monthly income and spending"
           >
             {trend.data ? (
@@ -189,7 +193,7 @@ export function AnalyticsPage() {
             own accounts are not counted. Recurring payments are on the{' '}
             <Link
               to="/insights"
-              className="font-medium text-brand-600 hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
+              className="font-medium text-brand-700 hover:underline underline-offset-4 hover:text-brand-800 transition-all duration-200"
             >
               Insights
             </Link>{' '}
@@ -323,7 +327,7 @@ function MerchantBars({
             {m.merchantId ? (
               <Link
                 to={linkFor(m.merchantId)}
-                className="min-w-0 truncate font-medium hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
+                className="min-w-0 truncate font-medium hover:underline underline-offset-4 hover:text-brand-800 transition-all duration-200"
               >
                 {m.name}
               </Link>
@@ -333,10 +337,13 @@ function MerchantBars({
             <span className="shrink-0 font-semibold tabular-nums">{formatINR(m.amountPaise)}</span>
           </div>
           <div className="mt-1.5 flex items-center gap-2">
-            <div className="h-2 flex-1 rounded-full bg-ink-100" aria-hidden="true">
+            <div className="h-2.5 flex-1 rounded-full bg-ink-100" aria-hidden="true">
               <div
-                className="h-full rounded-full bg-series-1"
-                style={{ width: `${Math.max((m.amountPaise / max) * 100, 2)}%` }}
+                className="h-full rounded-full"
+                style={{
+                  width: `${Math.max((m.amountPaise / max) * 100, 2)}%`,
+                  background: rankColour(m.amountPaise / max),
+                }}
               />
             </div>
             <span className="w-20 shrink-0 text-right text-xs whitespace-nowrap text-ink-500">

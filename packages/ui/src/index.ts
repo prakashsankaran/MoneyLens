@@ -5,18 +5,37 @@
 
 export const colors = {
   ink: {
-    900: '#0f172a',
-    700: '#334155',
-    500: '#64748b',
-    300: '#cbd5e1',
-    200: '#e2e8f0',
-    100: '#f1f5f9',
-    50: '#f8fafc',
+    900: '#111827',
+    700: '#4b5563',
+    500: '#6b7280',
+    300: '#d3dae6',
+    200: '#e3e8f0',
+    100: '#f1f4f9',
+    50: '#f6f8fc',
   },
-  brand: { 700: '#1d4ed8', 600: '#2563eb', 500: '#3b82f6', 100: '#dbeafe', 50: '#eff6ff' },
+  brand: {
+    800: '#1a4bc2',
+    700: '#1f5be6',
+    600: '#3874ff',
+    500: '#6a97ff',
+    100: '#dce6ff',
+    50: '#ebf1ff',
+  },
   positive: '#15803d',
-  negative: '#b42318',
-  warning: '#b45309',
+  negative: '#b91c1c',
+  warning: '#a16207',
+  tint: { positive: '#e6f6ec', negative: '#feeaea', warning: '#fef3d6' },
+} as const;
+
+/**
+ * Trend charts (income vs spending, weekdays vs weekends) use one blue family;
+ * category charts keep the categorical chartSeries palette below.
+ */
+export const trendSeries = {
+  income: '#3874ff',
+  spending: '#1e3a8a',
+  light: '#93c5fd',
+  neutral: '#94a3b8',
 } as const;
 
 /**
@@ -33,6 +52,9 @@ export const chartSeries = {
 /** Chart surfaces the palette was validated against. */
 export const chartSurfaces = { light: '#ffffff', dark: '#0f172a' } as const;
 
-/** Buttons use md (12px, rounded-xl); cards and containers use lg (16px, rounded-2xl). */
-export const radii = { sm: 8, md: 12, lg: 16 } as const;
+/**
+ * Inputs and inner items use md (12px), cards lg (20px), sheets and dialogs xl (28px).
+ * Buttons, chips, segmented controls and badges are fully round (pill).
+ */
+export const radii = { sm: 8, md: 12, lg: 20, xl: 28, pill: 999 } as const;
 export const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 } as const;
