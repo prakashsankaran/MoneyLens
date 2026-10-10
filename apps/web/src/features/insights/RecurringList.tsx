@@ -104,17 +104,17 @@ function Section({
               <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
                 {i.label}
                 {i.subscriptionLike && (
-                  <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[11px] text-brand-700">
+                  <span className="rounded-full bg-brand-50 px-2 py-0.5 text-2xs text-brand-700">
                     Subscription-like
                   </span>
                 )}
                 {!i.active && (
-                  <span className="rounded-full bg-ink-100 px-2 py-0.5 text-[11px] text-ink-700">
+                  <span className="rounded-full bg-ink-100 px-2 py-0.5 text-2xs text-ink-700">
                     Seems to have stopped
                   </span>
                 )}
                 {i.dismissed && (
-                  <span className="rounded-full bg-ink-100 px-2 py-0.5 text-[11px] text-ink-700">
+                  <span className="rounded-full bg-ink-100 px-2 py-0.5 text-2xs text-ink-700">
                     Marked not recurring
                   </span>
                 )}
@@ -128,7 +128,7 @@ function Section({
                   ? `next ~${shortDay(i.nextExpectedDate)}`
                   : `last on ${formatDayKey(i.lastDate)}`}
               </p>
-              <p className="mt-0.5 text-[11px] text-ink-500">
+              <p className="mt-0.5 text-2xs text-ink-500">
                 {i.occurrences} payments · confidence {confidenceLabel(i.confidence)}
               </p>
             </div>
@@ -141,7 +141,7 @@ function Section({
                 type="button"
                 onClick={() => onToggle(i)}
                 disabled={busyId === i.id}
-                className="text-xs font-medium text-brand-600 hover:underline disabled:opacity-50 underline-offset-4 hover:text-brand-700 transition-all duration-200"
+                className="text-xs font-medium text-brand-700 hover:underline disabled:opacity-50 underline-offset-4 hover:text-brand-800 transition-all duration-200"
                 aria-label={`${i.dismissed ? 'Restore' : 'Not recurring:'} ${i.label}`}
               >
                 {i.dismissed ? 'Restore' : 'Not recurring'}

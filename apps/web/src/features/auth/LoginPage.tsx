@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { LuArrowRight } from 'react-icons/lu';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router';
 import { loginSchema, type LoginInput } from '@moneylens/validation';
 import { Button } from '../../components/Button';
@@ -55,21 +56,25 @@ export function LoginPage() {
             {formError}
           </p>
         )}
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
+        <Button type="submit" className="group h-12 w-full" disabled={isSubmitting}>
           {isSubmitting ? 'Signing in…' : 'Sign in'}
+          <LuArrowRight
+            className="size-4 transition-transform duration-200 group-hover:translate-x-0.5"
+            aria-hidden="true"
+          />
         </Button>
       </form>
-      <p className="mt-6 text-sm text-ink-500">
+      <p className="mt-6 text-center text-sm text-ink-500">
         New to MoneyLens?{' '}
         <Link
           to="/register"
-          className="font-medium text-brand-600 hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
+          className="font-medium text-brand-700 hover:underline underline-offset-4 hover:text-brand-800 transition-all duration-200"
         >
           Create an account
         </Link>
       </p>
       {import.meta.env.DEV && (
-        <p className="mt-8 rounded-xl bg-brand-50 p-3 text-xs text-ink-700">
+        <p className="mt-6 rounded-xl bg-brand-50/60 px-3 py-2.5 text-xs text-ink-700">
           Demo account: <span className="font-medium">demo@moneylens.app</span> /{' '}
           <span className="font-medium">moneylens-demo</span>
         </p>

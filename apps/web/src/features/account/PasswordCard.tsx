@@ -1,3 +1,4 @@
+import { LuKeyRound } from 'react-icons/lu';
 import { useState, type FormEvent } from 'react';
 import { changePasswordSchema } from '@moneylens/validation';
 import { Button } from '../../components/Button';
@@ -50,6 +51,7 @@ export function PasswordCard() {
   return (
     <Card
       title="Password and devices"
+      icon={LuKeyRound}
       description="Changing your password signs out every other device. MoneyLens will never ask for your UPI PIN or bank password."
     >
       <form onSubmit={(e) => void onSubmit(e)} className="space-y-3" noValidate>
@@ -87,7 +89,7 @@ export function PasswordCard() {
         )}
       </form>
 
-      <div className="mt-8 space-y-3 border-t border-ink-100 pt-6">
+      <div className="mt-8 space-y-3 border-t border-ink-200 pt-6">
         <h3 className="text-sm font-semibold">Sign out everywhere</h3>
         <p className="text-sm text-ink-500">
           Ends every session, on this device and all others. Use it if a phone is lost or you see

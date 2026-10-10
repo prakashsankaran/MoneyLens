@@ -1,3 +1,4 @@
+import { LuPlus, LuWallet } from 'react-icons/lu';
 import { useState } from 'react';
 import { formatINR, formatMonthKey } from '@moneylens/shared';
 import type { BudgetItem } from '@moneylens/types';
@@ -162,7 +163,7 @@ export function BudgetsPanel() {
           <select
             value={data.month}
             onChange={(e) => setMonth(e.target.value)}
-            className="h-10 rounded-xl border border-ink-200 bg-surface px-3 text-sm shadow-card transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
+            className="h-10 rounded-xl border border-ink-200 bg-surface px-3 text-sm transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
           >
             {[...data.availableMonths].reverse().map((m) => (
               <option key={m} value={m}>
@@ -193,6 +194,7 @@ export function BudgetsPanel() {
       ) : (
         <Card
           title={`Budgets for ${formatMonthKey(data.month)}`}
+          icon={LuWallet}
           action={<ProvenanceBadge kind="CALCULATION" />}
         >
           <dl className="grid grid-cols-3 gap-3 text-sm">
@@ -230,7 +232,7 @@ export function BudgetsPanel() {
         </Card>
       )}
 
-      <Card title="Add a budget">
+      <Card title="Add a budget" icon={LuPlus}>
         <form
           className="flex flex-wrap items-end gap-3"
           onSubmit={(e) => {

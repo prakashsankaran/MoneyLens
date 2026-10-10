@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { LuShieldAlert } from 'react-icons/lu';
+import { LuHistory, LuShieldAlert } from 'react-icons/lu';
 import type { AuthActivityItem } from '@moneylens/types';
 import {
   AUTH_EVENT_LABEL,
@@ -23,6 +23,7 @@ export function ActivityCard() {
   return (
     <Card
       title="Recent sign-in activity"
+      icon={LuHistory}
       description="The last 20 events on your account, kept for 90 days. If something here wasn't you, change your password above."
     >
       {isPending ? (

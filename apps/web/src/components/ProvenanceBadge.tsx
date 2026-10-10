@@ -18,7 +18,7 @@ const LABELS: Record<ProvenanceKind, { label: string; className: string; descrip
   },
   AI_INTERPRETATION: {
     label: 'AI interpretation',
-    className: 'bg-amber-50 text-warning',
+    className: 'bg-warning-50 text-warning',
     description: 'Written by AI from your calculated figures. It may be wrong.',
   },
   RECOMMENDATION: {
@@ -34,7 +34,7 @@ export function ProvenanceBadge({ kind }: { kind: ProvenanceKind }) {
   return (
     <span
       title={meta.description}
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide ${meta.className}`}
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-2xs font-medium uppercase tracking-wide ${meta.className}`}
     >
       {meta.label}
     </span>

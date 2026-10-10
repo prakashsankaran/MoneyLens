@@ -43,10 +43,10 @@ export function ImportReviewPage() {
 
   if (isPending) return <FullPageSpinner />;
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 pb-32 sm:px-8 lg:py-12">
+    <div className="mx-auto max-w-[1200px] px-4 py-5 pb-32 md:px-6 lg:px-8 lg:py-8">
       <Link
         to="/imports"
-        className="inline-flex items-center gap-1 text-sm font-medium text-ink-700 hover:text-brand-600 transition-all duration-200"
+        className="inline-flex items-center gap-1 text-sm font-medium text-ink-700 hover:text-brand-700 transition-all duration-200"
       >
         <LuArrowLeft className="size-4" aria-hidden="true" /> Imports
       </Link>
@@ -83,7 +83,7 @@ function ReviewContent({ review }: { review: ImportReview }) {
         </p>
         <Link
           to="/imports"
-          className="mt-4 inline-block text-sm font-medium text-brand-600 hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
+          className="mt-4 inline-block text-sm font-medium text-brand-700 hover:underline underline-offset-4 hover:text-brand-800 transition-all duration-200"
         >
           Upload another file
         </Link>
@@ -106,13 +106,13 @@ function ReviewContent({ review }: { review: ImportReview }) {
             <div className="mt-4 flex flex-wrap gap-4 text-sm font-medium">
               <Link
                 to="/transactions"
-                className="text-brand-600 hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
+                className="text-brand-700 hover:underline underline-offset-4 hover:text-brand-800 transition-all duration-200"
               >
                 View transactions
               </Link>
               <Link
                 to="/"
-                className="text-brand-600 hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
+                className="text-brand-700 hover:underline underline-offset-4 hover:text-brand-800 transition-all duration-200"
               >
                 Go to dashboard
               </Link>
@@ -142,7 +142,7 @@ function ReviewContent({ review }: { review: ImportReview }) {
     <>
       <header className="mt-4 flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="truncate text-2xl font-bold tracking-tight sm:text-3xl">
+          <h1 className="truncate text-2xl font-bold tracking-tight">
             {editable ? 'Review import' : 'Import details'}
           </h1>
           <p className="mt-1 truncate text-sm text-ink-500">
@@ -183,7 +183,7 @@ function ReviewContent({ review }: { review: ImportReview }) {
       {review.warnings.length > 0 && (
         <div
           role="note"
-          className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-ink-900"
+          className="mt-4 rounded-2xl border border-warning/30 bg-warning-50 p-4 text-sm text-ink-900"
         >
           <p className="flex items-center gap-2 font-medium text-warning">
             <LuTriangleAlert className="size-4" aria-hidden="true" /> Notes about this file
@@ -213,10 +213,10 @@ function ReviewContent({ review }: { review: ImportReview }) {
               setView(key);
               setLimit(PAGE);
             }}
-            className={`h-9 shrink-0 rounded-xl border px-4 text-sm font-medium transition-all duration-200 active:scale-[0.98] ${
+            className={`h-9 shrink-0 rounded-full border px-4 text-sm font-medium transition-all duration-200 active:scale-[0.98] ${
               view === key
-                ? 'border-brand-600 bg-brand-600 text-white shadow-sm shadow-brand-600/20'
-                : 'border-ink-200 bg-surface text-ink-700 shadow-card hover:border-ink-300 hover:bg-ink-50'
+                ? 'border-brand-600/40 bg-brand-50 text-brand-700 font-semibold'
+                : 'border-ink-200 bg-surface text-ink-700 hover:bg-ink-100'
             }`}
           >
             {label}
@@ -225,7 +225,7 @@ function ReviewContent({ review }: { review: ImportReview }) {
       </div>
 
       <MerchantDatalist id={merchantListId} merchants={merchants.data ?? []} />
-      <ul className="mt-4 divide-y divide-ink-100 rounded-2xl border border-ink-200/70 bg-surface shadow-card">
+      <ul className="mt-4 divide-y divide-ink-100 rounded-2xl border border-ink-200 bg-surface shadow-card">
         {rows.slice(0, limit).map((row) => (
           <ReviewRow
             key={row.id}
@@ -245,15 +245,15 @@ function ReviewContent({ review }: { review: ImportReview }) {
         <button
           type="button"
           onClick={() => setLimit((l) => l + PAGE)}
-          className="mt-3 text-sm font-medium text-brand-600 hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
+          className="mt-3 text-sm font-medium text-brand-700 hover:underline underline-offset-4 hover:text-brand-800 transition-all duration-200"
         >
           Show {Math.min(PAGE, rows.length - limit)} more
         </button>
       )}
 
       {editable && (
-        <div className="fixed inset-x-0 bottom-16 z-30 border-t border-ink-100 bg-surface/95 px-4 py-3 backdrop-blur lg:bottom-0 lg:left-68">
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
+        <div className="fixed inset-x-0 bottom-16 z-30 border-t border-ink-200 bg-surface/95 px-4 py-3 backdrop-blur md:bottom-0 md:left-[72px] lg:left-[248px]">
+          <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-ink-700">
               {stats.included} of {stats.detected} rows will be added to your transactions.
             </p>
@@ -276,7 +276,7 @@ function ReviewContent({ review }: { review: ImportReview }) {
             </div>
           </div>
           {(confirm.isError || discard.isError) && (
-            <p role="alert" className="mx-auto mt-2 max-w-6xl text-sm text-negative">
+            <p role="alert" className="mx-auto mt-2 max-w-[1200px] text-sm text-negative">
               {(confirm.error ?? discard.error)?.message}
             </p>
           )}
@@ -288,7 +288,7 @@ function ReviewContent({ review }: { review: ImportReview }) {
 
 function Stat({ label, value, warn }: { label: string; value: string | number; warn?: boolean }) {
   return (
-    <div className="rounded-xl border border-ink-200/70 bg-surface px-4 py-3">
+    <div className="rounded-xl border border-ink-200 bg-surface px-4 py-3">
       <dt className="text-xs text-ink-500">{label}</dt>
       <dd className={`mt-1 text-lg font-semibold tabular-nums ${warn ? 'text-warning' : ''}`}>
         {value}
@@ -398,7 +398,7 @@ function ReviewRow({
               onClick={() => setEditing((v) => !v)}
               aria-expanded={editing}
               aria-label={`Edit ${label} on ${formatDay(row.date)}`}
-              className="rounded-xl p-2 text-ink-500 hover:bg-ink-100 md:col-start-5 transition-all duration-200 hover:text-ink-900"
+              className="rounded-full p-2 text-ink-500 hover:bg-ink-100 md:col-start-5 transition-all duration-200 hover:text-ink-900"
             >
               <LuPencil className="size-4" aria-hidden="true" />
             </button>
@@ -411,7 +411,7 @@ function ReviewRow({
           {label}?
           <button
             type="button"
-            className="font-medium text-brand-600 hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
+            className="font-medium text-brand-700 hover:underline underline-offset-4 hover:text-brand-800 transition-all duration-200"
             onClick={() => {
               update.mutate({
                 rowId: row.id,
@@ -498,7 +498,7 @@ function RowEditor({
     <form
       onSubmit={submit}
       aria-label={`Edit ${row.merchantName ?? 'row'}`}
-      className="mt-3 grid gap-3 rounded-xl border border-ink-200/70 bg-canvas p-3 text-sm sm:grid-cols-2"
+      className="mt-3 grid gap-3 rounded-xl border border-ink-200 bg-canvas p-3 text-sm sm:grid-cols-2"
     >
       <label htmlFor={`${fieldId}-merchant`} className="block">
         <span className="font-medium text-ink-700">Merchant</span>
@@ -508,7 +508,7 @@ function RowEditor({
           value={merchantName}
           maxLength={80}
           onChange={(e) => setMerchantName(e.target.value)}
-          className="mt-1.5 h-10 w-full rounded-xl border border-ink-200 bg-surface px-3 shadow-card transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
+          className="mt-1.5 h-10 w-full rounded-xl border border-ink-200 bg-surface px-3 transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
         />
       </label>
       <label className="block">
@@ -516,7 +516,7 @@ function RowEditor({
         <select
           value={type}
           onChange={(e) => setType(e.target.value as TransactionType)}
-          className="mt-1.5 h-10 w-full rounded-xl border border-ink-200 bg-surface px-3 shadow-card transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
+          className="mt-1.5 h-10 w-full rounded-xl border border-ink-200 bg-surface px-3 transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
         >
           {ROW_TYPES.map((t) => (
             <option key={t} value={t}>

@@ -1,3 +1,4 @@
+import { LuSparkles } from 'react-icons/lu';
 import { Link } from 'react-router';
 import { Card } from '../../../components/Card';
 import { ProvenanceBadge } from '../../../components/ProvenanceBadge';
@@ -14,6 +15,7 @@ export function MoneyBriefCard({ month }: { month: string }) {
   return (
     <Card
       title="AI Money Brief"
+      icon={LuSparkles}
       action={brief.data?.text ? <ProvenanceBadge kind="AI_INTERPRETATION" /> : undefined}
     >
       {brief.isPending ? (
@@ -34,7 +36,7 @@ export function MoneyBriefCard({ month }: { month: string }) {
             </p>
           )}
           {brief.data.facts.length > 0 && (
-            <details open={!brief.data.text} className="rounded-xl border border-ink-200/70 p-3">
+            <details open={!brief.data.text} className="rounded-xl border border-ink-200 p-3">
               <summary className="cursor-pointer text-xs font-medium text-ink-700">
                 Written from these figures
               </summary>
@@ -50,7 +52,7 @@ export function MoneyBriefCard({ month }: { month: string }) {
           )}
           <Link
             to="/assistant"
-            className="inline-block font-medium text-brand-600 hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
+            className="inline-block font-medium text-brand-700 hover:underline underline-offset-4 hover:text-brand-800 transition-all duration-200"
           >
             Ask MoneyLens AI a question
           </Link>

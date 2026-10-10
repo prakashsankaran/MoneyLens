@@ -36,7 +36,7 @@ export function HealthScoreSummary({ health }: { health: HealthScore }) {
           </ul>
           <Link
             to="/insights"
-            className="mt-4 inline-block text-sm font-medium text-brand-600 hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
+            className="mt-4 inline-block text-sm font-medium text-brand-700 hover:underline underline-offset-4 hover:text-brand-800 transition-all duration-200"
           >
             {health.score === null ? 'What is missing?' : 'How it is calculated'}
           </Link>

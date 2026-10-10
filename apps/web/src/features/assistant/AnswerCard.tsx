@@ -66,7 +66,7 @@ export function AnswerCard({
 
       {answer.facts.length > 0 && (
         <details
-          className="group rounded-xl border border-ink-200/70 p-3"
+          className="group rounded-xl border border-ink-200 p-3"
           open={!answer.interpretation}
         >
           <summary className="cursor-pointer text-xs font-medium text-ink-700">

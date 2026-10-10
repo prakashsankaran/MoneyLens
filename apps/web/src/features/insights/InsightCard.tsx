@@ -10,10 +10,10 @@ import { useTransactionsByIds } from './useInsights';
 const SEVERITY: Record<Severity, { label?: string; pill: string; accent: string }> = {
   high: {
     label: 'Worth a look',
-    pill: 'bg-negative/10 text-negative',
+    pill: 'bg-negative-50 text-negative',
     accent: 'border-l-negative',
   },
-  medium: { label: 'Notable', pill: 'bg-amber-50 text-warning', accent: 'border-l-amber-400' },
+  medium: { label: 'Notable', pill: 'bg-warning-50 text-warning', accent: 'border-l-amber-400' },
   low: { pill: '', accent: 'border-l-ink-300' },
   info: { pill: '', accent: 'border-l-ink-100' },
 };
@@ -31,17 +31,17 @@ export function InsightCard({ insight }: { insight: Insight }) {
 
   return (
     <article
-      className={`rounded-xl border border-l-4 border-ink-200/70 bg-surface p-4 ${severity.accent}`}
+      className={`rounded-xl border border-l-4 border-ink-200 bg-surface p-4 ${severity.accent}`}
     >
       {(severity.label || savingIdea) && (
         <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
           {severity.label && (
-            <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${severity.pill}`}>
+            <span className={`rounded-full px-2 py-0.5 text-2xs font-medium ${severity.pill}`}>
               {severity.label}
             </span>
           )}
           {savingIdea && (
-            <span className="rounded-full bg-positive/10 px-2 py-0.5 text-[11px] font-medium text-positive">
+            <span className="rounded-full bg-positive-50 px-2 py-0.5 text-2xs font-medium text-positive">
               Saving idea
             </span>
           )}
@@ -70,7 +70,7 @@ export function InsightCard({ insight }: { insight: Insight }) {
 
       {insight.recommendation && (
         <p className="mt-3 rounded-xl bg-sky-50/70 px-3 py-2 text-sm text-ink-700">
-          <span className="mr-1.5 text-[11px] font-semibold tracking-wide text-sky-800 uppercase">
+          <span className="mr-1.5 text-2xs font-semibold tracking-wide text-sky-800 uppercase">
             Suggestion
           </span>
           {insight.recommendation}
@@ -78,7 +78,7 @@ export function InsightCard({ insight }: { insight: Insight }) {
       )}
 
       <details className="group mt-3">
-        <summary className="inline-flex cursor-pointer list-none items-center gap-1 text-xs font-medium text-brand-600 hover:underline [&::-webkit-details-marker]:hidden underline-offset-4 hover:text-brand-700 transition-all duration-200">
+        <summary className="inline-flex cursor-pointer list-none items-center gap-1 text-xs font-medium text-brand-700 hover:underline [&::-webkit-details-marker]:hidden underline-offset-4 hover:text-brand-800 transition-all duration-200">
           <span aria-hidden className="inline-block transition-transform group-open:rotate-90">
             ›
           </span>
@@ -108,7 +108,7 @@ function EvidenceToggle({ ids }: { ids: string[] }) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="text-xs font-medium text-brand-600 hover:underline underline-offset-4 hover:text-brand-700 transition-all duration-200"
+        className="text-xs font-medium text-brand-700 hover:underline underline-offset-4 hover:text-brand-800 transition-all duration-200"
       >
         {open ? 'Hide' : 'Show'} the {count} {count === 1 ? 'transaction' : 'transactions'} behind
         this
@@ -130,7 +130,7 @@ function Evidence({ ids }: { ids: string[] }) {
   if (isError) return <p className="mt-2 text-xs text-negative">{error.message}</p>;
   return (
     <div className="mt-2">
-      <ul className="divide-y divide-ink-100 rounded-xl border border-ink-200/70 text-sm">
+      <ul className="divide-y divide-ink-100 rounded-xl border border-ink-200 text-sm">
         {data.items.map((t) => (
           <li key={t.id} className="flex items-center justify-between gap-3 px-3 py-2">
             <span className="min-w-0">
