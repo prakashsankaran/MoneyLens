@@ -140,6 +140,23 @@ drop data. See [docs/DATABASE.md](docs/DATABASE.md).
 | Production build   | `npm run build` then `npm start -w @moneylens/api` and serve `apps/web/dist`          |
 | Mobile (Expo)      | `npm run dev:mobile`, then scan the QR code with Expo Go. See `apps/mobile/README.md` |
 
+### On your iPhone, away from home
+
+Keep MoneyLens on your computer and reach it privately with
+[Tailscale](https://tailscale.com) (free for personal use):
+
+1. Install Tailscale on the computer and the iPhone and sign in to the same account.
+   In the Tailscale admin console, under DNS, turn on MagicDNS and HTTPS Certificates.
+2. Start MoneyLens (`npm run dev`), then publish the web app to your tailnet only:
+   `tailscale serve --bg http://localhost:5173`. It prints an address like
+   `https://my-mac.tail1234.ts.net`. (Use `serve`, never `funnel`, which is public.)
+3. Add that address to `CORS_ORIGINS` in `apps/api/.env`, for example
+   `CORS_ORIGINS=http://localhost:5173,https://my-mac.tail1234.ts.net`, and restart the API.
+4. On the iPhone, with Tailscale on, open the address in Safari, sign in, then
+   Share → Add to Home Screen. It opens full screen with the MoneyLens icon.
+
+The computer has to be on and awake. `tailscale serve reset` stops sharing.
+
 ## Tests and quality checks
 
 ```bash

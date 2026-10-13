@@ -9,6 +9,9 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     port: 5173,
+    // Allow Tailscale names (https://<mac>.<tailnet>.ts.net via `tailscale serve`)
+    // so the app can be opened from your own phone. Only your tailnet can reach them.
+    allowedHosts: ['.ts.net'],
     // Proxy API calls in development so the app and API share an origin; the
     // refresh cookie can then stay SameSite=Strict.
     proxy: {
