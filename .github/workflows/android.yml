@@ -1,0 +1,113 @@
+name: Android app
+
+# Builds the on-device Android app (apps/android). Every run uploads a test
+# build ("MoneyLens test", installs next to the real app). On main, a release
+# build signed with the MoneyLens key is published as a GitHub release, so
+# https://github.com/prakashsankaran/MoneyLens/releases/latest/download/MoneyLens.apk
+# always points at the newest version.
+
+on:
+  push:
+    branches: [main]
+    paths: ['apps/**', 'packages/**', 'package-lock.json', '.github/workflows/android.yml']
+  pull_request:
+    paths: ['apps/**', 'packages/**', 'package-lock.json', '.github/workflows/android.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      BUILD_NUMBER: ${{ github.run_number }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: Build the app's web part
+        run: npm run build -w @moneylens/android
+      - name: Check it in a browser (accounts, imports, analysis, nothing sent out)
+        working-directory: apps/android
+        run: |
+          npx playwright install --with-deps chromium
+          npx playwright test
+      - name: Copy it into the Android project
+        working-directory: apps/android
+        run: npx cap sync android
+      - name: Build the test APK
+        working-directory: apps/android/android
+        run: ./gradlew assembleDebug --no-daemon
+      - name: Build the release APK
+        if: env.ANDROID_KEYSTORE_PASSWORD != ''
+        working-directory: apps/android/android
+        run: ./gradlew assembleRelease --no-daemon
+      - name: Name the APKs
+        run: |
+          mkdir -p apk
+          cp apps/android/android/app/build/outputs/apk/debug/app-debug.apk apk/MoneyLens-test.apk
+          if [ -f apps/android/android/app/build/outputs/apk/release/app-release.apk ]; then
+            cp apps/android/android/app/build/outputs/apk/release/app-release.apk apk/MoneyLens.apk
+          fi
+          ls -l apk
+      - uses: actions/upload-artifact@v6
+        with:
+          name: moneylens-android-${{ github.run_number }}
+          path: apk/
+          retention-days: 30
+      - name: Publish the release
+        if: github.ref == 'refs/heads/main' && env.ANDROID_KEYSTORE_PASSWORD != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "android-v1.0.${BUILD_NUMBER}" apk/MoneyLens.apk \
+            --title "MoneyLens for Android 1.0.${BUILD_NUMBER}" \
+            --notes "Install MoneyLens.apk on an Android phone (allow installing from your browser or messaging app when asked). Everything stays on the phone: the app has no internet permission. Installing a newer version keeps your data." \
+            --latest
+
+  emulator:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v6
+        with:
+          name: moneylens-android-${{ github.run_number }}
+          path: apk
+      - name: Put the test APK where the smoke test looks
+        run: |
+          mkdir -p apps/android/android/app/build/outputs/apk/debug
+          cp apk/MoneyLens-test.apk apps/android/android/app/build/outputs/apk/debug/app-debug.apk
+          pip install pillow
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Open the app on an Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: ./apps/android/scripts/emulator-smoke-test.sh
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: emulator-smoke-${{ github.run_number }}
+          path: apps/android/smoke/
+          retention-days: 14

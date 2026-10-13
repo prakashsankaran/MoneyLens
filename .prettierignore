@@ -6,3 +6,5 @@ apps/api/prisma/migrations
 playwright-report
 test-results
 .expo
+apps/android/android
+apps/android/src/backend/prisma/schema.generated.json
