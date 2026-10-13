@@ -66,6 +66,14 @@ text), `size-5` (navigation and icon buttons) and `size-[18px]` (card header ico
 - Gaps: `gap-4 lg:gap-6` between cards; `space-y-4 md:space-y-6` between sections.
 - Shared building blocks: `Button`, `Card` (optional `icon`), `PageHeader`, `FormField`, `Dialog`
   in `apps/web/src/components`.
+- Responsive checks: every screen must fit 320–1440px wide (and phone landscape) with no sideways
+  scroll, including crore-sized amounts. Grids that only set columns from a breakpoint also set
+  `grid-cols-1` below it (or their items carry `min-w-0`, as `Card` does), so long content cannot
+  widen the page. Size tiles of big numbers by their container (`@container`), not the window,
+  because the sidebar takes width from `md`.
+- iPhone home-screen app: the page uses `viewport-fit=cover`; fixed and sticky bars pad with
+  `var(--safe-top|right|bottom|left)` from `index.css`. Fields stay at 16px on touch screens so
+  Safari does not zoom in on focus.
 
 ## Charts and headline numbers
 

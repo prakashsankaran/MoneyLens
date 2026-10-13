@@ -128,9 +128,9 @@ function ReportBody({ report }: { report: MonthlyReport }) {
       <Section n={1} title="Summary">
         <ul className="space-y-2">
           {report.executiveSummary.map((s) => (
-            <li key={s.text} className="flex flex-wrap items-start gap-2 text-sm">
+            <li key={s.text} className="flex items-start gap-2 text-sm">
               <ProvenanceBadge kind={s.kind} />
-              <span>{s.text}</span>
+              <span className="min-w-0 flex-1">{s.text}</span>
             </li>
           ))}
         </ul>
@@ -222,9 +222,9 @@ function ReportBody({ report }: { report: MonthlyReport }) {
         ) : (
           <ul className="space-y-2">
             {report.recommendations.map((r) => (
-              <li key={r.text} className="flex flex-wrap items-start gap-2 text-sm">
+              <li key={r.text} className="flex items-start gap-2 text-sm">
                 <ProvenanceBadge kind={r.kind} />
-                <span>{r.text}</span>
+                <span className="min-w-0 flex-1">{r.text}</span>
               </li>
             ))}
           </ul>
@@ -289,16 +289,23 @@ function TotalsVisual({
       },
     ];
   const max = Math.max(1, totals.incomePaise, totals.spendingPaise);
+  // Columns follow the card's width, and crore-sized amounts get wider tiles so they never spill out.
+  const long = tiles.some((t) => formatINR(t.now).length > 9);
+  const grid = long
+    ? 'grid-cols-1 @sm:grid-cols-2 @4xl:grid-cols-4'
+    : 'grid-cols-2 @xl:grid-cols-4';
   return (
-    <div>
-      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="@container">
+      <dl className={`grid gap-3 ${grid}`}>
         {tiles.map((t) => {
           const change =
             t.before === undefined ? null : (t.label === 'Overspent' ? kept : t.now) - t.before;
           return (
             <div key={t.label} className="rounded-xl bg-ink-50 p-3.5">
               <dt className="text-xs font-medium text-ink-500">{t.label}</dt>
-              <dd className={`mt-1 text-xl font-bold tracking-tight sm:text-2xl ${t.tone ?? ''}`}>
+              <dd
+                className={`mt-1 text-xl font-bold tracking-tight [overflow-wrap:anywhere] @md:text-2xl ${t.tone ?? ''}`}
+              >
                 {formatINR(t.now)}
               </dd>
               {change !== null && compareLabel && (
