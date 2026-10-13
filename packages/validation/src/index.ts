@@ -270,6 +270,32 @@ export const merchantAnalyticsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(10),
 });
 
+/** Rejects dates like 2026-02-31 that match the format but do not exist. */
+const isRealDay = (key: string) => new Date(`${key}T00:00:00Z`).toISOString().startsWith(key);
+
+/** Longest range the period analysis accepts: three years. */
+export const MAX_PERIOD_DAYS = 1100;
+
+export const periodAnalyticsQuerySchema = z
+  .object({
+    from: dayKeySchema,
+    to: dayKeySchema,
+    /** Compare with the period just before (default) or the same dates last year. */
+    compare: z.enum(['previous', 'lastYear']).default('previous'),
+  })
+  .refine((q) => isRealDay(q.from) && isRealDay(q.to), {
+    message: 'Expected a real calendar date',
+    path: ['from'],
+  })
+  .refine((q) => q.from <= q.to, {
+    message: 'Start date must be on or before the end date',
+    path: ['to'],
+  })
+  .refine((q) => (Date.parse(q.to) - Date.parse(q.from)) / 86_400_000 + 1 <= MAX_PERIOD_DAYS, {
+    message: 'Choose a period of up to three years',
+    path: ['from'],
+  });
+
 export const trendQuerySchema = z.object({
   end: monthKeySchema.optional(),
   months: z.coerce.number().int().min(1).max(24).default(6),

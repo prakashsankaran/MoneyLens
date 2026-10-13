@@ -5,6 +5,7 @@ import type {
   CategoryNode,
   MerchantAnalytics,
   MonthlyAnalytics,
+  PeriodAnalytics,
   TrendAnalytics,
 } from '@moneylens/types';
 import { DEMO_PASSWORD, seedDemoUser } from '../prisma/seed';
@@ -151,13 +152,62 @@ describe('analytics', () => {
     ]);
   });
 
+  it('analyses a longer period against the one before it', async () => {
+    const period = await get<PeriodAnalytics>(
+      '/api/analytics/period?from=2026-07-01&to=2026-09-30',
+    );
+    expect(period.months).toEqual(['2026-07', '2026-08', '2026-09']);
+    expect(period.wholeMonths).toBe(true);
+    expect(period.previous).toEqual({
+      from: '2026-04-01',
+      to: '2026-06-30',
+      hasData: true,
+      compare: 'previous',
+      months: 3,
+      monthsWithData: 3,
+    });
+    const lastYear = await get<PeriodAnalytics>(
+      '/api/analytics/period?from=2026-07-01&to=2026-09-30&compare=lastYear',
+    );
+    expect(lastYear.previous).toMatchObject({ from: '2025-07-01', to: '2025-09-30' });
+    expect(lastYear.spendingChangePct).toBeNull();
+    const monthly = await Promise.all(
+      period.months.map((m) => get<MonthlyAnalytics>(`/api/analytics/monthly?month=${m}`)),
+    );
+    expect(period.totals.spendingPaise).toBe(
+      monthly.reduce((a, m) => a + m.totals.spendingPaise, 0),
+    );
+    expect(period.averages.monthlySpendingPaise).toBe(Math.round(period.totals.spendingPaise / 3));
+    expect(period.spendingChangePct).not.toBeNull();
+    expect(period.categories.length).toBeGreaterThan(0);
+    const top = period.categories[0]!;
+    expect(period.subcategories[top.categoryId!]!.length).toBeGreaterThan(0);
+    expect(period.categoryTrend.points).toHaveLength(3);
+    expect(period.merchants.length).toBeGreaterThan(0);
+  });
+
   it('validates parameters and isolates users', async () => {
     await request(app).get('/api/analytics/trends?months=99').set(auth()).expect(400);
+    for (const q of [
+      'from=2026-09-30&to=2026-07-01',
+      'from=2026-02-31&to=2026-03-31',
+      'from=2020-01-01&to=2026-01-01',
+      'from=2026-07-01',
+      'from=2026-07-01&to=2026-07-31&compare=week',
+    ]) {
+      await request(app).get(`/api/analytics/period?${q}`).set(auth()).expect(400);
+    }
     await request(app).get('/api/analytics/monthly?month=2026-13').set(auth()).expect(400);
     const other = await registerUser(app);
     const data = await get<MonthlyAnalytics>('/api/analytics/monthly', other.accessToken);
     expect(data.availableMonths).toEqual([]);
     expect(data.totals.spendingPaise).toBe(0);
+    const empty = await get<PeriodAnalytics>(
+      '/api/analytics/period?from=2026-07-01&to=2026-09-30',
+      other.accessToken,
+    );
+    expect(empty.totals.spendingPaise).toBe(0);
+    expect(empty.monthsWithData).toBe(0);
   });
 });
 

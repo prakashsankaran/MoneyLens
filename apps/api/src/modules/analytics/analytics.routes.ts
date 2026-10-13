@@ -3,6 +3,7 @@ import {
   analyticsMonthQuerySchema,
   categoryAnalyticsQuerySchema,
   merchantAnalyticsQuerySchema,
+  periodAnalyticsQuerySchema,
   trendQuerySchema,
 } from '@moneylens/validation';
 import { ok } from '../../lib/respond';
@@ -32,6 +33,11 @@ export function analyticsRoutes(service: AnalyticsService, insights: InsightsSer
   router.get('/trends', async (req, res) => {
     const q = parseInput(trendQuerySchema, req.query);
     ok(res, await service.trends(requireUserId(req), q));
+  });
+
+  router.get('/period', async (req, res) => {
+    const { from, to, compare } = parseInput(periodAnalyticsQuerySchema, req.query);
+    ok(res, await service.period(requireUserId(req), from, to, compare));
   });
 
   router.get('/health', async (req, res) => {
