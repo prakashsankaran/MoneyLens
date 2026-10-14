@@ -12,15 +12,14 @@ import { PrismaClient } from '@prisma/client';
 import { addMonths, monthKeyOf, paiseToRupeeString } from '@moneylens/shared';
 import { AnalyticsDataSource } from '../src/lib/analytics-data';
 import { hashPassword } from '../src/modules/auth/password';
-import { ensureSystemCategories } from '../src/modules/categories/system-categories';
+import { seedCategories } from '../src/modules/categories/seed-categories';
 import { RecurringService } from '../src/modules/recurring/recurring.service';
 import { DEMO_MERCHANTS, generateDemoTransactions } from './demo/demo-data';
 
+export { seedCategories };
+
 export const DEMO_EMAIL = 'demo@moneylens.app';
 export const DEMO_PASSWORD = 'moneylens-demo';
-
-/** Upsert the system category tree; returns "parent/child" slug -> ids. */
-export const seedCategories = ensureSystemCategories;
 
 export async function seedDemoUser(
   prisma: PrismaClient,

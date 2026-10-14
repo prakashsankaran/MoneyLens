@@ -1,0 +1,3140 @@
+{
+  "models": {
+    "User": {
+      "fields": [
+        {
+          "name": "id",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": true,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "cuid",
+            "args": [
+              1
+            ]
+          }
+        },
+        {
+          "name": "email",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": true,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "name",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "passwordHash",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "createdAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "now",
+            "args": []
+          }
+        },
+        {
+          "name": "updatedAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": true
+        },
+        {
+          "name": "lastLoginAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "sessions",
+          "kind": "object",
+          "type": "Session",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "SessionToUser",
+          "relationFromFields": [],
+          "relationToFields": []
+        },
+        {
+          "name": "transactions",
+          "kind": "object",
+          "type": "Transaction",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "TransactionToUser",
+          "relationFromFields": [],
+          "relationToFields": []
+        },
+        {
+          "name": "categories",
+          "kind": "object",
+          "type": "Category",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "CategoryToUser",
+          "relationFromFields": [],
+          "relationToFields": []
+        },
+        {
+          "name": "merchants",
+          "kind": "object",
+          "type": "Merchant",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "MerchantToUser",
+          "relationFromFields": [],
+          "relationToFields": []
+        },
+        {
+          "name": "imports",
+          "kind": "object",
+          "type": "Import",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "ImportToUser",
+          "relationFromFields": [],
+          "relationToFields": []
+        },
+        {
+          "name": "recurringPayments",
+          "kind": "object",
+          "type": "RecurringPayment",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "RecurringPaymentToUser",
+          "relationFromFields": [],
+          "relationToFields": []
+        },
+        {
+          "name": "insights",
+          "kind": "object",
+          "type": "Insight",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "InsightToUser",
+          "relationFromFields": [],
+          "relationToFields": []
+        },
+        {
+          "name": "budgets",
+          "kind": "object",
+          "type": "Budget",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "BudgetToUser",
+          "relationFromFields": [],
+          "relationToFields": []
+        },
+        {
+          "name": "financialProfile",
+          "kind": "object",
+          "type": "FinancialProfile",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "FinancialProfileToUser",
+          "relationFromFields": [],
+          "relationToFields": []
+        },
+        {
+          "name": "moneyPlans",
+          "kind": "object",
+          "type": "MoneyPlan",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "MoneyPlanToUser",
+          "relationFromFields": [],
+          "relationToFields": []
+        },
+        {
+          "name": "aiConversations",
+          "kind": "object",
+          "type": "AIConversation",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "AIConversationToUser",
+          "relationFromFields": [],
+          "relationToFields": []
+        },
+        {
+          "name": "categoryRules",
+          "kind": "object",
+          "type": "UserCategoryRule",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "UserToUserCategoryRule",
+          "relationFromFields": [],
+          "relationToFields": []
+        },
+        {
+          "name": "authEvents",
+          "kind": "object",
+          "type": "AuthEvent",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "AuthEventToUser",
+          "relationFromFields": [],
+          "relationToFields": []
+        }
+      ],
+      "uniqueFields": []
+    },
+    "AuthEvent": {
+      "fields": [
+        {
+          "name": "id",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": true,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "cuid",
+            "args": [
+              1
+            ]
+          }
+        },
+        {
+          "name": "userId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "type",
+          "kind": "enum",
+          "type": "AuthEventType",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "emailKey",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "userAgent",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "createdAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "now",
+            "args": []
+          }
+        },
+        {
+          "name": "user",
+          "kind": "object",
+          "type": "User",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "AuthEventToUser",
+          "relationFromFields": [
+            "userId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "Cascade"
+        }
+      ],
+      "uniqueFields": []
+    },
+    "Session": {
+      "fields": [
+        {
+          "name": "id",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": true,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "cuid",
+            "args": [
+              1
+            ]
+          }
+        },
+        {
+          "name": "userId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "tokenHash",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": true,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "familyId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "userAgent",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "createdAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "now",
+            "args": []
+          }
+        },
+        {
+          "name": "expiresAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "revokedAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "replacedBy",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "user",
+          "kind": "object",
+          "type": "User",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "SessionToUser",
+          "relationFromFields": [
+            "userId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "Cascade"
+        }
+      ],
+      "uniqueFields": []
+    },
+    "Category": {
+      "fields": [
+        {
+          "name": "id",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": true,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "cuid",
+            "args": [
+              1
+            ]
+          }
+        },
+        {
+          "name": "userId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "parentId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "name",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "slug",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "icon",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "color",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "isSystem",
+          "kind": "scalar",
+          "type": "Boolean",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": false
+        },
+        {
+          "name": "sortOrder",
+          "kind": "scalar",
+          "type": "Int",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": 0
+        },
+        {
+          "name": "createdAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "now",
+            "args": []
+          }
+        },
+        {
+          "name": "updatedAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": true
+        },
+        {
+          "name": "user",
+          "kind": "object",
+          "type": "User",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "CategoryToUser",
+          "relationFromFields": [
+            "userId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "Cascade"
+        },
+        {
+          "name": "parent",
+          "kind": "object",
+          "type": "Category",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "CategoryTree",
+          "relationFromFields": [
+            "parentId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "Cascade"
+        },
+        {
+          "name": "children",
+          "kind": "object",
+          "type": "Category",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "CategoryTree",
+          "relationFromFields": [],
+          "relationToFields": []
+        },
+        {
+          "name": "transactions",
+          "kind": "object",
+          "type": "Transaction",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "TransactionCategory",
+          "relationFromFields": [],
+          "relationToFields": []
+        },
+        {
+          "name": "subcategoryTransactions",
+          "kind": "object",
+          "type": "Transaction",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "TransactionSubcategory",
+          "relationFromFields": [],
+          "relationToFields": []
+        },
+        {
+          "name": "merchantDefaults",
+          "kind": "object",
+          "type": "Merchant",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "MerchantDefaultCategory",
+          "relationFromFields": [],
+          "relationToFields": []
+        },
+        {
+          "name": "merchantOverrides",
+          "kind": "object",
+          "type": "Merchant",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "MerchantUserCategory",
+          "relationFromFields": [],
+          "relationToFields": []
+        },
+        {
+          "name": "budgets",
+          "kind": "object",
+          "type": "Budget",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "BudgetToCategory",
+          "relationFromFields": [],
+          "relationToFields": []
+        },
+        {
+          "name": "rules",
+          "kind": "object",
+          "type": "UserCategoryRule",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "CategoryToUserCategoryRule",
+          "relationFromFields": [],
+          "relationToFields": []
+        },
+        {
+          "name": "importRows",
+          "kind": "object",
+          "type": "ImportTransaction",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "CategoryToImportTransaction",
+          "relationFromFields": [],
+          "relationToFields": []
+        }
+      ],
+      "uniqueFields": [
+        [
+          "userId",
+          "parentId",
+          "slug"
+        ]
+      ]
+    },
+    "Merchant": {
+      "fields": [
+        {
+          "name": "id",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": true,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "cuid",
+            "args": [
+              1
+            ]
+          }
+        },
+        {
+          "name": "userId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "name",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "normalizedName",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "defaultCategoryId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "userCategoryId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "confidence",
+          "kind": "scalar",
+          "type": "Float",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": 0
+        },
+        {
+          "name": "createdAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "now",
+            "args": []
+          }
+        },
+        {
+          "name": "updatedAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": true
+        },
+        {
+          "name": "user",
+          "kind": "object",
+          "type": "User",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "MerchantToUser",
+          "relationFromFields": [
+            "userId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "Cascade"
+        },
+        {
+          "name": "defaultCategory",
+          "kind": "object",
+          "type": "Category",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "MerchantDefaultCategory",
+          "relationFromFields": [
+            "defaultCategoryId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "SetNull"
+        },
+        {
+          "name": "userCategory",
+          "kind": "object",
+          "type": "Category",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "MerchantUserCategory",
+          "relationFromFields": [
+            "userCategoryId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "SetNull"
+        },
+        {
+          "name": "aliases",
+          "kind": "object",
+          "type": "MerchantAlias",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "MerchantToMerchantAlias",
+          "relationFromFields": [],
+          "relationToFields": []
+        },
+        {
+          "name": "transactions",
+          "kind": "object",
+          "type": "Transaction",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "MerchantToTransaction",
+          "relationFromFields": [],
+          "relationToFields": []
+        },
+        {
+          "name": "recurring",
+          "kind": "object",
+          "type": "RecurringPayment",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "MerchantToRecurringPayment",
+          "relationFromFields": [],
+          "relationToFields": []
+        }
+      ],
+      "uniqueFields": [
+        [
+          "userId",
+          "normalizedName"
+        ]
+      ]
+    },
+    "MerchantAlias": {
+      "fields": [
+        {
+          "name": "id",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": true,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "cuid",
+            "args": [
+              1
+            ]
+          }
+        },
+        {
+          "name": "merchantId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "alias",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "aliasKey",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "createdAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "now",
+            "args": []
+          }
+        },
+        {
+          "name": "merchant",
+          "kind": "object",
+          "type": "Merchant",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "MerchantToMerchantAlias",
+          "relationFromFields": [
+            "merchantId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "Cascade"
+        }
+      ],
+      "uniqueFields": [
+        [
+          "merchantId",
+          "aliasKey"
+        ]
+      ]
+    },
+    "UserCategoryRule": {
+      "fields": [
+        {
+          "name": "id",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": true,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "cuid",
+            "args": [
+              1
+            ]
+          }
+        },
+        {
+          "name": "userId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "matchField",
+          "kind": "enum",
+          "type": "RuleMatchField",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "pattern",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "categoryId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "priority",
+          "kind": "scalar",
+          "type": "Int",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": 0
+        },
+        {
+          "name": "createdAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "now",
+            "args": []
+          }
+        },
+        {
+          "name": "updatedAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": true
+        },
+        {
+          "name": "user",
+          "kind": "object",
+          "type": "User",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "UserToUserCategoryRule",
+          "relationFromFields": [
+            "userId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "Cascade"
+        },
+        {
+          "name": "category",
+          "kind": "object",
+          "type": "Category",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "CategoryToUserCategoryRule",
+          "relationFromFields": [
+            "categoryId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "Cascade"
+        }
+      ],
+      "uniqueFields": [
+        [
+          "userId",
+          "matchField",
+          "pattern"
+        ]
+      ]
+    },
+    "Transaction": {
+      "fields": [
+        {
+          "name": "id",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": true,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "cuid",
+            "args": [
+              1
+            ]
+          }
+        },
+        {
+          "name": "userId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "transactionDate",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "amount",
+          "kind": "scalar",
+          "type": "Decimal",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "currency",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": "INR"
+        },
+        {
+          "name": "transactionType",
+          "kind": "enum",
+          "type": "TransactionType",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "flow",
+          "kind": "enum",
+          "type": "TransactionFlow",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "merchantId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "merchantName",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "description",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "categoryId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "subcategoryId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "paymentMethod",
+          "kind": "enum",
+          "type": "PaymentMethod",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "upiId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "transactionReference",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "source",
+          "kind": "enum",
+          "type": "TransactionSource",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "sourceFileId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "status",
+          "kind": "enum",
+          "type": "TransactionStatus",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": "CONFIRMED"
+        },
+        {
+          "name": "isRecurring",
+          "kind": "scalar",
+          "type": "Boolean",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": false
+        },
+        {
+          "name": "recurringGroupId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "categoryConfidence",
+          "kind": "scalar",
+          "type": "Float",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "notes",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "createdAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "now",
+            "args": []
+          }
+        },
+        {
+          "name": "updatedAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": true
+        },
+        {
+          "name": "user",
+          "kind": "object",
+          "type": "User",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "TransactionToUser",
+          "relationFromFields": [
+            "userId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "Cascade"
+        },
+        {
+          "name": "merchant",
+          "kind": "object",
+          "type": "Merchant",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "MerchantToTransaction",
+          "relationFromFields": [
+            "merchantId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "SetNull"
+        },
+        {
+          "name": "category",
+          "kind": "object",
+          "type": "Category",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "TransactionCategory",
+          "relationFromFields": [
+            "categoryId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "SetNull"
+        },
+        {
+          "name": "subcategory",
+          "kind": "object",
+          "type": "Category",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "TransactionSubcategory",
+          "relationFromFields": [
+            "subcategoryId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "SetNull"
+        },
+        {
+          "name": "sourceFile",
+          "kind": "object",
+          "type": "Import",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "ImportToTransaction",
+          "relationFromFields": [
+            "sourceFileId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "Cascade"
+        },
+        {
+          "name": "recurringGroup",
+          "kind": "object",
+          "type": "RecurringPayment",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "RecurringPaymentToTransaction",
+          "relationFromFields": [
+            "recurringGroupId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "SetNull"
+        },
+        {
+          "name": "importRows",
+          "kind": "object",
+          "type": "ImportTransaction",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "ImportTransactionToTransaction",
+          "relationFromFields": [],
+          "relationToFields": []
+        }
+      ],
+      "uniqueFields": []
+    },
+    "Import": {
+      "fields": [
+        {
+          "name": "id",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": true,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "cuid",
+            "args": [
+              1
+            ]
+          }
+        },
+        {
+          "name": "userId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "originalFilename",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "mimeType",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "sizeBytes",
+          "kind": "scalar",
+          "type": "Int",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "sha256",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "storageKey",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "source",
+          "kind": "enum",
+          "type": "TransactionSource",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "parserName",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "status",
+          "kind": "enum",
+          "type": "ImportStatus",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": "UPLOADED"
+        },
+        {
+          "name": "statementStart",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "statementEnd",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "detectedCount",
+          "kind": "scalar",
+          "type": "Int",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": 0
+        },
+        {
+          "name": "duplicateCount",
+          "kind": "scalar",
+          "type": "Int",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": 0
+        },
+        {
+          "name": "committedCount",
+          "kind": "scalar",
+          "type": "Int",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": 0
+        },
+        {
+          "name": "errorMessage",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "warnings",
+          "kind": "scalar",
+          "type": "Json",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "createdAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "now",
+            "args": []
+          }
+        },
+        {
+          "name": "updatedAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": true
+        },
+        {
+          "name": "confirmedAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "user",
+          "kind": "object",
+          "type": "User",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "ImportToUser",
+          "relationFromFields": [
+            "userId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "Cascade"
+        },
+        {
+          "name": "rows",
+          "kind": "object",
+          "type": "ImportTransaction",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "ImportToImportTransaction",
+          "relationFromFields": [],
+          "relationToFields": []
+        },
+        {
+          "name": "transactions",
+          "kind": "object",
+          "type": "Transaction",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "ImportToTransaction",
+          "relationFromFields": [],
+          "relationToFields": []
+        }
+      ],
+      "uniqueFields": []
+    },
+    "ImportTransaction": {
+      "fields": [
+        {
+          "name": "id",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": true,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "cuid",
+            "args": [
+              1
+            ]
+          }
+        },
+        {
+          "name": "importId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "rowIndex",
+          "kind": "scalar",
+          "type": "Int",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "transactionDate",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "amount",
+          "kind": "scalar",
+          "type": "Decimal",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "transactionType",
+          "kind": "enum",
+          "type": "TransactionType",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "flow",
+          "kind": "enum",
+          "type": "TransactionFlow",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "rawDescription",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "merchantName",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "categoryId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "categoryConfidence",
+          "kind": "scalar",
+          "type": "Float",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "upiId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "transactionReference",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "decision",
+          "kind": "enum",
+          "type": "ImportRowDecision",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": "INCLUDE"
+        },
+        {
+          "name": "duplicateOfId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "duplicateReason",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "warnings",
+          "kind": "scalar",
+          "type": "Json",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "committedId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "createdAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "now",
+            "args": []
+          }
+        },
+        {
+          "name": "importRecord",
+          "kind": "object",
+          "type": "Import",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "ImportToImportTransaction",
+          "relationFromFields": [
+            "importId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "Cascade"
+        },
+        {
+          "name": "category",
+          "kind": "object",
+          "type": "Category",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "CategoryToImportTransaction",
+          "relationFromFields": [
+            "categoryId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "SetNull"
+        },
+        {
+          "name": "duplicateOf",
+          "kind": "object",
+          "type": "Transaction",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "ImportTransactionToTransaction",
+          "relationFromFields": [
+            "duplicateOfId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "SetNull"
+        }
+      ],
+      "uniqueFields": [
+        [
+          "importId",
+          "rowIndex"
+        ]
+      ]
+    },
+    "RecurringPayment": {
+      "fields": [
+        {
+          "name": "id",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": true,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "cuid",
+            "args": [
+              1
+            ]
+          }
+        },
+        {
+          "name": "userId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "key",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "flow",
+          "kind": "enum",
+          "type": "TransactionFlow",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": "OUT"
+        },
+        {
+          "name": "merchantId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "label",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "frequency",
+          "kind": "enum",
+          "type": "RecurringFrequency",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "typicalAmount",
+          "kind": "scalar",
+          "type": "Decimal",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "lastChargedAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "nextExpectedAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "occurrenceCount",
+          "kind": "scalar",
+          "type": "Int",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": 0
+        },
+        {
+          "name": "confidence",
+          "kind": "scalar",
+          "type": "Float",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": 0
+        },
+        {
+          "name": "isSubscription",
+          "kind": "scalar",
+          "type": "Boolean",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": false
+        },
+        {
+          "name": "isActive",
+          "kind": "scalar",
+          "type": "Boolean",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": true
+        },
+        {
+          "name": "dismissedAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "createdAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "now",
+            "args": []
+          }
+        },
+        {
+          "name": "updatedAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": true
+        },
+        {
+          "name": "user",
+          "kind": "object",
+          "type": "User",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "RecurringPaymentToUser",
+          "relationFromFields": [
+            "userId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "Cascade"
+        },
+        {
+          "name": "merchant",
+          "kind": "object",
+          "type": "Merchant",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "MerchantToRecurringPayment",
+          "relationFromFields": [
+            "merchantId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "SetNull"
+        },
+        {
+          "name": "transactions",
+          "kind": "object",
+          "type": "Transaction",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "RecurringPaymentToTransaction",
+          "relationFromFields": [],
+          "relationToFields": []
+        }
+      ],
+      "uniqueFields": [
+        [
+          "userId",
+          "key"
+        ]
+      ]
+    },
+    "Insight": {
+      "fields": [
+        {
+          "name": "id",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": true,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "cuid",
+            "args": [
+              1
+            ]
+          }
+        },
+        {
+          "name": "userId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "key",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "kind",
+          "kind": "enum",
+          "type": "InsightKind",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "severity",
+          "kind": "enum",
+          "type": "InsightSeverity",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "group",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "title",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "explanation",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "recommendation",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "metric",
+          "kind": "scalar",
+          "type": "Json",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "confidence",
+          "kind": "scalar",
+          "type": "Float",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "supportingTransactionIds",
+          "kind": "scalar",
+          "type": "String",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "periodStart",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "periodEnd",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "dismissedAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "createdAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "now",
+            "args": []
+          }
+        },
+        {
+          "name": "user",
+          "kind": "object",
+          "type": "User",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "InsightToUser",
+          "relationFromFields": [
+            "userId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "Cascade"
+        }
+      ],
+      "uniqueFields": [
+        [
+          "userId",
+          "key"
+        ]
+      ]
+    },
+    "Budget": {
+      "fields": [
+        {
+          "name": "id",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": true,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "cuid",
+            "args": [
+              1
+            ]
+          }
+        },
+        {
+          "name": "userId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "categoryId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "month",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "amount",
+          "kind": "scalar",
+          "type": "Decimal",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "createdAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "now",
+            "args": []
+          }
+        },
+        {
+          "name": "updatedAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": true
+        },
+        {
+          "name": "user",
+          "kind": "object",
+          "type": "User",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "BudgetToUser",
+          "relationFromFields": [
+            "userId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "Cascade"
+        },
+        {
+          "name": "category",
+          "kind": "object",
+          "type": "Category",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "BudgetToCategory",
+          "relationFromFields": [
+            "categoryId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "Cascade"
+        }
+      ],
+      "uniqueFields": [
+        [
+          "userId",
+          "categoryId",
+          "month"
+        ]
+      ]
+    },
+    "FinancialProfile": {
+      "fields": [
+        {
+          "name": "id",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": true,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "cuid",
+            "args": [
+              1
+            ]
+          }
+        },
+        {
+          "name": "userId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": true,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "monthlyIncome",
+          "kind": "scalar",
+          "type": "Decimal",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "fixedExpenses",
+          "kind": "scalar",
+          "type": "Decimal",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "emis",
+          "kind": "scalar",
+          "type": "Decimal",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "insurance",
+          "kind": "scalar",
+          "type": "Decimal",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "investments",
+          "kind": "scalar",
+          "type": "Decimal",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "savingsTarget",
+          "kind": "scalar",
+          "type": "Decimal",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "emergencyFundTarget",
+          "kind": "scalar",
+          "type": "Decimal",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "emergencyFundCurrent",
+          "kind": "scalar",
+          "type": "Decimal",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "upcomingExpenses",
+          "kind": "scalar",
+          "type": "Json",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "createdAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "now",
+            "args": []
+          }
+        },
+        {
+          "name": "updatedAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": true
+        },
+        {
+          "name": "user",
+          "kind": "object",
+          "type": "User",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "FinancialProfileToUser",
+          "relationFromFields": [
+            "userId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "Cascade"
+        }
+      ],
+      "uniqueFields": []
+    },
+    "MoneyPlan": {
+      "fields": [
+        {
+          "name": "id",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": true,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "cuid",
+            "args": [
+              1
+            ]
+          }
+        },
+        {
+          "name": "userId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "name",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "inputs",
+          "kind": "scalar",
+          "type": "Json",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "allocation",
+          "kind": "scalar",
+          "type": "Json",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "schemaVersion",
+          "kind": "scalar",
+          "type": "Int",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": 1
+        },
+        {
+          "name": "isActive",
+          "kind": "scalar",
+          "type": "Boolean",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": true
+        },
+        {
+          "name": "createdAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "now",
+            "args": []
+          }
+        },
+        {
+          "name": "updatedAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": true
+        },
+        {
+          "name": "user",
+          "kind": "object",
+          "type": "User",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "MoneyPlanToUser",
+          "relationFromFields": [
+            "userId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "Cascade"
+        }
+      ],
+      "uniqueFields": []
+    },
+    "AIConversation": {
+      "fields": [
+        {
+          "name": "id",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": true,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "cuid",
+            "args": [
+              1
+            ]
+          }
+        },
+        {
+          "name": "userId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "title",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "createdAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "now",
+            "args": []
+          }
+        },
+        {
+          "name": "updatedAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": true
+        },
+        {
+          "name": "user",
+          "kind": "object",
+          "type": "User",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "AIConversationToUser",
+          "relationFromFields": [
+            "userId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "Cascade"
+        },
+        {
+          "name": "messages",
+          "kind": "object",
+          "type": "AIMessage",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "AIConversationToAIMessage",
+          "relationFromFields": [],
+          "relationToFields": []
+        }
+      ],
+      "uniqueFields": []
+    },
+    "AIMessage": {
+      "fields": [
+        {
+          "name": "id",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": true,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "cuid",
+            "args": [
+              1
+            ]
+          }
+        },
+        {
+          "name": "conversationId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "role",
+          "kind": "enum",
+          "type": "AIRole",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "content",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "provider",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "contextRef",
+          "kind": "scalar",
+          "type": "Json",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "createdAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "now",
+            "args": []
+          }
+        },
+        {
+          "name": "conversation",
+          "kind": "object",
+          "type": "AIConversation",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "AIConversationToAIMessage",
+          "relationFromFields": [
+            "conversationId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "Cascade"
+        }
+      ],
+      "uniqueFields": []
+    }
+  }
+}

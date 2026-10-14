@@ -12,6 +12,7 @@ export default defineConfig({
       },
       'apps/api/vitest.config.ts',
       'apps/web/vite.config.ts',
+      'apps/android/vitest.config.ts',
     ],
   },
 });

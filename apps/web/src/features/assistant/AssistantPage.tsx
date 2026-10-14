@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { LuPlus, LuSend, LuTrash2 } from 'react-icons/lu';
+import { Link } from 'react-router';
 import { formatMonthKey } from '@moneylens/shared';
 import { ASSISTANT_MESSAGE_MAX } from '@moneylens/validation';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { ErrorCard, PageHeader } from '../../components/PageHeader';
+import { deviceAI } from '../../lib/device';
 import { formatDayTime } from '../../lib/format';
 import { AnswerCard } from './AnswerCard';
 import { EXAMPLE_QUESTIONS } from './examples';
@@ -96,9 +98,23 @@ export function AssistantPage() {
           role="status"
           className="mt-6 rounded-xl border border-warning/40 bg-surface p-4 text-sm text-ink-700"
         >
-          MoneyLens AI is not turned on for your account. You can still ask questions: you will get
-          the calculated figures for each one, without a written explanation. Whoever runs this
-          server turns it on with AI_PROVIDER, AI_API_KEY and AI_ALLOWED_EMAILS.
+          {deviceAI() ? (
+            <>
+              MoneyLens AI is off on this phone. You can still ask questions: you will get the
+              calculated figures for each one, without a written explanation. To turn it on, add
+              your own key in{' '}
+              <Link to="/settings" className="font-medium text-brand-700 underline">
+                Settings
+              </Link>
+              .
+            </>
+          ) : (
+            <>
+              MoneyLens AI is not turned on for your account. You can still ask questions: you will
+              get the calculated figures for each one, without a written explanation. Whoever runs
+              this server turns it on with AI_PROVIDER, AI_API_KEY and AI_ALLOWED_EMAILS.
+            </>
+          )}
         </p>
       )}
 

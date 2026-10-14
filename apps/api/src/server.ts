@@ -3,7 +3,7 @@ import { loadEnv } from './config/env';
 import { createLogger } from './lib/logger';
 import { createPrismaClient } from './lib/prisma';
 import { pruneAuthEvents } from './modules/auth/auth.service';
-import { ensureSystemCategories } from './modules/categories/system-categories';
+import { seedCategories } from './modules/categories/seed-categories';
 
 const env = loadEnv();
 const logger = createLogger(env);
@@ -11,7 +11,7 @@ const prisma = createPrismaClient();
 const app = createApp({ env, prisma, logger });
 
 // A fresh database (a new server) has no categories until this runs.
-await ensureSystemCategories(prisma);
+await seedCategories(prisma);
 
 const server = app.listen(env.PORT, () => {
   logger.info(`MoneyLens API listening on http://localhost:${env.PORT}`);
