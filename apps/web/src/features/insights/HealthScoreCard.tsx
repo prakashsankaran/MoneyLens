@@ -32,7 +32,7 @@ export function HealthScoreBreakdown({ health }: { health: HealthScore }) {
   const tone = toneForScore(health.score);
   return (
     <div>
-      <div className="flex items-center gap-5">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
         <ScoreRing value={health.score} tone={tone} size={120} thickness={11}>
           <span className="text-4xl font-bold tracking-tight">
             {health.score === null ? '–' : health.score}

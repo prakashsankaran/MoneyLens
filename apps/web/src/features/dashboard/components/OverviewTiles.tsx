@@ -20,7 +20,7 @@ const pillClass: Record<DeltaTone, string> = {
 function DeltaPill({ delta }: { delta: Delta }) {
   return (
     <span
-      className={`inline-flex h-6 items-center rounded-full px-2.5 text-xs font-semibold whitespace-nowrap ${pillClass[delta.tone]}`}
+      className={`inline-flex min-h-6 max-w-full items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${pillClass[delta.tone]}`}
     >
       {delta.text}
     </span>
@@ -54,6 +54,11 @@ export function OverviewTiles({
   const overspent = totals.savedPaise < 0;
   // Far below zero the exact rate stops meaning much and would not fit the ring.
   const rateText = rate === null ? '—' : rate < -999 ? '< −999%' : `${Math.round(rate)}%`;
+  const incomeText = formatINR(totals.incomePaise);
+  const savedText = formatINR(Math.abs(totals.savedPaise));
+  // Ten-lakh-plus amounts do not fit two tiles side by side on a phone, so they stack there.
+  const tileSpan =
+    Math.max(incomeText.length, savedText.length) > 9 ? 'col-span-2 sm:col-span-1' : '';
 
   return (
     <dl className="list-rise grid grid-cols-2 gap-3 md:gap-4 lg:gap-6 xl:grid-cols-4">
@@ -105,15 +110,17 @@ export function OverviewTiles({
       <Tile
         label="Income"
         icon={LuArrowDownLeft}
-        value={formatINR(totals.incomePaise)}
+        value={incomeText}
         delta={incomeDelta}
+        className={tileSpan}
       />
       <Tile
         label={overspent ? 'Overspent' : 'Saved'}
         icon={LuPiggyBank}
-        value={formatINR(Math.abs(totals.savedPaise))}
+        value={savedText}
         valueClass={overspent ? 'text-negative' : 'text-positive'}
         delta={savedDelta}
+        className={tileSpan}
       />
     </dl>
   );
@@ -133,15 +140,19 @@ function Tile({
   value,
   valueClass = '',
   delta,
+  className = '',
 }: {
   label: string;
   icon: IconType;
   value: string;
   valueClass?: string;
   delta: Delta | undefined;
+  className?: string;
 }) {
   return (
-    <div className="flex min-w-0 flex-col rounded-2xl border border-ink-200 bg-surface p-4 shadow-card sm:p-5 lg:p-6">
+    <div
+      className={`flex min-w-0 flex-col rounded-2xl border border-ink-200 bg-surface p-4 shadow-card sm:p-5 lg:p-6 ${className}`}
+    >
       <dt className="flex items-center justify-between gap-2 text-xs font-medium text-ink-500">
         {label}
         <TileIcon icon={icon} />

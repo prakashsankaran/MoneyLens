@@ -35,7 +35,7 @@ export function Dialog({ title, onClose, children, variant = 'center' }: DialogP
 
   const panel =
     variant === 'side'
-      ? 'max-h-[92dvh] w-full self-end rounded-t-3xl animate-sheet-up sm:max-h-dvh sm:h-dvh sm:max-w-md sm:self-stretch sm:rounded-none sm:rounded-l-3xl sm:ml-auto'
+      ? 'max-h-[92dvh] w-full self-end rounded-t-3xl animate-sheet-up sm:max-h-dvh sm:h-dvh sm:max-w-md sm:pt-[var(--safe-top)] sm:self-stretch sm:rounded-none sm:rounded-l-3xl sm:ml-auto'
       : 'max-h-[92dvh] w-full max-w-lg self-end rounded-t-3xl animate-sheet-up sm:self-center sm:rounded-3xl sm:animate-pop';
 
   return (
@@ -55,7 +55,7 @@ export function Dialog({ title, onClose, children, variant = 'center' }: DialogP
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`relative flex flex-col overflow-hidden bg-surface pb-[env(safe-area-inset-bottom)] shadow-2xl outline-none ${panel}`}
+        className={`relative flex flex-col overflow-hidden bg-surface pb-[var(--safe-bottom)] shadow-2xl outline-none ${panel}`}
       >
         <header className="flex items-center justify-between gap-4 px-5 pt-6 pb-2 sm:px-6">
           <h2 id={titleId} className="text-xl font-semibold tracking-tight">
