@@ -1,5 +1,5 @@
 /**
- * MoneyLens brand artwork as plain data (from the teal-and-emerald brand kit),
+ * MoneyLens brand artwork as plain data (teal-and-emerald brand),
  * so web (react-icons) and mobile (react-native-svg) draw the same shapes.
  * Everything is on a 100 x 100 grid.
  */
@@ -8,15 +8,15 @@ export type BrandShape =
   | { tag: 'path'; attr: { d: string; transform?: string } }
   | { tag: 'circle'; attr: { cx: string; cy: string; r: string } };
 
-/** The rising-bars mark. Strokes and fills name the role, not the colour. */
+/**
+ * The MoneyLens mark: an "M" whose right stroke rises into a trend arrow, over
+ * two rising bars. `viewBox` frames the mark tightly on the 100 grid.
+ */
 export const brandMark = {
-  line: { d: 'M15 83 V48 Q15 41 22 45 L40 56 Q45 59 50 55 L87 26', strokeWidth: 12 },
-  arrow: { d: 'M73 26 L90 22 L87 39', strokeWidth: 9 },
-  bars: [
-    { d: 'M15 83 V60 L31 69 V83 Z', tone: 'accent' },
-    { d: 'M39 83 V68 L55 58 V83 Z', tone: 'primary' },
-    { d: 'M63 83 V51 L79 39 V83 Z', tone: 'accent' },
-  ],
+  viewBox: '17 14 74 74',
+  line: { d: 'M29 88 V38 L47 56 L74.9 28.1', strokeWidth: 15 },
+  arrowHead: { d: 'M87.3 15.7 L83.8 39 L64 19.2 Z' },
+  bars: { d: 'M41 88 V76.6 L56 61.6 V88 Z M62 88 V55.6 L77 40.6 V88 Z' },
 } as const;
 
 /**

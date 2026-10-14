@@ -31,9 +31,11 @@ soft shadow, very round shapes, the MoneyLens teal-and-emerald brand, and big bo
 
 ## Brand assets
 
-- The mark (rising line over three bars) is `BrandMark` in `apps/web/src/components/Logo.tsx`,
-  drawn from `brandMark` in `packages/ui/src/brand.ts`. The wordmark beside it stays live text in
-  the app font. Source SVGs from the brand kit are in `docs/brand/`.
+- The mark (an "M" whose right stroke rises into a trend arrow, over two rising bars) is
+  `BrandMark` in `apps/web/src/components/Logo.tsx` (mobile: `components/brand.tsx`), drawn from
+  `brandMark` in `packages/ui/src/brand.ts` and shaded from `brand-500` to `brand-600`. The
+  wordmark beside it stays live text in the app font. The app icon is the same mark in white and
+  emerald on a teal-to-dark-teal tile; both are exported to `docs/brand/`.
 - Feature icons for Transactions, Budgets, Goals, Reports, Insights, Accounts, Settings and
   Security come from the kit (`featureIcons` in `packages/ui`; `components/BrandIcons.tsx` on web,
   `components/brand.tsx` on mobile). They draw in the current colour like the react-icons line
