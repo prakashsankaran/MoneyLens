@@ -1,8 +1,9 @@
-import { LuPlus, LuWallet } from 'react-icons/lu';
+import { LuPlus } from 'react-icons/lu';
 import { useState } from 'react';
 import { formatINR, formatMonthKey } from '@moneylens/shared';
 import type { BudgetItem } from '@moneylens/types';
 import { Button } from '../../components/Button';
+import { BrandBudgetsIcon } from '../../components/BrandIcons';
 import { Card } from '../../components/Card';
 import { FullPageSpinner } from '../../components/FullPageSpinner';
 import { ErrorCard } from '../../components/PageHeader';
@@ -194,7 +195,7 @@ export function BudgetsPanel() {
       ) : (
         <Card
           title={`Budgets for ${formatMonthKey(data.month)}`}
-          icon={LuWallet}
+          icon={BrandBudgetsIcon}
           action={<ProvenanceBadge kind="CALCULATION" />}
         >
           <dl className="grid grid-cols-3 gap-3 text-sm">

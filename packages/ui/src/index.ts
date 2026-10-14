@@ -5,21 +5,23 @@
 
 export const colors = {
   ink: {
-    900: '#111827',
+    900: '#1f2937',
     700: '#4b5563',
-    500: '#6b7280',
+    500: '#64748b',
     300: '#d3dae6',
     200: '#e3e8f0',
     100: '#f1f4f9',
     50: '#f6f8fc',
   },
+  /** Teal-and-emerald brand: primary teal 600, emerald accent 500, dark teal for depth. */
   brand: {
-    800: '#1a4bc2',
-    700: '#1f5be6',
-    600: '#3874ff',
-    500: '#6a97ff',
-    100: '#dce6ff',
-    50: '#ebf1ff',
+    900: '#063b3a',
+    800: '#134e4a',
+    700: '#115e59',
+    600: '#0f766e',
+    500: '#10b981',
+    100: '#d1fae5',
+    50: '#ecfdf5',
   },
   positive: '#15803d',
   negative: '#b91c1c',
@@ -28,13 +30,13 @@ export const colors = {
 } as const;
 
 /**
- * Trend charts (income vs spending, weekdays vs weekends) use one blue family;
+ * Trend charts (income vs spending, weekdays vs weekends) use one teal family;
  * category charts keep the categorical chartSeries palette below.
  */
 export const trendSeries = {
-  income: '#3874ff',
-  spending: '#1e3a8a',
-  light: '#93c5fd',
+  income: '#0f766e',
+  spending: '#063b3a',
+  light: '#6ee7b7',
   neutral: '#94a3b8',
 } as const;
 
@@ -58,3 +60,5 @@ export const chartSurfaces = { light: '#ffffff', dark: '#0f172a' } as const;
  */
 export const radii = { sm: 8, md: 12, lg: 20, xl: 28, pill: 999 } as const;
 export const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 } as const;
+
+export * from './brand';

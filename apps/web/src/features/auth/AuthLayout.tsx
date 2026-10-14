@@ -19,12 +19,12 @@ function PreviewArt() {
         <svg viewBox="0 0 300 110" className="h-auto w-full">
           <defs>
             <linearGradient id="ml-la" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0" stopColor="#3874FF" stopOpacity=".45" />
-              <stop offset="1" stopColor="#3874FF" stopOpacity="0" />
+              <stop offset="0" stopColor="#0F766E" stopOpacity=".45" />
+              <stop offset="1" stopColor="#0F766E" stopOpacity="0" />
             </linearGradient>
             <linearGradient id="ml-lb" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0" stopColor="#1E3A8A" stopOpacity=".35" />
-              <stop offset="1" stopColor="#1E3A8A" stopOpacity="0" />
+              <stop offset="0" stopColor="#063B3A" stopOpacity=".35" />
+              <stop offset="1" stopColor="#063B3A" stopOpacity="0" />
             </linearGradient>
           </defs>
           {[20, 50, 80].map((y) => (
@@ -37,7 +37,7 @@ function PreviewArt() {
           <path
             d="M0 70 C40 60 60 40 100 45 S170 20 210 28 S270 10 300 14"
             fill="none"
-            stroke="#3874FF"
+            stroke="#0F766E"
             strokeWidth="3"
             strokeLinecap="round"
           />
@@ -48,21 +48,21 @@ function PreviewArt() {
           <path
             d="M0 92 C50 88 80 72 120 76 S190 60 230 64 S280 52 300 50"
             fill="none"
-            stroke="#1E3A8A"
+            stroke="#063B3A"
             strokeWidth="2.5"
             strokeLinecap="round"
           />
-          <circle cx="210" cy="28" r="5" fill="#fff" stroke="#3874FF" strokeWidth="3" />
+          <circle cx="210" cy="28" r="5" fill="#fff" stroke="#0F766E" strokeWidth="3" />
         </svg>
       </div>
       <div className="absolute bottom-2 left-0 w-40 animate-float-slow rounded-2xl border border-white bg-white/95 p-4 shadow-lg">
         <svg viewBox="0 0 42 42" className="mx-auto size-20 -rotate-90">
           {(
             [
-              ['#3874FF', 0, 34],
-              ['#1E3A8A', 36, 28],
+              ['#0F766E', 0, 34],
+              ['#063B3A', 36, 28],
               ['#94A3B8', 66, 8],
-              ['#93C5FD', 76, 22],
+              ['#6EE7B7', 76, 22],
             ] as const
           ).map(([c, o, l]) => (
             <circle
@@ -88,7 +88,7 @@ function PreviewArt() {
             <span
               key={i}
               className="flex-1 rounded-md"
-              style={{ height: `${h}%`, background: i === 3 ? '#3874FF' : '#DCE6FF' }}
+              style={{ height: `${h}%`, background: i === 3 ? '#0F766E' : '#D1FAE5' }}
             />
           ))}
         </div>
@@ -116,7 +116,7 @@ export function AuthLayout({
     <div className="relative min-h-dvh overflow-hidden bg-canvas">
       {/* Soft colour field and dot grid */}
       <div className="pointer-events-none absolute -top-40 -left-32 size-[36rem] rounded-full bg-brand-600/25 blur-3xl" />
-      <div className="pointer-events-none absolute top-1/3 -right-40 size-[32rem] rounded-full bg-blue-300/20 blur-3xl" />
+      <div className="pointer-events-none absolute top-1/3 -right-40 size-[32rem] rounded-full bg-brand-500/20 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-40 left-1/3 size-[28rem] rounded-full bg-slate-300/30 blur-3xl" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(rgb(15_23_42/.06)_1px,transparent_1px)] [background-size:22px_22px]" />
 

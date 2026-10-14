@@ -28,22 +28,24 @@
   --text-3xl--line-height: 1.2;
 
   /* Ink: text, borders and neutral surfaces. */
-  --color-ink-900: #111827;
+  --color-ink-900: #1f2937;
   --color-ink-700: #4b5563;
-  --color-ink-500: #6b7280;
+  --color-ink-500: #64748b;
   --color-ink-300: #d3dae6;
   --color-ink-200: #e3e8f0;
   --color-ink-100: #f1f4f9;
   --color-ink-50: #f6f8fc;
 
-  /* Electric blue accent. Use for the primary action, active states, links and key highlights only.
-     Small text uses brand-700, which keeps AA contrast on white. */
-  --color-brand-800: #1a4bc2;
-  --color-brand-700: #1f5be6;
-  --color-brand-600: #3874ff;
-  --color-brand-500: #6a97ff;
-  --color-brand-100: #dce6ff;
-  --color-brand-50: #ebf1ff;
+  /* Teal-and-emerald brand. Teal 600 for the primary action, active states, links and key
+     highlights; emerald 500 is the accent (logo bars, light chart steps), never small text.
+     Small text uses brand-700. White on brand-600 is 5.5:1, so buttons pass AA. */
+  --color-brand-900: #063b3a;
+  --color-brand-800: #134e4a;
+  --color-brand-700: #115e59;
+  --color-brand-600: #0f766e;
+  --color-brand-500: #10b981;
+  --color-brand-100: #d1fae5;
+  --color-brand-50: #ecfdf5;
 
   --color-positive: #15803d;
   --color-positive-50: #e6f6ec;
@@ -52,10 +54,10 @@
   --color-warning: #a16207;
   --color-warning-50: #fef3d6;
 
-  /* Charts: one blue family. Category charts keep the categorical palette (packages/ui). */
-  --color-series-1: #3874ff;
-  --color-series-2: #1e3a8a;
-  --color-series-3: #93c5fd;
+  /* Charts: one teal family. Category charts keep the categorical palette (packages/ui). */
+  --color-series-1: #0f766e;
+  --color-series-2: #063b3a;
+  --color-series-3: #6ee7b7;
   --color-series-4: #94a3b8;
   --color-chart-grid: #eef1f6;
 
@@ -155,7 +157,7 @@
     @apply transition-all duration-200;
   }
   :focus-visible {
-    outline: 2px solid rgb(56 116 255 / 0.7);
+    outline: 2px solid rgb(15 118 110 / 0.7);
     outline-offset: 2px;
   }
   input:focus-visible,
@@ -163,7 +165,7 @@
   textarea:focus-visible {
     outline: none;
     border-color: var(--color-brand-600);
-    box-shadow: 0 0 0 4px rgb(56 116 255 / 0.12);
+    box-shadow: 0 0 0 4px rgb(15 118 110 / 0.14);
   }
   ::placeholder {
     color: var(--color-ink-500);

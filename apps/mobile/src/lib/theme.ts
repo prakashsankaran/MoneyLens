@@ -22,7 +22,7 @@ export function categoryColour(index: number): string {
   return (index < COLOURED_CATEGORIES && chartSeries.light[index]) || tokens.ink[300];
 }
 
-/** Income and spending trends use the blue family (see packages/ui). */
+/** Income and spending trends use the teal family (see packages/ui). */
 export const seriesColour = {
   income: trendSeries.income,
   spending: trendSeries.spending,

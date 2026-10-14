@@ -1,7 +1,8 @@
-import { LuChevronDown, LuEllipsis, LuLogOut, LuSettings, LuX } from 'react-icons/lu';
+import { LuChevronDown, LuEllipsis, LuLogOut, LuX } from 'react-icons/lu';
 import { Suspense, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import { useAuth } from '../../features/auth/useAuth';
+import { BrandSettingsIcon } from '../BrandIcons';
 import { Logo } from '../Logo';
 import { NAV_ITEMS } from './nav';
 
@@ -91,7 +92,7 @@ export function AppShell() {
                   to="/settings"
                   className={`${linkBase} text-ink-700 hover:bg-ink-100 hover:text-ink-900`}
                 >
-                  <LuSettings className="size-[18px]" aria-hidden="true" />
+                  <BrandSettingsIcon className="size-[18px]" aria-hidden="true" />
                   Settings
                 </Link>
                 <button

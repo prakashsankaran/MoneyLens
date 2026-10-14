@@ -1,8 +1,9 @@
 import { router, type Href } from 'expo-router';
-import { ChevronRight, FileUp, LogOut, Settings, Sparkles } from 'lucide-react-native';
+import { ChevronRight, FileUp, LogOut, Sparkles } from 'lucide-react-native';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '@/auth/AuthProvider';
+import { FeatureIcon } from '@/components/brand';
 import { Card, Screen } from '@/components/ui';
 import { colors, type } from '@/lib/theme';
 
@@ -29,7 +30,7 @@ export function MoreScreen() {
         />
         <Item
           href="/settings"
-          icon={<Settings size={20} color={colors.primary} />}
+          icon={<FeatureIcon name="settings" size={20} color={colors.primary} />}
           title="Settings and privacy"
           detail="Delete your data or your account"
           last
