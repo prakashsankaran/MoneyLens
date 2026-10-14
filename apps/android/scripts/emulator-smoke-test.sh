@@ -15,8 +15,10 @@ adb shell am start -W -n "$PKG/app.moneylens.android.MainActivity"
 found=""
 for _ in $(seq 1 30); do
   sleep 3
+  # uiautomator can exit 0 without writing the file ("could not get idle state"),
+  # so a failed pull just means "try again".
   adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 || continue
-  adb pull /sdcard/ui.xml smoke/ui.xml >/dev/null
+  adb pull /sdcard/ui.xml smoke/ui.xml >/dev/null 2>&1 || continue
   if grep -q "Sign in" smoke/ui.xml; then
     found=yes
     break
