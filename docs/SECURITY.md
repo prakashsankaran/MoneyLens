@@ -152,13 +152,15 @@ aggregates → AI`. Raw documents, transaction lists, UPI IDs, references and
 
 ## Remaining risks and future work
 
-| Item                                                      | Why it is not done yet                                                                                                                                                                         |
-| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Parsing in a separate worker thread or process            | The deadline stops PDF parsing between pages and always answers the request on time, but a CPU-bound step inside one page or inside the Excel reader can keep running until it finishes.       |
-| Two-factor sign-in                                        | Not in the V1 scope. The activity log and "sign out on all devices" cover detection and response.                                                                                              |
-| Email notifications for new sign-ins and password changes | MoneyLens sends no email yet.                                                                                                                                                                  |
-| Revoking access tokens before they expire                 | Access tokens are stateless and live 15 minutes. Signing out everywhere ends sessions at once, but a token already issued works until it expires.                                              |
-| Per-IP rate limits are kept in memory                     | The per-account pause is stored in PostgreSQL and works across instances; the per-IP limits use memory and would need a shared store (for example Redis) if the API runs on several instances. |
+| Item                                                      | Why it is not done yet                                                                                                                                                                                          |
+| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Parsing in a separate worker thread or process            | The deadline stops PDF parsing between pages and always answers the request on time, but a CPU-bound step inside one page or inside the Excel reader can keep running until it finishes.                        |
+| Two-factor sign-in                                        | Not in the V1 scope. The activity log and "sign out on all devices" cover detection and response.                                                                                                               |
+| Email notifications for new sign-ins and password changes | MoneyLens sends no email yet.                                                                                                                                                                                   |
+| Revoking access tokens before they expire                 | Access tokens are stateless and live 15 minutes. Signing out everywhere ends sessions at once, but a token already issued works until it expires.                                                               |
+| The operator can read every account's data                | MoneyLens on a shared server stores everyone's transactions in one PostgreSQL database that its operator can open. There is no per-user encryption. See [HOSTING.md](HOSTING.md#what-your-friends-should-know). |
+| No email: password resets are done by the operator        | `infrastructure/hosting/reset-password.mjs` sets a new password and signs the account out everywhere.                                                                                                           |
+| Per-IP rate limits are kept in memory                     | The per-account pause is stored in PostgreSQL and works across instances; the per-IP limits use memory and would need a shared store (for example Redis) if the API runs on several instances.                  |
 
 See [THREAT_MODEL.md](THREAT_MODEL.md) for the full list of threats and how
 each one is handled.

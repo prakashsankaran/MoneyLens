@@ -54,6 +54,11 @@ interface AIProvider {
 | `openai-compatible` | Any `/chat/completions` service. Needs `AI_API_KEY`, `AI_BASE_URL`, `AI_MODEL`. |
 | `mock`              | Deterministic; repeats the key figures. For tests and local development.        |
 
+`AI_ALLOWED_EMAILS` (comma-separated) limits the provider to those accounts.
+Everyone else is treated as `none`: their figures are never sent, and the
+server owner's key is not spent on them. Empty means every account, which
+suits a server used by one person.
+
 Providers call the vendor with `fetch`, with a timeout (`AI_TIMEOUT_MS`).
 Errors report only the HTTP status, never the response body. The process
 refuses to start when a provider is chosen without the settings it needs.

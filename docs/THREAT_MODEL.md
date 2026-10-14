@@ -28,6 +28,10 @@ protects against and what is left.
 - **A compromised dependency** in the build or at runtime.
 - **The AI provider**, which receives aggregates when AI is turned on.
 
+When MoneyLens is hosted for other people ([HOSTING.md](HOSTING.md)), sign-up
+is invite-only by default (`SIGNUP_MODE=invite`), so strangers who find the
+address cannot create accounts, and AI use is limited to `AI_ALLOWED_EMAILS`.
+
 Out of scope: an attacker with database or host access, a compromised
 device operating system, and the user's own bank or Google Pay accounts.
 

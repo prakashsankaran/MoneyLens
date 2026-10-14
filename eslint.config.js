@@ -69,7 +69,12 @@ export default tseslint.config(
     },
   },
   {
-    files: ['apps/api/prisma/seed.ts', 'scripts/**/*.mjs', 'apps/android/scripts/**/*.mjs'],
+    files: [
+      'apps/api/prisma/seed.ts',
+      'scripts/**/*.mjs',
+      'apps/android/scripts/**/*.mjs',
+      'infrastructure/hosting/*.mjs',
+    ],
     rules: { 'no-console': 'off' },
   },
   {

@@ -234,7 +234,7 @@ describe('the figure check', () => {
     auth = await login(off.app);
     res = await ask('Where did most of my money go?', { app: off.app, auth }).expect(200);
     expect(res.body.data.reply.answer.status).toBe('not-configured');
-    expect(res.body.data.reply.content).toMatch(/isn't set up/);
+    expect(res.body.data.reply.content).toMatch(/isn't turned on/);
     const status = await request(off.app)
       .get('/api/ai/status')
       .set('Authorization', `Bearer ${auth}`)
@@ -327,6 +327,38 @@ describe('conversations', () => {
     await ask('Hello', { app: ctx.app, auth: user.accessToken }).expect(200);
     const res = await ask('Hello again', { app: ctx.app, auth: user.accessToken }).expect(429);
     expect(res.body.error.message).toMatch(/limit/);
+    await ctx.prisma.$disconnect();
+  });
+
+  it('only accounts in AI_ALLOWED_EMAILS reach the provider', async () => {
+    const provider = new ScriptedProvider(() => 'Your figures are above.');
+    const ctx = createTestContext(
+      { AI_ALLOWED_EMAILS: ` ${EMAIL.toUpperCase()} ` },
+      { aiProvider: provider },
+    );
+    const owner = await login(ctx.app);
+    const friend = await registerUser(ctx.app);
+
+    const ownerStatus = await request(ctx.app)
+      .get('/api/ai/status')
+      .set('Authorization', `Bearer ${owner}`)
+      .expect(200);
+    expect((ownerStatus.body.data as AssistantStatus).configured).toBe(true);
+    await ask('Where did most of my money go?', { app: ctx.app, auth: owner }).expect(200);
+    const callsAfterOwner = provider.calls.length;
+    expect(callsAfterOwner).toBeGreaterThan(0);
+
+    const friendStatus = await request(ctx.app)
+      .get('/api/ai/status')
+      .set('Authorization', `Bearer ${friend.accessToken}`)
+      .expect(200);
+    expect(friendStatus.body.data).toMatchObject({ configured: false, provider: 'none' });
+    const res = await ask('Where did most of my money go?', {
+      app: ctx.app,
+      auth: friend.accessToken,
+    }).expect(200);
+    expect(res.body.data.reply.answer.provider).toBeNull();
+    expect(provider.calls.length).toBe(callsAfterOwner);
     await ctx.prisma.$disconnect();
   });
 

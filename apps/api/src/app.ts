@@ -42,15 +42,42 @@ export interface AppDeps {
   logger: Logger;
   /** Overrides the provider chosen by AI_PROVIDER (tests). */
   aiProvider?: AIProvider;
+  /**
+   * Serves the built web app after the API routes (`serveWeb`, when
+   * WEB_DIST_DIR is set). Passed in so the Android build, which bundles this
+   * file for the browser, never imports Node's file system modules.
+   */
+  webApp?: Router;
 }
 
 /** Build the Express app. Dependencies are injected so tests can supply their own. */
-export function createApp({ env, prisma, logger, aiProvider }: AppDeps): Express {
+export function createApp({ env, prisma, logger, aiProvider, webApp }: AppDeps): Express {
   const app = express();
   app.disable('x-powered-by');
   if (env.TRUST_PROXY > 0) app.set('trust proxy', env.TRUST_PROXY);
 
-  app.use(helmet());
+  // The same policy nginx sends for the web app (security-headers.conf), so
+  // it also holds when the API serves the app itself (WEB_DIST_DIR).
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        useDefaults: false,
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+          fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+          imgSrc: ["'self'", 'data:'],
+          connectSrc: ["'self'"],
+          objectSrc: ["'none'"],
+          baseUri: ["'self'"],
+          formAction: ["'self'"],
+          frameAncestors: ["'none'"],
+        },
+      },
+      frameguard: { action: 'deny' },
+    }),
+  );
   app.use(
     cors({
       origin: env.CORS_ORIGINS,
@@ -72,6 +99,7 @@ export function createApp({ env, prisma, logger, aiProvider }: AppDeps): Express
     tokens,
     { attempts: env.LOGIN_LOCKOUT_ATTEMPTS, windowMinutes: env.LOGIN_LOCKOUT_MINUTES },
     createHmac('sha256', env.JWT_ACCESS_SECRET).update('moneylens:email-key').digest('hex'),
+    { mode: env.SIGNUP_MODE, inviteCodes: env.SIGNUP_INVITE_CODES },
   );
   const analyticsData = new AnalyticsDataSource(prisma);
   const recurring = new RecurringService(prisma, analyticsData);
@@ -134,12 +162,17 @@ export function createApp({ env, prisma, logger, aiProvider }: AppDeps): Express
     insights,
     plan,
     aiProvider ?? createAIProvider(env),
-    { maxOutputTokens: env.AI_MAX_OUTPUT_TOKENS, dailyMessageLimit: env.AI_DAILY_MESSAGE_LIMIT },
+    {
+      maxOutputTokens: env.AI_MAX_OUTPUT_TOKENS,
+      dailyMessageLimit: env.AI_DAILY_MESSAGE_LIMIT,
+      allowedEmails: env.AI_ALLOWED_EMAILS,
+    },
     logger,
   );
   api.use('/ai', requireAuth, aiRoutes(ai, { chatPerMinute: env.AI_CHAT_RATE_LIMIT }));
 
   app.use('/api', api);
+  if (webApp) app.use(webApp);
   app.use(notFoundHandler);
   app.use(errorHandler(logger));
   return app;

@@ -1,11 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, Navigate, useNavigate } from 'react-router';
+import type { SignupOptions } from '@moneylens/types';
 import { registerSchema, type RegisterInput } from '@moneylens/validation';
 import { Button } from '../../components/Button';
 import { FormField } from '../../components/FormField';
-import { ApiError } from '../../lib/api-client';
+import { api, ApiError } from '../../lib/api-client';
 import { AuthLayout } from './AuthLayout';
 import { useAuth } from './useAuth';
 
@@ -13,6 +15,14 @@ export function RegisterPage() {
   const { register: createAccount, status } = useAuth();
   const navigate = useNavigate();
   const [formError, setFormError] = useState<string | null>(null);
+  // Before the answer arrives the form is shown without the invite field;
+  // the server still enforces the rule.
+  const signup = useQuery({
+    queryKey: ['auth', 'signup'],
+    queryFn: () => api<SignupOptions>('/auth/signup'),
+    staleTime: Infinity,
+  });
+  const mode = signup.data?.mode ?? 'open';
   const {
     register,
     handleSubmit,
@@ -30,11 +40,29 @@ export function RegisterPage() {
     } catch (err) {
       if (err instanceof ApiError && err.code === 'CONFLICT') {
         setError('email', { message: err.message });
+      } else if (err instanceof ApiError && err.details?.field === 'inviteCode') {
+        setError('inviteCode', { message: err.message });
       } else {
         setFormError(err instanceof ApiError ? err.message : 'Could not create your account.');
       }
     }
   });
+
+  if (mode === 'closed') {
+    return (
+      <AuthLayout title="Sign-up is closed" subtitle="New accounts are not being created here.">
+        <p className="text-sm text-ink-500">
+          Already have an account?{' '}
+          <Link
+            to="/login"
+            className="font-medium text-brand-700 hover:underline underline-offset-4 hover:text-brand-800 transition-all duration-200"
+          >
+            Sign in
+          </Link>
+        </p>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout title="Create your account" subtitle="Your data stays private to your account.">
@@ -60,6 +88,15 @@ export function RegisterPage() {
           error={errors.password?.message}
           {...register('password')}
         />
+        {mode === 'invite' && (
+          <FormField
+            label="Invite code"
+            autoComplete="off"
+            hint="From the person who invited you. Your data is stored on the server they run."
+            error={errors.inviteCode?.message}
+            {...register('inviteCode')}
+          />
+        )}
         {formError && (
           <p role="alert" className="text-sm text-negative">
             {formError}

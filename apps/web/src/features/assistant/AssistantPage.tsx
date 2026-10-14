@@ -110,9 +110,9 @@ export function AssistantPage() {
             </>
           ) : (
             <>
-              MoneyLens AI is not set up on this server yet. You can still ask questions: you will
-              get the calculated figures for each one, without a written explanation. To turn it on,
-              set AI_PROVIDER and AI_API_KEY in the API&apos;s environment.
+              MoneyLens AI is not turned on for your account. You can still ask questions: you will
+              get the calculated figures for each one, without a written explanation. Whoever runs
+              this server turns it on with AI_PROVIDER, AI_API_KEY and AI_ALLOWED_EMAILS.
             </>
           )}
         </p>

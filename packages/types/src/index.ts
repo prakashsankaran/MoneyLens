@@ -112,6 +112,13 @@ export interface AuthActivityItem {
   userAgent: string | null;
 }
 
+/** Who may create an account on this server (`GET /api/auth/signup`). */
+export type SignupMode = 'open' | 'invite' | 'closed';
+
+export interface SignupOptions {
+  mode: SignupMode;
+}
+
 export interface AuthResult {
   user: PublicUser;
   accessToken: string;

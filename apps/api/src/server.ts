@@ -2,12 +2,22 @@ import { createApp } from './app';
 import { loadEnv } from './config/env';
 import { createLogger } from './lib/logger';
 import { createPrismaClient } from './lib/prisma';
+import { serveWeb } from './lib/serve-web';
 import { pruneAuthEvents } from './modules/auth/auth.service';
+import { seedCategories } from './modules/categories/seed-categories';
 
 const env = loadEnv();
 const logger = createLogger(env);
 const prisma = createPrismaClient();
-const app = createApp({ env, prisma, logger });
+const app = createApp({
+  env,
+  prisma,
+  logger,
+  webApp: env.WEB_DIST_DIR ? serveWeb(env.WEB_DIST_DIR) : undefined,
+});
+
+// A fresh database (a new server) has no categories until this runs.
+await seedCategories(prisma);
 
 const server = app.listen(env.PORT, () => {
   logger.info(`MoneyLens API listening on http://localhost:${env.PORT}`);

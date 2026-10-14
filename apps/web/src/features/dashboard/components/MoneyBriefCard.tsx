@@ -34,7 +34,7 @@ export function MoneyBriefCard({ month }: { month: string }) {
                 : brief.data.status === 'not-configured'
                   ? deviceAI()
                     ? 'MoneyLens AI is off on this phone (turn it on in Settings), so here are the figures the brief would be written from.'
-                    : 'MoneyLens AI is not set up on this server, so here are the figures the brief would be written from.'
+                    : 'MoneyLens AI is not turned on for your account, so here are the figures the brief would be written from.'
                   : 'A written brief is not available right now. These are the figures it is written from.'}
             </p>
           )}

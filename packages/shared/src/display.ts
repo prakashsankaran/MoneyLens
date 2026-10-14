@@ -180,7 +180,7 @@ export const EXAMPLE_QUESTIONS = [
 /** Why an answer has no AI text, for the statuses that need saying. */
 export const ANSWER_STATUS_NOTE: Partial<Record<AssistantAnswerStatus, string>> = {
   'not-configured':
-    'MoneyLens AI is not set up on this server, so only the calculated figures are shown.',
+    'MoneyLens AI is not turned on for your account, so only the calculated figures are shown.',
   fallback: 'The written answer used figures that are not in your data, so it was not shown.',
   unavailable: 'MoneyLens AI could not be reached. The calculated figures are below.',
 };

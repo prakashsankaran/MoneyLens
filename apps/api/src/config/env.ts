@@ -4,19 +4,20 @@ import { z } from 'zod';
  * Environment configuration, validated once at startup. The process refuses to
  * start with a missing or weak secret rather than running insecurely.
  */
+function splitList(value: string): string[] {
+  return value
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+const commaList = z.string().default('').transform(splitList);
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().min(0).max(65535).default(4000),
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
-  CORS_ORIGINS: z
-    .string()
-    .default('http://localhost:5173')
-    .transform((v) =>
-      v
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean),
-    ),
+  CORS_ORIGINS: z.string().default('http://localhost:5173').transform(splitList),
   JWT_ACCESS_SECRET: z.string().min(32, 'JWT_ACCESS_SECRET must be at least 32 characters'),
   ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().positive().default(900),
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),
@@ -31,8 +32,21 @@ const envSchema = z.object({
   LOGIN_LOCKOUT_MINUTES: z.coerce.number().int().positive().default(15),
   /** Requests per minute per IP across the API. */
   API_RATE_LIMIT: z.coerce.number().int().positive().default(300),
+  /**
+   * Folder holding the built web app (apps/web/dist). When set, the API also
+   * serves the app, so one container is enough (free single-service hosts).
+   */
+  WEB_DIST_DIR: z.string().trim().optional(),
   /** Set when running behind a reverse proxy so client IPs are correct. */
   TRUST_PROXY: z.coerce.number().int().min(0).default(0),
+
+  /**
+   * Who may create an account. `open`: anyone who can reach the app;
+   * `invite`: only with one of SIGNUP_INVITE_CODES; `closed`: nobody.
+   */
+  SIGNUP_MODE: z.enum(['open', 'invite', 'closed']).default('open'),
+  /** Comma-separated invite codes for SIGNUP_MODE=invite (one per friend works well). */
+  SIGNUP_INVITE_CODES: commaList,
 
   /** MoneyLens AI. `none` shows calculated figures only; `mock` is for tests. */
   AI_PROVIDER: z.enum(['none', 'mock', 'anthropic', 'openai-compatible']).default('none'),
@@ -46,12 +60,23 @@ const envSchema = z.object({
   AI_DAILY_MESSAGE_LIMIT: z.coerce.number().int().positive().default(50),
   /** Questions per user per minute. */
   AI_CHAT_RATE_LIMIT: z.coerce.number().int().positive().default(10),
+  /**
+   * Comma-separated emails that may use the AI provider. Empty: every account.
+   * Everyone else gets calculated figures only, as with AI_PROVIDER=none, so
+   * a shared server does not spend the owner's AI key on other people.
+   */
+  AI_ALLOWED_EMAILS: commaList.transform((list) => list.map((e) => e.toLowerCase())),
 });
 
 export type Env = z.infer<typeof envSchema>;
 
 export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
-  const parsed = envSchema.safeParse(source);
+  // An empty variable (`AI_BASE_URL=` in a .env or compose file) means unset.
+  const present = Object.fromEntries(Object.entries(source).filter(([, v]) => v !== ''));
+  // On Render the app's own https address is known only after it is created;
+  // Render provides it, so it is the default trusted origin there.
+  present.CORS_ORIGINS ??= present.RENDER_EXTERNAL_URL;
+  const parsed = envSchema.safeParse(present);
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => `  - ${i.path.join('.')}: ${i.message}`);
     throw new Error(`Invalid environment configuration:\n${issues.join('\n')}`);
@@ -59,6 +84,14 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
   const env = parsed.data;
   if (env.NODE_ENV === 'production' && /change-me/i.test(env.JWT_ACCESS_SECRET)) {
     throw new Error('JWT_ACCESS_SECRET still has the example value; set a real secret.');
+  }
+  if (env.SIGNUP_MODE === 'invite') {
+    if (env.SIGNUP_INVITE_CODES.length === 0) {
+      throw new Error('SIGNUP_MODE=invite needs at least one code in SIGNUP_INVITE_CODES.');
+    }
+    if (env.SIGNUP_INVITE_CODES.some((code) => code.length < 8 || code.length > 64)) {
+      throw new Error('Each invite code in SIGNUP_INVITE_CODES must be 8 to 64 characters.');
+    }
   }
   if (
     (env.AI_PROVIDER === 'anthropic' || env.AI_PROVIDER === 'openai-compatible') &&
