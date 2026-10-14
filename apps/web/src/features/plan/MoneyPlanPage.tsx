@@ -1,5 +1,6 @@
-import { LuCalculator, LuTarget } from 'react-icons/lu';
+import { LuCalculator } from 'react-icons/lu';
 import { useState } from 'react';
+import { BrandGoalsIcon } from '../../components/BrandIcons';
 import { Card } from '../../components/Card';
 import { FullPageSpinner } from '../../components/FullPageSpinner';
 import { ErrorCard, PageHeader } from '../../components/PageHeader';
@@ -37,7 +38,7 @@ function PlanTab() {
       >
         <PlanForm profile={profile} baseline={result.baseline} />
       </Card>
-      <Card title="Your money plan" icon={LuTarget}>
+      <Card title="Your money plan" icon={BrandGoalsIcon}>
         <PlanResult plan={result} />
       </Card>
     </div>

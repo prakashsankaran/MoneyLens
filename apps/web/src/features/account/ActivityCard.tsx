@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { LuHistory, LuShieldAlert } from 'react-icons/lu';
+import { LuShieldAlert } from 'react-icons/lu';
 import type { AuthActivityItem } from '@moneylens/types';
 import {
   AUTH_EVENT_LABEL,
@@ -7,6 +7,7 @@ import {
   describeDevice,
   formatDayTime,
 } from '@moneylens/shared';
+import { BrandSecurityIcon } from '../../components/BrandIcons';
 import { Card } from '../../components/Card';
 import { api } from '../../lib/api-client';
 
@@ -23,7 +24,7 @@ export function ActivityCard() {
   return (
     <Card
       title="Recent sign-in activity"
-      icon={LuHistory}
+      icon={BrandSecurityIcon}
       description="The last 20 events on your account, kept for 90 days. If something here wasn't you, change your password above."
     >
       {isPending ? (

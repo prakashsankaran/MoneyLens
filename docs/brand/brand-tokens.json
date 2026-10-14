@@ -1,0 +1,42 @@
+{
+  "name": "MoneyLens",
+  "tagline": "See Your Money. Build Your Tomorrow.",
+  "colors": {
+    "primary": "#0F766E",
+    "accent": "#10B981",
+    "text": "#1F2937",
+    "muted": "#64748B",
+    "background": "#F0FDF4",
+    "dark": "#063B3A",
+    "white": "#FFFFFF",
+    "pale_mint": "#ECFDF5",
+    "navy": "#102A43"
+  },
+  "typography": {
+    "policy": "Preserve the application's existing typography exactly",
+    "fontFamily": "Do not change",
+    "fontFilesImportsAndTokens": "Leave unchanged",
+    "fontSizesWeightsLineHeightsLetterSpacing": "Leave unchanged"
+  },
+  "style": {
+    "tone": ["clean", "modern", "trustworthy"],
+    "iconStyle": "rounded geometry, consistent 5px vector strokes, teal/emerald accents",
+    "avoid": [
+      "random gradients",
+      "thin mismatched icons",
+      "stock finance imagery",
+      "altering business logic"
+    ]
+  },
+  "scope": {
+    "allowed": ["logos", "icons", "favicons", "app icons", "brand colour tokens"],
+    "forbidden": [
+      "font family changes",
+      "font imports or font installation",
+      "font size/weight changes",
+      "line-height or letter-spacing changes",
+      "layout redesign",
+      "business logic changes"
+    ]
+  }
+}

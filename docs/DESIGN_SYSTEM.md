@@ -3,7 +3,7 @@
 The web app is styled with Tailwind CSS 4 utility classes only. Tokens live in
 `apps/web/src/index.css` (`@theme`) and mirror `packages/ui` so mobile can share them. The look
 follows the "RevLens" style: a cool off-white canvas, white cards with a hairline border and a
-soft shadow, very round shapes, one electric blue, and big bold numbers.
+soft shadow, very round shapes, the MoneyLens teal-and-emerald brand, and big bold numbers.
 
 ## Typography
 
@@ -18,12 +18,28 @@ soft shadow, very round shapes, one electric blue, and big bold numbers.
 ## Colour
 
 - Canvas `bg-canvas` (#F6F8FC), surfaces `bg-surface` (white), borders `border-ink-200` (#E3E8F0).
-- Text: `text-ink-900` (#111827) for headings and numbers, `ink-700` for body, `ink-500` for labels.
-- Accent: `brand-600` (#3874FF) for the primary button, active nav and chart emphasis;
-  `brand-700` for links and small blue text (keeps AA contrast on white); `brand-50` for active
-  and selected backgrounds.
+- Text: `text-ink-900` (#1F2937) for headings and numbers, `ink-700` for body, `ink-500`
+  (#64748B) for labels.
+- Brand (teal and emerald, from the MoneyLens brand kit): `brand-600` (#0F766E, primary teal) for
+  the primary button, active nav and chart emphasis; white on it is 5.5:1, so buttons pass AA.
+  `brand-700` (#115E59) for links and small teal text; `brand-50` (#ECFDF5) and `brand-100`
+  (#D1FAE5) for active and selected backgrounds. `brand-500` (#10B981, emerald) is the accent:
+  logo bars and light chart steps only, never text (it is under 3:1 on white). `brand-900`
+  (#063B3A, dark teal) is the app-icon background.
 - Status: `positive`, `negative`, `warning`, each with a `-50` tint for pills and callouts.
 - Icons sit in neutral grey circles (`bg-ink-100 text-ink-700`), not coloured ones.
+
+## Brand assets
+
+- The mark (rising line over three bars) is `BrandMark` in `apps/web/src/components/Logo.tsx`,
+  drawn from `brandMark` in `packages/ui/src/brand.ts`. The wordmark beside it stays live text in
+  the app font. Source SVGs from the brand kit are in `docs/brand/`.
+- Feature icons for Transactions, Budgets, Goals, Reports, Insights, Accounts, Settings and
+  Security come from the kit (`featureIcons` in `packages/ui`; `components/BrandIcons.tsx` on web,
+  `components/brand.tsx` on mobile). They draw in the current colour like the react-icons line
+  set, so other icons keep using `react-icons/lu`.
+- App icons, favicons and splash images for web, the Expo app and the Android app are rendered
+  from the same artwork by `node scripts/render-brand-icons.mjs`.
 
 ## Shape and depth
 
@@ -37,7 +53,7 @@ soft shadow, very round shapes, one electric blue, and big bold numbers.
 
 - Primary button: `Button` (pill, `bg-brand-600 hover:bg-brand-700`, semibold). Secondary: white
   with a border, `hover:bg-ink-100`. Everything presses to `scale(.98)`.
-- Inputs focus with a blue border and a 4px soft blue halo.
+- Inputs focus with a teal border and a 4px soft teal halo.
 - Segmented controls (tabs, ranges): `rounded-full bg-ink-100 p-1`, the active segment white with
   `shadow-card`. Filter chips: `rounded-full border`, selected `bg-brand-50 text-brand-700`.
 - Dialogs are bottom sheets on phones (slide up) and centred 28px modals from `sm` (pop in).
@@ -84,12 +100,12 @@ text), `size-5` (navigation and icon buttons) and `size-[18px]` (card header ico
   `chart-theme.ts` (tooltip class, axis ticks, grid colour, `rankColour()`).
 - Axes have no lines or ticks; only horizontal grid lines in `chart-grid`. Tooltips are white,
   bordered, 12px radius, `shadow-lg`.
-- Trend charts use one blue family: `series-1` (#3874FF, income), `series-2` (#1E3A8A,
-  spending), `series-3`, `series-4`. Ranking bars run from light to full blue by size
+- Trend charts use one teal family: `series-1` (#0F766E, income), `series-2` (#063B3A,
+  spending), `series-3` (#6EE7B7), `series-4`. Ranking bars run from mint to full teal by size
   (`rankColour()`).
 - Category colours come from `categoryColour()` in `apps/web/src/lib/category-colors.ts`: the
   categorical `chartSeries` palette from `packages/ui` in fixed order for the top six, neutral grey
-  after, because one blue family cannot tell many categories apart. Every donut has a labelled
+  after, because one teal family cannot tell many categories apart. Every donut has a labelled
   legend beside it, so colour is never the only cue.
 - Rankings (categories, merchants) are horizontal bars; days of the week are columns.
 - Long explanations go behind a "Why?" `<details>` toggle.

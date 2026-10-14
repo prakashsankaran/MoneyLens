@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router/js-tabs';
-import { House, Lightbulb, List, Menu, Target } from 'lucide-react-native';
+import { House, Menu } from 'lucide-react-native';
 import { Text } from 'react-native';
+import { FeatureIcon } from '@/components/brand';
 import { colors } from '@/lib/theme';
 
 /** Bottom navigation from the spec: Home, Transactions, Insights, Plan, More. */
@@ -37,21 +38,25 @@ export default function TabsLayout() {
         name="transactions"
         options={{
           title: 'Transactions',
-          tabBarIcon: ({ color, size }) => <List color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => (
+            <FeatureIcon name="transactions" color={color} size={size} />
+          ),
         }}
       />
       <Tabs.Screen
         name="insights"
         options={{
           title: 'Insights',
-          tabBarIcon: ({ color, size }) => <Lightbulb color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => (
+            <FeatureIcon name="insights" color={color} size={size} />
+          ),
         }}
       />
       <Tabs.Screen
         name="plan"
         options={{
           title: 'Plan',
-          tabBarIcon: ({ color, size }) => <Target color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <FeatureIcon name="goals" color={color} size={size} />,
         }}
       />
       <Tabs.Screen

@@ -29,7 +29,7 @@
     "android": {
       "package": "app.moneylens.mobile",
       "adaptiveIcon": {
-        "backgroundColor": "#2563eb",
+        "backgroundColor": "#063b3a",
         "foregroundImage": "./assets/adaptive-icon.png"
       },
       "intentFilters": [
@@ -58,7 +58,7 @@
       ["expo-document-picker", { "iCloudContainerEnvironment": "Production" }],
       [
         "expo-splash-screen",
-        { "backgroundColor": "#f8fafc", "image": "./assets/splash-icon.png", "imageWidth": 96 }
+        { "backgroundColor": "#f0fdf4", "image": "./assets/splash-icon.png", "imageWidth": 96 }
       ]
     ],
     "experiments": {
