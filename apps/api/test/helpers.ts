@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import request from 'supertest';
-import type { Express } from 'express';
+import type { Express, Router } from 'express';
 import { createApp } from '../src/app';
 import { loadEnv } from '../src/config/env';
 import { createLogger } from '../src/lib/logger';
@@ -8,7 +8,7 @@ import type { AIProvider } from '../src/modules/ai/providers';
 
 export function createTestContext(
   overrides: Record<string, string> = {},
-  deps: { aiProvider?: AIProvider } = {},
+  deps: { aiProvider?: AIProvider; webApp?: Router } = {},
 ) {
   const env = loadEnv({
     ...process.env,

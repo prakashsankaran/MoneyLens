@@ -8,7 +8,6 @@ import type { PrismaClient } from '@prisma/client';
 import type { Logger } from 'pino';
 import type { Env } from './config/env';
 import { AnalyticsDataSource } from './lib/analytics-data';
-import { serveWeb } from './lib/serve-web';
 import { AIService } from './modules/ai/ai.service';
 import { aiRoutes } from './modules/ai/ai.routes';
 import { createAIProvider, type AIProvider } from './modules/ai/providers';
@@ -43,10 +42,16 @@ export interface AppDeps {
   logger: Logger;
   /** Overrides the provider chosen by AI_PROVIDER (tests). */
   aiProvider?: AIProvider;
+  /**
+   * Serves the built web app after the API routes (`serveWeb`, when
+   * WEB_DIST_DIR is set). Passed in so the Android build, which bundles this
+   * file for the browser, never imports Node's file system modules.
+   */
+  webApp?: Router;
 }
 
 /** Build the Express app. Dependencies are injected so tests can supply their own. */
-export function createApp({ env, prisma, logger, aiProvider }: AppDeps): Express {
+export function createApp({ env, prisma, logger, aiProvider, webApp }: AppDeps): Express {
   const app = express();
   app.disable('x-powered-by');
   if (env.TRUST_PROXY > 0) app.set('trust proxy', env.TRUST_PROXY);
@@ -167,7 +172,7 @@ export function createApp({ env, prisma, logger, aiProvider }: AppDeps): Express
   api.use('/ai', requireAuth, aiRoutes(ai, { chatPerMinute: env.AI_CHAT_RATE_LIMIT }));
 
   app.use('/api', api);
-  if (env.WEB_DIST_DIR) app.use(serveWeb(env.WEB_DIST_DIR));
+  if (webApp) app.use(webApp);
   app.use(notFoundHandler);
   app.use(errorHandler(logger));
   return app;

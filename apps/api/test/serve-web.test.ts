@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import request from 'supertest';
 import { afterAll, describe, expect, it } from 'vitest';
+import { serveWeb } from '../src/lib/serve-web';
 import { createTestContext } from './helpers';
 
 const dir = mkdtempSync(path.join(tmpdir(), 'moneylens-web-'));
@@ -11,7 +12,7 @@ writeFileSync(path.join(dir, 'index.html'), '<!doctype html><title>MoneyLens</ti
 writeFileSync(path.join(dir, 'assets', 'app-abc123.js'), 'console.log(1)');
 writeFileSync(path.join(dir, 'manifest.webmanifest'), '{}');
 
-const { app, prisma } = createTestContext({ WEB_DIST_DIR: dir });
+const { app, prisma } = createTestContext({}, { webApp: serveWeb(dir) });
 
 afterAll(async () => {
   await prisma.$disconnect();
