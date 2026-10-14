@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { Card } from '../../../components/Card';
 import { ProvenanceBadge } from '../../../components/ProvenanceBadge';
 import { PlainText } from '../../assistant/AnswerCard';
+import { deviceAI } from '../../../lib/device';
 import { useMoneyBrief } from '../../assistant/useAssistant';
 
 /**
@@ -31,7 +32,9 @@ export function MoneyBriefCard({ month }: { month: string }) {
               {brief.data.facts.length === 0
                 ? 'There are no figures to summarise for this month yet.'
                 : brief.data.status === 'not-configured'
-                  ? 'MoneyLens AI is not set up on this server, so here are the figures the brief would be written from.'
+                  ? deviceAI()
+                    ? 'MoneyLens AI is off on this phone (turn it on in Settings), so here are the figures the brief would be written from.'
+                    : 'MoneyLens AI is not set up on this server, so here are the figures the brief would be written from.'
                   : 'A written brief is not available right now. These are the figures it is written from.'}
             </p>
           )}

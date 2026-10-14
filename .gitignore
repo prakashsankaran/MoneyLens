@@ -13,3 +13,4 @@ test-results/
 apps/api/uploads/
 .expo/
 !.env.test
+apps/android/smoke/

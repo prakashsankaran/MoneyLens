@@ -16,6 +16,7 @@ export default tseslint.config(
       'apps/mobile/.expo/**',
       'apps/mobile/*.config.js',
       'apps/mobile/expo-env.d.ts',
+      'apps/android/android/**',
     ],
   },
   js.configs.recommended,
@@ -49,6 +50,11 @@ export default tseslint.config(
     rules: reactHooks.configs.recommended.rules,
   },
   {
+    // The Android app runs the API inside the WebView.
+    files: ['apps/android/src/**/*.ts'],
+    languageOptions: { globals: { ...globals.browser } },
+  },
+  {
     files: ['apps/mobile/**/*.test.{ts,tsx}', 'apps/mobile/src/test/**'],
     languageOptions: { globals: { ...globals.jest } },
   },
@@ -63,7 +69,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['apps/api/prisma/seed.ts', 'scripts/**/*.mjs'],
+    files: ['apps/api/prisma/seed.ts', 'scripts/**/*.mjs', 'apps/android/scripts/**/*.mjs'],
     rules: { 'no-console': 'off' },
   },
   {

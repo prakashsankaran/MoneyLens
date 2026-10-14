@@ -8,6 +8,7 @@
     "apps/api",
     "apps/web",
     "apps/mobile",
+    "apps/android",
     "packages/*"
   ],
   "engines": {
