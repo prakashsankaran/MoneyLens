@@ -190,6 +190,33 @@ function weekdayOfKey(key: string): number {
 }
 
 /**
+ * Spending by IST day of week (Monday first) and the average spend per
+ * weekday and per weekend day over `days` (every day counts, spent or not).
+ */
+export function weekdaySpending(spend: readonly AnalyticsTransaction[], days: readonly string[]) {
+  const byWeekday = WEEKDAY_LABELS.map((label, weekday) => ({
+    weekday,
+    label,
+    amountPaise: 0,
+    transactionCount: 0,
+  }));
+  for (const tx of spend) {
+    const bucket = byWeekday[(istWeekday(tx.date) + 6) % 7];
+    if (bucket) {
+      bucket.amountPaise += tx.amountPaise;
+      bucket.transactionCount += 1;
+    }
+  }
+  const weekendDays = days.filter((d) => weekdayOfKey(d) >= 5).length;
+  const weekdayDays = days.length - weekendDays;
+  const weekendTotal = byWeekday.slice(5).reduce((a, b) => a + b.amountPaise, 0);
+  const weekdayTotal = byWeekday.slice(0, 5).reduce((a, b) => a + b.amountPaise, 0);
+  const weekdayAvg = weekdayDays === 0 ? 0 : Math.round(weekdayTotal / weekdayDays);
+  const weekendAvg = weekendDays === 0 ? 0 : Math.round(weekendTotal / weekendDays);
+  return { byWeekday, weekdayAvg, weekendAvg };
+}
+
+/**
  * When and how the month's money was spent: weekday vs weekend, per weekday,
  * per week, volatility across months, largest payments, refunds, cashback and
  * transfers. `history` is the full set used for volatility (up to 6 months).
@@ -204,26 +231,8 @@ export function spendingPatterns(
   const current = byMonth.get(month) ?? [];
   const spend = current.filter((t) => classifyTransaction(t) === 'spend');
 
-  const byWeekday = WEEKDAY_LABELS.map((label, weekday) => ({
-    weekday,
-    label,
-    amountPaise: 0,
-    transactionCount: 0,
-  }));
-  for (const tx of spend) {
-    const bucket = byWeekday[(istWeekday(tx.date) + 6) % 7];
-    if (bucket) {
-      bucket.amountPaise += tx.amountPaise;
-      bucket.transactionCount += 1;
-    }
-  }
   const days = daysOfMonth(month);
-  const weekendDays = days.filter((d) => weekdayOfKey(d) >= 5).length;
-  const weekdayDays = days.length - weekendDays;
-  const weekendTotal = byWeekday.slice(5).reduce((a, b) => a + b.amountPaise, 0);
-  const weekdayTotal = byWeekday.slice(0, 5).reduce((a, b) => a + b.amountPaise, 0);
-  const weekdayAvg = Math.round(weekdayTotal / weekdayDays);
-  const weekendAvg = Math.round(weekendTotal / weekendDays);
+  const { byWeekday, weekdayAvg, weekendAvg } = weekdaySpending(spend, days);
 
   // Weeks start on Monday; the first week may start in the previous month.
   const weekly = new Map<string, { amountPaise: number; transactionCount: number }>();

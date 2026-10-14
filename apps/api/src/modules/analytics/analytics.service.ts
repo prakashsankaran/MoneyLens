@@ -2,15 +2,26 @@ import {
   categoryBreakdown,
   comparePeriods,
   monthlyTrend,
+  periodAnalysis,
   summarizePeriod,
   topLevelCategory,
   topMerchants,
 } from '@moneylens/analytics';
-import { addMonths, monthKeyOf, monthRangeUtc, monthsEnding } from '@moneylens/shared';
+import {
+  addMonths,
+  dayRangeBoundsUtc,
+  monthKeyOf,
+  monthRangeUtc,
+  monthsEnding,
+  previousRange,
+  yearBeforeRange,
+} from '@moneylens/shared';
 import type {
   CategoryAnalytics,
   MerchantAnalytics,
   MonthlyAnalytics,
+  PeriodAnalytics,
+  PeriodCompare,
   TrendAnalytics,
 } from '@moneylens/types';
 import type { AnalyticsDataSource } from '../../lib/analytics-data';
@@ -92,5 +103,25 @@ export class AnalyticsService {
     const start = monthRangeUtc(months[0] as string).start;
     const txs = await this.data.transactionsBetween(userId, start, monthRangeUtc(end).end);
     return { points: monthlyTrend(txs, months) };
+  }
+
+  /** Detailed analysis of an IST day range, compared with the period before it or a year earlier. */
+  async period(
+    userId: string,
+    from: string,
+    to: string,
+    compare: PeriodCompare = 'previous',
+  ): Promise<PeriodAnalytics> {
+    const previous = {
+      ...(compare === 'lastYear' ? yearBeforeRange(from, to) : previousRange(from, to)),
+      compare,
+    };
+    const { start, end } = dayRangeBoundsUtc(previous.from, to);
+    const [txs, categories, availableMonths] = await Promise.all([
+      this.data.transactionsBetween(userId, start, end),
+      this.data.categories(userId),
+      this.data.monthsWithData(userId),
+    ]);
+    return periodAnalysis({ from, to, previous, txs, categories, availableMonths });
   }
 }

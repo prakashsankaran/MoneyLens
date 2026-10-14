@@ -12,6 +12,14 @@ import {
   dayRangeUtc,
   isValidCalendarDate,
   parseDayKey,
+  addDays,
+  daysInRange,
+  monthsInRange,
+  monthDayRange,
+  isWholeMonthRange,
+  previousRange,
+  dayRangeBoundsUtc,
+  yearBeforeRange,
 } from './dates';
 
 describe('IST month bucketing', () => {
@@ -73,5 +81,57 @@ describe('day ranges', () => {
     expect(() => parseDayKey('2026-02-29')).toThrow();
     expect(parseDayKey('2028-02-29')).toEqual({ year: 2028, month: 2, day: 29 });
     expect(isValidCalendarDate(2026, 13, 1)).toBe(false);
+  });
+});
+
+describe('day ranges', () => {
+  it('adds days across month and year ends', () => {
+    expect(addDays('2026-12-31', 1)).toBe('2027-01-01');
+    expect(addDays('2026-03-01', -1)).toBe('2026-02-28');
+    expect(daysInRange('2026-01-01', '2026-12-31')).toBe(365);
+  });
+
+  it('lists the months a range touches', () => {
+    expect(monthsInRange('2025-11-15', '2026-02-03')).toEqual([
+      '2025-11',
+      '2025-12',
+      '2026-01',
+      '2026-02',
+    ]);
+    expect(monthDayRange('2028-02')).toEqual({ from: '2028-02-01', to: '2028-02-29' });
+  });
+
+  it('compares whole months with the same number of months before', () => {
+    expect(isWholeMonthRange('2026-08-01', '2026-10-31')).toBe(true);
+    expect(previousRange('2026-08-01', '2026-10-31')).toEqual({
+      from: '2026-05-01',
+      to: '2026-07-31',
+    });
+    expect(previousRange('2026-01-01', '2026-12-31')).toEqual({
+      from: '2025-01-01',
+      to: '2025-12-31',
+    });
+  });
+
+  it('compares other ranges with the same number of days before', () => {
+    expect(isWholeMonthRange('2026-08-10', '2026-10-31')).toBe(false);
+    expect(previousRange('2026-10-01', '2026-10-13')).toEqual({
+      from: '2026-09-18',
+      to: '2026-09-30',
+    });
+  });
+
+  it('finds the same dates a year earlier', () => {
+    expect(yearBeforeRange('2026-01-01', '2026-10-13')).toEqual({
+      from: '2025-01-01',
+      to: '2025-10-13',
+    });
+    expect(yearBeforeRange('2028-02-01', '2028-02-29').to).toBe('2027-02-28');
+  });
+
+  it('bounds a day range in UTC', () => {
+    const { start, end } = dayRangeBoundsUtc('2026-10-01', '2026-10-31');
+    expect(start.toISOString()).toBe('2026-09-30T18:30:00.000Z');
+    expect(end.toISOString()).toBe('2026-10-31T18:30:00.000Z');
   });
 });

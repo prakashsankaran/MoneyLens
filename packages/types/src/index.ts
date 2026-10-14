@@ -969,3 +969,88 @@ export interface MerchantAnalytics {
 export interface TrendAnalytics {
   points: MonthlyTrendPoint[];
 }
+
+export type PeriodCompare = 'previous' | 'lastYear';
+
+/** One category's spending in this period against the period before. */
+export interface PeriodCategoryChange {
+  categoryId: string | null;
+  name: string;
+  slug: string;
+  currentPaise: number;
+  previousPaise: number;
+  changePaise: number;
+  /** null when the category had no spending in the previous period. */
+  changePct: number | null;
+}
+
+/**
+ * Detailed analysis of any day range (e.g. the last 3, 6 or 12 months),
+ * returned by GET /analytics/period. Days are IST, both ends included.
+ */
+export interface PeriodAnalytics {
+  from: string;
+  to: string;
+  days: number;
+  /** True when the range is whole calendar months. */
+  wholeMonths: boolean;
+  /** IST months ("YYYY-MM") that have confirmed transactions, across all time. */
+  availableMonths: string[];
+  /** Months of the range, and how many of them have any transactions. */
+  months: string[];
+  monthsWithData: number;
+  totals: PeriodTotals;
+  /** What the period is compared with: the same length of time just before it, or the same dates last year. */
+  previous: {
+    from: string;
+    to: string;
+    hasData: boolean;
+    compare: PeriodCompare;
+    /** Months of the comparison period, and how many of them have any transactions. */
+    months: number;
+    monthsWithData: number;
+  };
+  previousTotals: PeriodTotals | null;
+  /** Change against the previous period; null when it has no data. */
+  incomeChangePct: number | null;
+  spendingChangePct: number | null;
+  savedChangePaise: number | null;
+  /** Per month of data (months with no transactions are not averaged in). */
+  averages: {
+    monthlyIncomePaise: number;
+    monthlySpendingPaise: number;
+    monthlySavedPaise: number;
+    dailySpendingPaise: number;
+  };
+  /** Income, spending and savings per month; edge months may be partial. */
+  trend: MonthlyTrendPoint[];
+  /** Months with data that had the highest and lowest spending. */
+  highestMonth: MonthlyTrendPoint | null;
+  lowestMonth: MonthlyTrendPoint | null;
+  /** Top-level categories for the whole period. */
+  categories: CategoryBreakdownItem[];
+  /** Subcategories of each top-level category, keyed by its id. */
+  subcategories: Record<string, CategoryBreakdownItem[]>;
+  /** The largest categories month by month; the rest are summed as "Everything else". */
+  categoryTrend: {
+    series: { key: string; categoryId: string | null; name: string }[];
+    points: { month: string; values: Record<string, number> }[];
+  };
+  /** Categories that moved most against the previous period, largest change first. */
+  categoryChanges: PeriodCategoryChange[];
+  merchants: MerchantSummaryItem[];
+  incomeSources: MerchantSummaryItem[];
+  patterns: {
+    byWeekday: SpendingPatterns['byWeekday'];
+    weekdayDailyAveragePaise: number;
+    weekendDailyAveragePaise: number;
+    weekendRatio: number | null;
+    /** Coefficient of variation of monthly spending; needs 3 months of data. */
+    monthlyVolatility: number | null;
+    largest: TransactionBrief[];
+    refunds: { count: number; amountPaise: number };
+    cashback: { count: number; amountPaise: number };
+    transfersOut: { count: number; amountPaise: number };
+    transfersIn: { count: number; amountPaise: number };
+  };
+}

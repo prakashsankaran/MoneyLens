@@ -13,3 +13,4 @@ export * from './budgets';
 export * from './plan';
 export * from './simulator';
 export * from './assistant';
+export * from './period';

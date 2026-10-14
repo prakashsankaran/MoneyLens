@@ -3,6 +3,8 @@ import type {
   CategoryAnalytics,
   MerchantAnalytics,
   MonthlyAnalytics,
+  PeriodAnalytics,
+  PeriodCompare,
   TrendAnalytics,
 } from '@moneylens/types';
 import { api } from '../../lib/api-client';
@@ -45,6 +47,17 @@ export function useTrendAnalytics(end: string | undefined, months = 12) {
     queryKey: ['analytics', 'trends', end, months],
     queryFn: () => api<TrendAnalytics>(`/analytics/trends${qs({ end, months })}`),
     enabled: !!end,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function usePeriodAnalytics(
+  range: { from: string; to: string; compare: PeriodCompare } | null,
+) {
+  return useQuery({
+    queryKey: ['analytics', 'period', range?.from, range?.to, range?.compare],
+    queryFn: () => api<PeriodAnalytics>(`/analytics/period${qs({ ...range })}`),
+    enabled: !!range,
     placeholderData: keepPreviousData,
   });
 }
