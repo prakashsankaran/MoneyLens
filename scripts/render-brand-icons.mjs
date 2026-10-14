@@ -1,4 +1,4 @@
-// Renders the MoneyLens brand artwork (docs/brand) to the app icons, favicons and splash
+// Renders the MoneyLens brand artwork to the app icons, favicons and splash
 // images for web, the Expo app and the Android app.
 // Usage: node scripts/render-brand-icons.mjs
 // Uses Playwright's Chromium; set CHROMIUM_PATH to use a specific browser binary.
@@ -12,46 +12,45 @@ const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DARK = '#063B3A',
   TEAL = '#0F766E',
   EMERALD = '#10B981',
+  LIGHT_EMERALD = '#34D399',
   MINT = '#F0FDF4';
-// App-icon artwork (kit app-icons/moneylens-app-icon.svg), centred on (55,53) in its own grid.
-const appMark = `
-  <path d="M18 86 V47 Q18 40 25 44 L43 55 Q47 58 52 54 L91 24" fill="none" stroke="#FFFFFF" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M77 24 L93 20 L90 37" fill="none" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M18 86 V60 L35 70 V86 Z" fill="#FFFFFF"/>
-  <path d="M43 86 V66 L60 56 V86 Z" fill="${EMERALD}"/>
-  <path d="M68 86 V49 L86 36 V86 Z" fill="${EMERALD}"/>`;
-// Logo mark (kit logos/moneylens-mark.svg), for light backgrounds.
-const colourMark = `
-  <path d="M15 83 V48 Q15 41 22 45 L40 56 Q45 59 50 55 L87 26" fill="none" stroke="${TEAL}" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M73 26 L90 22 L87 39" fill="none" stroke="${TEAL}" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M15 83 V60 L31 69 V83 Z" fill="${EMERALD}"/>
-  <path d="M39 83 V68 L55 58 V83 Z" fill="${TEAL}"/>
-  <path d="M63 83 V51 L79 39 V83 Z" fill="${EMERALD}"/>`;
+
+// The mark (same shapes as brandMark in packages/ui/src/brand.ts): an "M" whose right
+// stroke rises into a trend arrow, over two rising bars. Centre of its box: (54.4, 51.9).
+const mark = (line, bar) => `
+  <path d="M41 88 V76.6 L56 61.6 V88 Z M62 88 V55.6 L77 40.6 V88 Z" fill="${bar}"/>
+  <path d="M29 88 V38 L47 56 L74.9 28.1" fill="none" stroke="${line}" stroke-width="15" stroke-linejoin="round"/>
+  <path d="M87.3 15.7 L83.8 39 L64 19.2 Z" fill="${line}" stroke="${line}" stroke-width="2" stroke-linejoin="round"/>`;
+const centred = (scale, body, cx = 50, cy = 50) =>
+  `<g transform="translate(${cx} ${cy}) scale(${scale}) translate(-54.4 -51.9)">${body}</g>`;
+
+const defs = `<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${TEAL}"/><stop offset="1" stop-color="${DARK}"/></linearGradient>
+  <linearGradient id="bar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${LIGHT_EMERALD}"/><stop offset="1" stop-color="${EMERALD}"/></linearGradient>
+  <linearGradient id="shade" gradientUnits="userSpaceOnUse" x1="20" y1="90" x2="90" y2="15"><stop offset="0" stop-color="${EMERALD}"/><stop offset="1" stop-color="${TEAL}"/></linearGradient>
+</defs>`;
+// On the dark tile: white "M" and arrow, emerald bars.
+const appMark = mark('#FFFFFF', 'url(#bar)');
+// On light backgrounds: the whole mark shaded from emerald to teal.
+const colourMark = mark('url(#shade)', 'url(#shade)');
 
 const svg = (body, w = 100, h = 100) =>
-  `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${body}</svg>`;
-// Kit app icon: rounded square (transparent corners).
+  `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${defs}${body}</svg>`;
+// App icon: rounded square (transparent corners).
 const roundedIcon = svg(
-  `<rect width="100" height="100" rx="23" fill="${DARK}"/><g transform="translate(8,7) scale(0.84)">${appMark}</g>`,
+  `<rect width="100" height="100" rx="23" fill="url(#bg)"/>${centred(0.86, appMark)}`,
 );
 // Full-bleed square, for iOS and Expo (the system applies its own mask).
-const squareIcon = svg(
-  `<rect width="100" height="100" fill="${DARK}"/><g transform="translate(8,7) scale(0.84)">${appMark}</g>`,
-);
-const circleIcon = svg(
-  `<circle cx="50" cy="50" r="50" fill="${DARK}"/><g transform="translate(50,50) scale(0.68) translate(-55,-53)">${appMark}</g>`,
-);
+const squareIcon = svg(`<rect width="100" height="100" fill="url(#bg)"/>${centred(0.86, appMark)}`);
+const circleIcon = svg(`<circle cx="50" cy="50" r="50" fill="url(#bg)"/>${centred(0.74, appMark)}`);
 // Adaptive-icon foreground: art inside the 66/108 safe zone, transparent around it.
-const foreground = svg(
-  `<g transform="translate(50,50) scale(0.58) translate(-55,-53)">${appMark}</g>`,
-);
-const splashMark = svg(
-  `<g transform="translate(50,50) scale(0.9) translate(-52,-54)">${colourMark}</g>`,
-);
+// The launcher draws it over the flat dark-teal ic_launcher_background colour.
+const foreground = svg(centred(0.6, appMark));
+const markOnly = svg(centred(1.15, colourMark));
 const splash = (w, h) => {
-  const s = Math.min(w, h) * 0.32;
+  const s = (Math.min(w, h) * 0.3) / 100;
   return svg(
-    `<rect width="${w}" height="${h}" fill="${MINT}"/><g transform="translate(${w / 2},${h / 2}) scale(${s / 100}) translate(-52,-54)">${colourMark}</g>`,
+    `<rect width="${w}" height="${h}" fill="${MINT}"/>${centred(s, colourMark, w / 2, h / 2)}`,
     w,
     h,
   );
@@ -68,7 +67,7 @@ add(`${web}/icon-512.png`, roundedIcon, 512);
 const mob = `${repo}/apps/mobile/assets`;
 add(`${mob}/icon.png`, squareIcon, 1024, 1024, true);
 add(`${mob}/adaptive-icon.png`, foreground, 1024);
-add(`${mob}/splash-icon.png`, splashMark, 512);
+add(`${mob}/splash-icon.png`, markOnly, 512);
 add(`${mob}/favicon.png`, roundedIcon, 64);
 
 const res = `${repo}/apps/android/android/app/src/main/res`;
@@ -108,6 +107,9 @@ for (const j of jobs) {
   mkdirSync(dirname(j.path), { recursive: true });
   writeFileSync(j.path, buf);
 }
-writeFileSync(`${web}/favicon.svg`, roundedIcon.replace(/\n\s*/g, '') + '\n');
+const oneLine = (art) => art.replace(/\n\s*/g, '') + '\n';
+writeFileSync(`${web}/favicon.svg`, oneLine(roundedIcon));
+writeFileSync(`${repo}/docs/brand/moneylens-app-icon.svg`, oneLine(roundedIcon));
+writeFileSync(`${repo}/docs/brand/moneylens-mark.svg`, oneLine(markOnly));
 await browser.close();
 console.log(`rendered ${jobs.length} images`);
