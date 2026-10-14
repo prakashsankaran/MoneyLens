@@ -72,6 +72,7 @@ export function createApp({ env, prisma, logger, aiProvider }: AppDeps): Express
     tokens,
     { attempts: env.LOGIN_LOCKOUT_ATTEMPTS, windowMinutes: env.LOGIN_LOCKOUT_MINUTES },
     createHmac('sha256', env.JWT_ACCESS_SECRET).update('moneylens:email-key').digest('hex'),
+    { mode: env.SIGNUP_MODE, inviteCodes: env.SIGNUP_INVITE_CODES },
   );
   const analyticsData = new AnalyticsDataSource(prisma);
   const recurring = new RecurringService(prisma, analyticsData);
@@ -134,7 +135,11 @@ export function createApp({ env, prisma, logger, aiProvider }: AppDeps): Express
     insights,
     plan,
     aiProvider ?? createAIProvider(env),
-    { maxOutputTokens: env.AI_MAX_OUTPUT_TOKENS, dailyMessageLimit: env.AI_DAILY_MESSAGE_LIMIT },
+    {
+      maxOutputTokens: env.AI_MAX_OUTPUT_TOKENS,
+      dailyMessageLimit: env.AI_DAILY_MESSAGE_LIMIT,
+      allowedEmails: env.AI_ALLOWED_EMAILS,
+    },
     logger,
   );
   api.use('/ai', requireAuth, aiRoutes(ai, { chatPerMinute: env.AI_CHAT_RATE_LIMIT }));

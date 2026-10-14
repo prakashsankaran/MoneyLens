@@ -78,7 +78,7 @@ describe('AssistantPage', () => {
       return undefined;
     });
     renderRoute(<AssistantPage />);
-    expect(await screen.findByText(/not set up on this server yet/)).toBeInTheDocument();
+    expect(await screen.findByText(/not turned on for your account/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Where did most of my money go?' }));
     const reply = await screen.findByRole('listitem', { name: 'MoneyLens AI reply' });
     expect(within(reply).queryByText('AI interpretation')).not.toBeInTheDocument();

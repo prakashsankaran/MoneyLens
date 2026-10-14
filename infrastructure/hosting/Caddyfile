@@ -1,0 +1,17 @@
+# HTTPS in front of MoneyLens. Caddy requests and renews the certificate for
+# MONEYLENS_DOMAIN by itself; the domain's DNS must point at this server.
+{$MONEYLENS_DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+
+	# Statements are capped at MAX_UPLOAD_MB (10 MB) by the API; leave headroom.
+	request_body {
+		max_size 12MB
+	}
+
+	reverse_proxy web:80
+}

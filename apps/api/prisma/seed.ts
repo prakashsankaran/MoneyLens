@@ -12,7 +12,7 @@ import { PrismaClient } from '@prisma/client';
 import { addMonths, monthKeyOf, paiseToRupeeString } from '@moneylens/shared';
 import { AnalyticsDataSource } from '../src/lib/analytics-data';
 import { hashPassword } from '../src/modules/auth/password';
-import { SYSTEM_CATEGORIES } from '../src/modules/categories/system-categories';
+import { ensureSystemCategories } from '../src/modules/categories/system-categories';
 import { RecurringService } from '../src/modules/recurring/recurring.service';
 import { DEMO_MERCHANTS, generateDemoTransactions } from './demo/demo-data';
 
@@ -20,40 +20,7 @@ export const DEMO_EMAIL = 'demo@moneylens.app';
 export const DEMO_PASSWORD = 'moneylens-demo';
 
 /** Upsert the system category tree; returns "parent/child" slug -> ids. */
-export async function seedCategories(
-  prisma: PrismaClient,
-): Promise<Map<string, { categoryId: string; subcategoryId: string }>> {
-  const paths = new Map<string, { categoryId: string; subcategoryId: string }>();
-
-  for (const [index, def] of SYSTEM_CATEGORIES.entries()) {
-    const parent =
-      (await prisma.category.findFirst({
-        where: { userId: null, parentId: null, slug: def.slug },
-      })) ??
-      (await prisma.category.create({
-        data: { slug: def.slug, name: def.name, icon: def.icon, isSystem: true, sortOrder: index },
-      }));
-
-    for (const [childIndex, child] of def.children.entries()) {
-      const existing = await prisma.category.findFirst({
-        where: { userId: null, parentId: parent.id, slug: child.slug },
-      });
-      const sub =
-        existing ??
-        (await prisma.category.create({
-          data: {
-            slug: child.slug,
-            name: child.name,
-            parentId: parent.id,
-            isSystem: true,
-            sortOrder: childIndex,
-          },
-        }));
-      paths.set(`${def.slug}/${child.slug}`, { categoryId: parent.id, subcategoryId: sub.id });
-    }
-  }
-  return paths;
-}
+export const seedCategories = ensureSystemCategories;
 
 export async function seedDemoUser(
   prisma: PrismaClient,

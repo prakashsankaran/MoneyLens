@@ -1,6 +1,6 @@
-import { createHmac, randomUUID } from 'node:crypto';
+import { createHash, createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import { Prisma, type AuthEventType, type PrismaClient, type User } from '@prisma/client';
-import type { AuthActivityItem, PublicUser } from '@moneylens/types';
+import type { AuthActivityItem, PublicUser, SignupMode } from '@moneylens/types';
 import type { ChangePasswordInput, LoginInput, RegisterInput } from '@moneylens/validation';
 import { AppError, unauthenticated } from '../../lib/errors';
 import { getDummyHash, hashPassword, verifyPassword } from './password';
@@ -28,6 +28,21 @@ export interface LoginThrottle {
   windowMinutes: number;
 }
 
+export interface SignupPolicy {
+  mode: SignupMode;
+  /** Accepted codes when `mode` is `invite`. */
+  inviteCodes: readonly string[];
+}
+
+/** Compares in constant time, so response timing does not hint at a code. */
+function codeMatches(given: string, codes: readonly string[]): boolean {
+  const digest = (v: string) => createHash('sha256').update(v).digest();
+  const wanted = digest(given);
+  let found = false;
+  for (const code of codes) found = timingSafeEqual(wanted, digest(code)) || found;
+  return found;
+}
+
 /** Sign-in activity is kept this long, then pruned. */
 export const AUTH_EVENT_RETENTION_DAYS = 90;
 
@@ -45,7 +60,27 @@ export class AuthService {
     private readonly throttle: LoginThrottle = { attempts: 10, windowMinutes: 15 },
     /** Keys the email HMAC, so the stored value cannot be reversed with a word list. */
     private readonly emailKeySecret = 'moneylens-test-email-key',
+    private readonly signup: SignupPolicy = { mode: 'open', inviteCodes: [] },
   ) {}
+
+  get signupMode(): SignupMode {
+    return this.signup.mode;
+  }
+
+  /** Throws unless this server lets the caller create an account. */
+  private checkSignupAllowed(inviteCode: string | undefined): void {
+    if (this.signup.mode === 'open') return;
+    if (this.signup.mode === 'closed') {
+      throw new AppError('FORBIDDEN', 'New accounts are not being created on this server.');
+    }
+    if (!inviteCode || !codeMatches(inviteCode, this.signup.inviteCodes)) {
+      throw new AppError(
+        'FORBIDDEN',
+        'That invite code is not valid. Ask the person who invited you for the code.',
+        { field: 'inviteCode' },
+      );
+    }
+  }
 
   /** A stable, non-reversible key for an email address. */
   emailKey(email: string): string {
@@ -92,6 +127,7 @@ export class AuthService {
   }
 
   async register(input: RegisterInput, userAgent?: string): Promise<IssuedSession> {
+    this.checkSignupAllowed(input.inviteCode);
     const passwordHash = await hashPassword(input.password);
     let user: User;
     try {

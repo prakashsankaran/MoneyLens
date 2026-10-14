@@ -314,3 +314,59 @@ describe('rate limiting', () => {
     await limited.prisma.$disconnect();
   });
 });
+
+describe('sign-up modes', () => {
+  const newUser = () => ({
+    name: 'Friend',
+    email: `friend-${Date.now()}-${Math.random().toString(36).slice(2)}@example.test`,
+    password: 'a-long-passphrase',
+  });
+
+  it('is open by default and says so', async () => {
+    const res = await request(app).get('/api/auth/signup').expect(200);
+    expect(res.body.data).toEqual({ mode: 'open' });
+  });
+
+  it('invite mode needs one of the configured codes', async () => {
+    const ctx = createTestContext({
+      SIGNUP_MODE: 'invite',
+      SIGNUP_INVITE_CODES: 'asha-invite-2026,ravi-invite-2026',
+    });
+    expect((await request(ctx.app).get('/api/auth/signup').expect(200)).body.data).toEqual({
+      mode: 'invite',
+    });
+
+    const missing = await request(ctx.app).post('/api/auth/register').send(newUser()).expect(403);
+    expect(missing.body.error).toMatchObject({
+      code: 'FORBIDDEN',
+      details: { field: 'inviteCode' },
+    });
+    const wrong = newUser();
+    await request(ctx.app)
+      .post('/api/auth/register')
+      .send({ ...wrong, inviteCode: 'asha-invite-2025' })
+      .expect(403);
+    expect(await ctx.prisma.user.findUnique({ where: { email: wrong.email } })).toBeNull();
+
+    await request(ctx.app)
+      .post('/api/auth/register')
+      .send({ ...newUser(), inviteCode: ' ravi-invite-2026 ' })
+      .expect(201);
+    await ctx.prisma.$disconnect();
+  });
+
+  it('closed mode refuses every new account but still allows sign-in', async () => {
+    const existing = await registerUser(app);
+    const ctx = createTestContext({ SIGNUP_MODE: 'closed' });
+    const res = await request(ctx.app)
+      .post('/api/auth/register')
+      .send({ ...newUser(), inviteCode: 'anything-at-all' })
+      .expect(403);
+    expect(res.body.error.code).toBe('FORBIDDEN');
+    await request(ctx.app)
+      .post('/api/auth/login')
+      .send({ email: existing.email, password: existing.password })
+      .expect(200);
+    await ctx.prisma.$disconnect();
+  });
+});

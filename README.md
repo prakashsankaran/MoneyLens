@@ -83,31 +83,34 @@ create your own account and import one of the fictional statements in
 API variables live in `apps/api/.env` (template: `apps/api/.env.example`).
 They are validated at startup and the API refuses to start if they are invalid.
 
-| Variable                   | Required | Default                 | Purpose                                                                                                                     |
-| -------------------------- | -------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`             | yes      | –                       | PostgreSQL connection string                                                                                                |
-| `JWT_ACCESS_SECRET`        | yes      | –                       | ≥ 32 chars. Signs access tokens. Generate: `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"` |
-| `NODE_ENV`                 | no       | `development`           | `development`, `test` or `production`                                                                                       |
-| `PORT`                     | no       | `4000`                  | API port                                                                                                                    |
-| `CORS_ORIGINS`             | no       | `http://localhost:5173` | Comma-separated allowed browser origins                                                                                     |
-| `ACCESS_TOKEN_TTL_SECONDS` | no       | `900`                   | Access token lifetime                                                                                                       |
-| `REFRESH_TOKEN_TTL_DAYS`   | no       | `30`                    | Refresh session lifetime                                                                                                    |
-| `AUTH_RATE_LIMIT`          | no       | `20`                    | Credential requests per 15 min per IP                                                                                       |
-| `API_RATE_LIMIT`           | no       | `300`                   | API requests per minute per IP                                                                                              |
-| `TRUST_PROXY`              | no       | `0`                     | Proxy hops to trust for client IPs                                                                                          |
-| `LOG_LEVEL`                | no       | `info`                  | pino log level                                                                                                              |
-| `MAX_UPLOAD_MB`            | no       | `10`                    | Statement upload size limit                                                                                                 |
-| `PARSE_TIMEOUT_MS`         | no       | `20000`                 | Longest time one statement may take to parse                                                                                |
-| `LOGIN_LOCKOUT_ATTEMPTS`   | no       | `10`                    | Wrong passwords for one account before its sign-in is paused                                                                |
-| `LOGIN_LOCKOUT_MINUTES`    | no       | `15`                    | How long those failures count, and the pause                                                                                |
-| `AI_PROVIDER`              | no       | `none`                  | `none`, `anthropic`, `openai-compatible` or `mock`. With `none`, MoneyLens AI shows calculated figures only                 |
-| `AI_API_KEY`               | for AI   |                         | Provider API key (anthropic, openai-compatible)                                                                             |
-| `AI_MODEL`                 | no       | `claude-sonnet-5-5`     | Model id; required for openai-compatible                                                                                    |
-| `AI_BASE_URL`              | no       |                         | Base URL for openai-compatible (e.g. `https://host/v1`)                                                                     |
-| `AI_MAX_OUTPUT_TOKENS`     | no       | `700`                   | Output token cap per answer                                                                                                 |
-| `AI_TIMEOUT_MS`            | no       | `30000`                 | Provider request timeout                                                                                                    |
-| `AI_DAILY_MESSAGE_LIMIT`   | no       | `50`                    | Questions per user per 24 hours                                                                                             |
-| `AI_CHAT_RATE_LIMIT`       | no       | `10`                    | Questions per user per minute                                                                                               |
+| Variable                   | Required   | Default                 | Purpose                                                                                                                     |
+| -------------------------- | ---------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`             | yes        | –                       | PostgreSQL connection string                                                                                                |
+| `JWT_ACCESS_SECRET`        | yes        | –                       | ≥ 32 chars. Signs access tokens. Generate: `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"` |
+| `NODE_ENV`                 | no         | `development`           | `development`, `test` or `production`                                                                                       |
+| `PORT`                     | no         | `4000`                  | API port                                                                                                                    |
+| `CORS_ORIGINS`             | no         | `http://localhost:5173` | Comma-separated allowed browser origins                                                                                     |
+| `ACCESS_TOKEN_TTL_SECONDS` | no         | `900`                   | Access token lifetime                                                                                                       |
+| `REFRESH_TOKEN_TTL_DAYS`   | no         | `30`                    | Refresh session lifetime                                                                                                    |
+| `AUTH_RATE_LIMIT`          | no         | `20`                    | Credential requests per 15 min per IP                                                                                       |
+| `API_RATE_LIMIT`           | no         | `300`                   | API requests per minute per IP                                                                                              |
+| `TRUST_PROXY`              | no         | `0`                     | Proxy hops to trust for client IPs                                                                                          |
+| `LOG_LEVEL`                | no         | `info`                  | pino log level                                                                                                              |
+| `MAX_UPLOAD_MB`            | no         | `10`                    | Statement upload size limit                                                                                                 |
+| `PARSE_TIMEOUT_MS`         | no         | `20000`                 | Longest time one statement may take to parse                                                                                |
+| `LOGIN_LOCKOUT_ATTEMPTS`   | no         | `10`                    | Wrong passwords for one account before its sign-in is paused                                                                |
+| `LOGIN_LOCKOUT_MINUTES`    | no         | `15`                    | How long those failures count, and the pause                                                                                |
+| `SIGNUP_MODE`              | no         | `open`                  | `open`, `invite` (needs a code from `SIGNUP_INVITE_CODES`) or `closed`                                                      |
+| `SIGNUP_INVITE_CODES`      | for invite |                         | Comma-separated invite codes, 8–64 characters each                                                                          |
+| `AI_PROVIDER`              | no         | `none`                  | `none`, `anthropic`, `openai-compatible` or `mock`. With `none`, MoneyLens AI shows calculated figures only                 |
+| `AI_API_KEY`               | for AI     |                         | Provider API key (anthropic, openai-compatible)                                                                             |
+| `AI_MODEL`                 | no         | `claude-sonnet-5-5`     | Model id; required for openai-compatible                                                                                    |
+| `AI_BASE_URL`              | no         |                         | Base URL for openai-compatible (e.g. `https://host/v1`)                                                                     |
+| `AI_MAX_OUTPUT_TOKENS`     | no         | `700`                   | Output token cap per answer                                                                                                 |
+| `AI_TIMEOUT_MS`            | no         | `30000`                 | Provider request timeout                                                                                                    |
+| `AI_DAILY_MESSAGE_LIMIT`   | no         | `50`                    | Questions per user per 24 hours                                                                                             |
+| `AI_CHAT_RATE_LIMIT`       | no         | `10`                    | Questions per user per minute                                                                                               |
+| `AI_ALLOWED_EMAILS`        | no         |                         | Comma-separated emails that may use the AI provider; empty means everyone                                                   |
 
 Web variables (optional, `apps/web/.env`): `VITE_API_BASE_URL` (default `/api`)
 and `VITE_API_PROXY_TARGET` for the dev proxy (default `http://localhost:4000`).
@@ -184,6 +187,9 @@ npm run docker:down
 The API container applies migrations on start. The web container serves the
 built app with nginx and proxies `/api` to the API.
 
+To put MoneyLens on a server for friends, with HTTPS, invite-only sign-up and
+nightly backups, follow [HOSTING.md](docs/HOSTING.md).
+
 ## Documentation
 
 - [ARCHITECTURE.md](docs/ARCHITECTURE.md): system design and key decisions
@@ -191,6 +197,7 @@ built app with nginx and proxies `/api` to the API.
 - [DATABASE.md](docs/DATABASE.md): schema and conventions
 - [SECURITY.md](docs/SECURITY.md): auth, privacy and hardening
 - [THREAT_MODEL.md](docs/THREAT_MODEL.md): assets, threats and how each is handled
+- [HOSTING.md](docs/HOSTING.md): run MoneyLens on a server for you and invited friends
 - [DEVELOPMENT.md](docs/DEVELOPMENT.md): workflow and conventions
 - [IMPORT_PIPELINE.md](docs/IMPORT_PIPELINE.md): statement import pipeline, supported formats and duplicate detection
 - [AI_ARCHITECTURE.md](docs/AI_ARCHITECTURE.md): MoneyLens AI: providers, context, guardrails

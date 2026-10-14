@@ -1,5 +1,5 @@
 import { Router, type CookieOptions, type Request, type Response } from 'express';
-import { MOBILE_CLIENT_HEADER, type AuthResult } from '@moneylens/types';
+import { MOBILE_CLIENT_HEADER, type AuthResult, type SignupOptions } from '@moneylens/types';
 import {
   changePasswordSchema,
   deleteAccountSchema,
@@ -63,6 +63,12 @@ export function authRoutes(deps: {
     isMobileClient(req)
       ? parseInput(refreshTokenSchema, req.body ?? {}).refreshToken
       : readRefreshCookie(req.cookies);
+
+  // Lets the sign-up page show an invite code field, or say sign-up is closed.
+  router.get('/signup', (_req, res) => {
+    const body: SignupOptions = { mode: auth.signupMode };
+    ok(res, body);
+  });
 
   router.post('/register', credentialLimiter, async (req, res) => {
     const input = parseInput(registerSchema, req.body);

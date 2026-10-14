@@ -76,7 +76,7 @@ export function AssistantScreen() {
         >
           {status.data && !status.data.configured ? (
             <Text style={styles.notice}>
-              MoneyLens AI is not set up on this server yet. You can still ask: each answer shows
+              MoneyLens AI is not turned on for your account. You can still ask: each answer shows
               the calculated figures, without a written explanation.
             </Text>
           ) : null}

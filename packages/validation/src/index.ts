@@ -20,6 +20,8 @@ export const registerSchema = z.object({
   name: z.string().trim().min(1, 'Enter your name').max(80, 'Name is too long'),
   email: emailSchema,
   password: passwordSchema,
+  /** Needed when the server only allows sign-up by invitation. */
+  inviteCode: z.string().trim().max(64, 'Invite code is too long').optional(),
 });
 export type RegisterInput = z.infer<typeof registerSchema>;
 

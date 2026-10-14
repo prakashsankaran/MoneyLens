@@ -52,11 +52,18 @@ Without that header a `refreshToken` in the body is ignored, and web clients
 never receive the token in a body. A mobile refresh with a missing or
 malformed token → `400 VALIDATION_ERROR`; logout tolerates a missing one.
 
+### `GET /api/auth/signup`
+
+No authentication. `{ mode: "open" | "invite" | "closed" }` from
+`SIGNUP_MODE`, so the sign-up page knows whether to ask for an invite code.
+
 ### `POST /api/auth/register`
 
-Body: `{ "name": string, "email": string, "password": string (10–128) }`
+Body: `{ "name": string, "email": string, "password": string (10–128), "inviteCode"?: string (≤64) }`
 → `201` `{ user, accessToken, expiresIn }` and sets the refresh cookie.
-`409 CONFLICT` if the email exists.
+`409 CONFLICT` if the email exists. With `SIGNUP_MODE=invite`, a missing or
+wrong code → `403 FORBIDDEN` with `details.field = "inviteCode"`; with
+`SIGNUP_MODE=closed` every request → `403 FORBIDDEN`.
 
 ### `POST /api/auth/login`
 

@@ -28,11 +28,11 @@ import {
   correctionTurn,
   questionTurn,
 } from './prompt';
-import type { AIProvider } from './providers';
+import { NoProvider, type AIProvider } from './providers';
 
 export const NOTES = {
   notConfigured:
-    "MoneyLens AI isn't set up on this server yet, so there is no written explanation. Here are the calculated figures for your question.",
+    "MoneyLens AI isn't turned on for your account, so there is no written explanation. Here are the calculated figures for your question.",
   fallback:
     "I couldn't write an explanation that sticks to your calculated figures, so here are the figures themselves.",
   unavailable:
@@ -47,7 +47,11 @@ const BRIEF_CACHE_MAX = 1000;
 export interface AIServiceOptions {
   maxOutputTokens: number;
   dailyMessageLimit: number;
+  /** Lowercased emails that may use the provider; empty means every account. */
+  allowedEmails?: readonly string[];
 }
+
+const NO_PROVIDER = new NoProvider();
 
 type Turn = { role: 'user' | 'assistant'; content: string };
 
@@ -55,6 +59,11 @@ interface Explanation {
   status: AssistantAnswer['status'];
   interpretation: string | null;
   regenerated: boolean;
+}
+
+function providerLabel(provider: AIProvider): string | null {
+  if (!provider.configured) return null;
+  return provider.model ? `${provider.name}/${provider.model}` : provider.name;
 }
 
 /**
@@ -74,18 +83,27 @@ export class AIService {
     private readonly logger: Logger,
   ) {}
 
-  private get providerLabel(): string | null {
-    if (!this.provider.configured) return null;
-    return this.provider.model
-      ? `${this.provider.name}/${this.provider.model}`
-      : this.provider.name;
+  /**
+   * The provider this user may use. Accounts outside AI_ALLOWED_EMAILS get
+   * calculated figures only, so nothing of theirs reaches the provider and
+   * they do not spend the server owner's AI key.
+   */
+  private async providerFor(userId: string): Promise<AIProvider> {
+    const allowed = this.options.allowedEmails ?? [];
+    if (!this.provider.configured || allowed.length === 0) return this.provider;
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+    return user && allowed.includes(user.email.toLowerCase()) ? this.provider : NO_PROVIDER;
   }
 
   async status(userId: string): Promise<AssistantStatus> {
+    const provider = await this.providerFor(userId);
     return {
-      configured: this.provider.configured,
-      provider: this.provider.name,
-      model: this.provider.model,
+      configured: provider.configured,
+      provider: provider.name,
+      model: provider.model,
       dailyMessageLimit: this.options.dailyMessageLimit,
       messagesToday: await this.messagesToday(userId),
       availableMonths: await this.insights.availableMonths(userId),
@@ -116,20 +134,21 @@ export class AIService {
    * with the problems listed if the check fails.
    */
   private async explain(
+    provider: AIProvider,
     history: Turn[],
     turn: string,
     ctx: AssistantContext,
     extraText: string,
     facts: ReportStatement[],
   ): Promise<Explanation> {
-    if (!this.provider.configured) {
+    if (!provider.configured) {
       return { status: 'not-configured', interpretation: null, regenerated: false };
     }
     const allowed = allowedNumbers(ctx, extraText, ...facts.map((f) => f.text));
     const messages: Turn[] = [...history, { role: 'user', content: turn }];
     try {
       for (let attempt = 0; attempt < 2; attempt++) {
-        const { text } = await this.provider.complete({
+        const { text } = await provider.complete({
           system: SYSTEM_PROMPT,
           messages,
           maxTokens: this.options.maxOutputTokens,
@@ -197,7 +216,8 @@ export class AIService {
       const { topics, facts } = factsFor(classifyQuestion(question), ctx, question);
       const history = await this.history(conv.id);
       const turn = questionTurn(question, contextFor(ctx, topics), facts);
-      const result = await this.explain(history, turn, ctx, question, facts);
+      const provider = await this.providerFor(userId);
+      const result = await this.explain(provider, history, turn, ctx, question, facts);
       answer = {
         status: result.status,
         month: ctx.month,
@@ -205,7 +225,7 @@ export class AIService {
         facts,
         interpretation: result.interpretation,
         dataLimitations: [...noData, ...ctx.dataLimitations],
-        provider: result.interpretation ? this.providerLabel : null,
+        provider: result.interpretation ? providerLabel(provider) : null,
         regenerated: result.regenerated,
       };
       content =
@@ -297,7 +317,8 @@ export class AIService {
     const { facts } = factsFor(['overview', 'change', 'savings', 'recurring'], ctx, '');
     const briefFacts = pickBriefFacts(facts);
     const hash = createHash('sha256').update(JSON.stringify(briefFacts)).digest('hex').slice(0, 16);
-    const key = `${userId}:${ctx.month}:${hash}:${this.provider.name}`;
+    const provider = await this.providerFor(userId);
+    const key = `${userId}:${ctx.month}:${hash}:${provider.name}`;
     const cached = this.briefs.get(key);
     if (cached && cached.expires > Date.now()) return cached.brief;
 
@@ -318,13 +339,13 @@ export class AIService {
         contextFor(ctx, ['overview', 'change', 'savings']),
         briefFacts,
       );
-      const result = await this.explain([], turn, ctx, '', briefFacts);
+      const result = await this.explain(provider, [], turn, ctx, '', briefFacts);
       brief = {
         month: ctx.month,
         status: result.status,
         facts: briefFacts,
         text: result.interpretation,
-        provider: result.interpretation ? this.providerLabel : null,
+        provider: result.interpretation ? providerLabel(provider) : null,
         generatedAt,
       };
     }
