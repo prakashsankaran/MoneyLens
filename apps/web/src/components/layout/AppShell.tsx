@@ -43,12 +43,12 @@ export function AppShell() {
     <div className="flex min-h-dvh flex-col">
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-surface focus:shadow-card focus:px-4 focus:py-2"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-[calc(1rem+var(--safe-top))] focus:z-50 focus:rounded-full focus:bg-surface focus:shadow-card focus:px-4 focus:py-2"
       >
         Skip to content
       </a>
 
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-ink-200 bg-surface/95 px-4 backdrop-blur-md md:px-6 lg:h-16 lg:px-8">
+      <header className="sticky top-0 z-30 flex h-[calc(3.5rem+var(--safe-top))] items-center justify-between gap-3 border-b border-ink-200 bg-surface/95 pt-[var(--safe-top)] pr-[max(1rem,var(--safe-right))] pl-[max(1rem,var(--safe-left))] backdrop-blur-md md:pr-[max(1.5rem,var(--safe-right))] md:pl-[max(1.5rem,var(--safe-left))] lg:h-[calc(4rem+var(--safe-top))] lg:pr-[max(2rem,var(--safe-right))] lg:pl-[max(2rem,var(--safe-left))]">
         <Link to="/" aria-label="MoneyLens home" className="rounded-full">
           <Logo />
         </Link>
@@ -110,7 +110,7 @@ export function AppShell() {
 
       <div className="flex min-w-0 flex-1">
         {/* Sidebar: icon rail from md, expanded from lg */}
-        <aside className="hidden w-[72px] shrink-0 border-r border-ink-200 bg-surface p-3 md:sticky md:top-14 md:block md:h-[calc(100dvh-3.5rem)] lg:top-16 lg:h-[calc(100dvh-4rem)] lg:w-[248px] lg:p-4">
+        <aside className="hidden w-[calc(72px+var(--safe-left))] shrink-0 overflow-y-auto overscroll-contain border-r border-ink-200 bg-surface p-3 pl-[calc(0.75rem+var(--safe-left))] md:sticky md:top-[calc(3.5rem+var(--safe-top))] md:block md:h-[calc(100dvh-3.5rem-var(--safe-top))] lg:top-[calc(4rem+var(--safe-top))] lg:h-[calc(100dvh-4rem-var(--safe-top))] lg:w-[calc(248px+var(--safe-left))] lg:p-4 lg:pl-[calc(1rem+var(--safe-left))]">
           <p className="mb-2 hidden px-3 text-2xs font-semibold tracking-[.06em] text-ink-500 uppercase lg:block">
             Menu
           </p>
@@ -136,7 +136,7 @@ export function AppShell() {
         <main
           id="main"
           key={location.pathname}
-          className="min-w-0 flex-1 animate-page-enter pb-24 md:pb-0"
+          className="min-w-0 flex-1 animate-page-enter pr-[var(--safe-right)] pb-[calc(6rem+var(--safe-bottom))] pl-[var(--safe-left)] md:pb-[var(--safe-bottom)] md:pl-0"
         >
           <Suspense fallback={<PageLoading />}>
             <Outlet />
@@ -147,7 +147,7 @@ export function AppShell() {
       {/* Mobile bottom navigation */}
       <nav
         aria-label="Main"
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-ink-200 bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-ink-200 bg-surface/95 pr-[var(--safe-right)] pb-[var(--safe-bottom)] pl-[var(--safe-left)] backdrop-blur-md md:hidden"
       >
         <ul className="grid grid-cols-5">
           {primary.map(({ to, label, shortLabel, icon: Icon }) => (
@@ -168,7 +168,9 @@ export function AppShell() {
                     >
                       <Icon className="size-5" aria-hidden="true" />
                     </span>
-                    {shortLabel ?? label}
+                    <span className="max-w-full truncate tracking-tight max-[359px]:text-[10px]">
+                      {shortLabel ?? label}
+                    </span>
                   </>
                 )}
               </NavLink>
@@ -189,7 +191,7 @@ export function AppShell() {
               >
                 <LuEllipsis className="size-5" aria-hidden="true" />
               </span>
-              More
+              <span className="tracking-tight max-[359px]:text-[10px]">More</span>
             </button>
           </li>
         </ul>
@@ -210,7 +212,7 @@ export function AppShell() {
           />
           <div
             id="more-sheet"
-            className="absolute inset-x-0 bottom-0 animate-sheet-up rounded-t-3xl bg-surface px-4 pt-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-2xl"
+            className="absolute inset-x-0 bottom-0 animate-sheet-up rounded-t-3xl bg-surface px-4 pt-5 pb-[calc(1.5rem+var(--safe-bottom))] shadow-2xl"
           >
             <div className="mb-2 flex items-center justify-between px-3">
               <p className="text-base font-semibold tracking-tight">More</p>

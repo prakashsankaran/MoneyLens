@@ -102,7 +102,7 @@ export function AssistantPage() {
         </p>
       )}
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[16rem_minmax(0,1fr)]">
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[16rem_minmax(0,1fr)]">
         <aside aria-label="Conversations" className="hidden lg:block">
           <h2 className="text-sm font-semibold">Conversations</h2>
           {list.length === 0 ? (
@@ -209,12 +209,12 @@ export function AssistantPage() {
             }}
           >
             {latestMonth && earlierMonths.length > 0 && (
-              <label className="mb-3 flex items-center gap-2 text-sm text-ink-500">
+              <label className="mb-3 flex flex-wrap items-center gap-2 text-sm text-ink-500">
                 <span>Answer about</span>
                 <select
                   value={month}
                   onChange={(e) => setMonth(e.target.value)}
-                  className="h-9 rounded-lg border border-ink-200 bg-surface px-2 text-sm text-ink-900 transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
+                  className="h-9 min-w-0 max-w-full rounded-lg border border-ink-200 bg-surface px-2 text-sm text-ink-900 transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100"
                 >
                   <option value="">Latest month ({formatMonthKey(latestMonth)})</option>
                   {earlierMonths.map((m) => (

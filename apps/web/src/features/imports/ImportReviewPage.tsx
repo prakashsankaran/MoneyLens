@@ -252,7 +252,7 @@ function ReviewContent({ review }: { review: ImportReview }) {
       )}
 
       {editable && (
-        <div className="fixed inset-x-0 bottom-16 z-30 border-t border-ink-200 bg-surface/95 px-4 py-3 backdrop-blur md:bottom-0 md:left-[72px] lg:left-[248px]">
+        <div className="fixed inset-x-0 bottom-[calc(4rem+var(--safe-bottom))] z-30 border-t border-ink-200 bg-surface/95 py-3 pr-[max(1rem,var(--safe-right))] pl-[max(1rem,var(--safe-left))] backdrop-blur md:bottom-0 md:left-[calc(72px+var(--safe-left))] md:pb-[calc(0.75rem+var(--safe-bottom))] md:pl-4 lg:left-[calc(248px+var(--safe-left))]">
           <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-ink-700">
               {stats.included} of {stats.detected} rows will be added to your transactions.

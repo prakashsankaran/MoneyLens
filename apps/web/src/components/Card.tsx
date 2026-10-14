@@ -22,7 +22,7 @@ export function Card({
 }: CardProps) {
   return (
     <section
-      className={`rounded-2xl border border-ink-200 bg-surface p-4 shadow-card sm:p-5 lg:p-6 ${className}`}
+      className={`min-w-0 rounded-2xl border border-ink-200 bg-surface p-4 shadow-card sm:p-5 lg:p-6 ${className}`}
     >
       {(title || action) && (
         <header className="mb-5 flex flex-wrap items-start justify-between gap-3">

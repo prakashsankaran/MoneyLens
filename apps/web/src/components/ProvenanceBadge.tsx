@@ -34,7 +34,7 @@ export function ProvenanceBadge({ kind }: { kind: ProvenanceKind }) {
   return (
     <span
       title={meta.description}
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-2xs font-medium uppercase tracking-wide ${meta.className}`}
+      className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-2xs font-medium uppercase tracking-wide ${meta.className}`}
     >
       {meta.label}
     </span>
