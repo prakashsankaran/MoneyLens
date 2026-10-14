@@ -100,6 +100,7 @@ They are validated at startup and the API refuses to start if they are invalid.
 | `PARSE_TIMEOUT_MS`         | no         | `20000`                 | Longest time one statement may take to parse                                                                                |
 | `LOGIN_LOCKOUT_ATTEMPTS`   | no         | `10`                    | Wrong passwords for one account before its sign-in is paused                                                                |
 | `LOGIN_LOCKOUT_MINUTES`    | no         | `15`                    | How long those failures count, and the pause                                                                                |
+| `WEB_DIST_DIR`             | no         |                         | Built web app folder; when set the API also serves the app (one-container hosting)                                          |
 | `SIGNUP_MODE`              | no         | `open`                  | `open`, `invite` (needs a code from `SIGNUP_INVITE_CODES`) or `closed`                                                      |
 | `SIGNUP_INVITE_CODES`      | for invite |                         | Comma-separated invite codes, 8–64 characters each                                                                          |
 | `AI_PROVIDER`              | no         | `none`                  | `none`, `anthropic`, `openai-compatible` or `mock`. With `none`, MoneyLens AI shows calculated figures only                 |
@@ -187,8 +188,8 @@ npm run docker:down
 The API container applies migrations on start. The web container serves the
 built app with nginx and proxies `/api` to the API.
 
-To put MoneyLens on a server for friends, with HTTPS, invite-only sign-up and
-nightly backups, follow [HOSTING.md](docs/HOSTING.md).
+To put MoneyLens online for friends for free (Render and Neon), with
+invite-only sign-up, follow [HOSTING.md](docs/HOSTING.md).
 
 ## Documentation
 

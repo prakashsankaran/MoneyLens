@@ -8,6 +8,7 @@ import type { PrismaClient } from '@prisma/client';
 import type { Logger } from 'pino';
 import type { Env } from './config/env';
 import { AnalyticsDataSource } from './lib/analytics-data';
+import { serveWeb } from './lib/serve-web';
 import { AIService } from './modules/ai/ai.service';
 import { aiRoutes } from './modules/ai/ai.routes';
 import { createAIProvider, type AIProvider } from './modules/ai/providers';
@@ -50,7 +51,28 @@ export function createApp({ env, prisma, logger, aiProvider }: AppDeps): Express
   app.disable('x-powered-by');
   if (env.TRUST_PROXY > 0) app.set('trust proxy', env.TRUST_PROXY);
 
-  app.use(helmet());
+  // The same policy nginx sends for the web app (security-headers.conf), so
+  // it also holds when the API serves the app itself (WEB_DIST_DIR).
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        useDefaults: false,
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+          fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+          imgSrc: ["'self'", 'data:'],
+          connectSrc: ["'self'"],
+          objectSrc: ["'none'"],
+          baseUri: ["'self'"],
+          formAction: ["'self'"],
+          frameAncestors: ["'none'"],
+        },
+      },
+      frameguard: { action: 'deny' },
+    }),
+  );
   app.use(
     cors({
       origin: env.CORS_ORIGINS,
@@ -145,6 +167,7 @@ export function createApp({ env, prisma, logger, aiProvider }: AppDeps): Express
   api.use('/ai', requireAuth, aiRoutes(ai, { chatPerMinute: env.AI_CHAT_RATE_LIMIT }));
 
   app.use('/api', api);
+  if (env.WEB_DIST_DIR) app.use(serveWeb(env.WEB_DIST_DIR));
   app.use(notFoundHandler);
   app.use(errorHandler(logger));
   return app;

@@ -63,4 +63,12 @@ describe('loadEnv', () => {
     expect(env.AI_BASE_URL).toBeUndefined();
     expect(env.SIGNUP_INVITE_CODES).toEqual([]);
   });
+
+  it("trusts Render's own address when CORS_ORIGINS is not set", () => {
+    const url = 'https://moneylens-x1.onrender.com';
+    expect(loadEnv({ ...base, RENDER_EXTERNAL_URL: url }).CORS_ORIGINS).toEqual([url]);
+    expect(
+      loadEnv({ ...base, RENDER_EXTERNAL_URL: url, CORS_ORIGINS: 'https://a.test' }).CORS_ORIGINS,
+    ).toEqual(['https://a.test']);
+  });
 });

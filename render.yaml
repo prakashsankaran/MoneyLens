@@ -1,0 +1,33 @@
+# Render Blueprint for MoneyLens on Render's free plan (docs/HOSTING.md).
+# Render reads this file when you choose New → Blueprint and pick this repo.
+# The database lives on Neon's free plan; paste its connection string when
+# Render asks for DATABASE_URL. The app trusts its own onrender.com address
+# (RENDER_EXTERNAL_URL) unless CORS_ORIGINS is set.
+services:
+  - type: web
+    name: moneylens
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./infrastructure/hosting/single.Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeploy: false
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SIGNUP_INVITE_CODES
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: SIGNUP_MODE
+        value: invite
+      # Render's edge network adds proxy hops in front of the container.
+      - key: TRUST_PROXY
+        value: '3'
+      - key: AI_PROVIDER
+        value: none
+      - key: AI_DAILY_MESSAGE_LIMIT
+        value: '20'
+      - key: LOG_LEVEL
+        value: info

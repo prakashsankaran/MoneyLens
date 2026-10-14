@@ -32,6 +32,11 @@ const envSchema = z.object({
   LOGIN_LOCKOUT_MINUTES: z.coerce.number().int().positive().default(15),
   /** Requests per minute per IP across the API. */
   API_RATE_LIMIT: z.coerce.number().int().positive().default(300),
+  /**
+   * Folder holding the built web app (apps/web/dist). When set, the API also
+   * serves the app, so one container is enough (free single-service hosts).
+   */
+  WEB_DIST_DIR: z.string().trim().optional(),
   /** Set when running behind a reverse proxy so client IPs are correct. */
   TRUST_PROXY: z.coerce.number().int().min(0).default(0),
 
@@ -68,6 +73,9 @@ export type Env = z.infer<typeof envSchema>;
 export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
   // An empty variable (`AI_BASE_URL=` in a .env or compose file) means unset.
   const present = Object.fromEntries(Object.entries(source).filter(([, v]) => v !== ''));
+  // On Render the app's own https address is known only after it is created;
+  // Render provides it, so it is the default trusted origin there.
+  present.CORS_ORIGINS ??= present.RENDER_EXTERNAL_URL;
   const parsed = envSchema.safeParse(present);
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => `  - ${i.path.join('.')}: ${i.message}`);

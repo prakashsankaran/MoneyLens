@@ -1,140 +1,136 @@
 # Hosting MoneyLens for friends
 
-This puts MoneyLens on one small cloud server so you and the friends you
-invite can use it from any phone or browser, with no Mac left running. Each
-friend creates their own account with an invite code, uploads their own
-Google Pay or bank statements, and sees only their own data.
+This puts MoneyLens on the internet so you and the friends you invite can use
+it from any phone or browser, with no Mac left running. Each friend creates
+their own account with an invite code, uploads their own Google Pay or bank
+statements, and sees only their own data.
 
-Everything runs from `infrastructure/hosting/`:
+**The recommended route costs nothing:** the app runs on Render's free plan
+and the database on Neon's free plan. Neither asks for a card. The trade-off
+is that a free Render app goes to sleep after 15 minutes without visitors, so
+the first person to open it after a quiet spell waits about a minute while it
+wakes up. After that it is quick.
 
-| File                 | What it does                                                                  |
-| -------------------- | ----------------------------------------------------------------------------- |
-| `docker-compose.yml` | Postgres, the API, the web app, Caddy (HTTPS) and a nightly backup            |
-| `Caddyfile`          | Gets and renews a free HTTPS certificate for your address; adds HSTS          |
-| `.env.example`       | The settings you fill in: address, secrets, invite codes, AI                  |
-| `backup.sh`          | A compressed database dump every 24 hours, kept for 14 days                   |
-| `reset-password.mjs` | Sets a new password for a friend who forgot theirs (MoneyLens sends no email) |
+| Free plan limit (October 2026)       | What it means for MoneyLens                                       |
+| ------------------------------------ | ----------------------------------------------------------------- |
+| Render: sleeps after 15 idle minutes | First visit after a quiet spell takes about a minute              |
+| Render: 750 running hours a month    | Enough for one app running all month                              |
+| Neon: 1 GB of storage                | Hundreds of thousands of transactions; far more than a few users  |
+| Neon: 100 compute hours a month      | The database also sleeps when idle, so light use stays well under |
+
+Free plans change. If either service starts asking for money, nothing here
+ties you to it: the same app runs on any host that can run a Docker image
+(see [Option B](#option-b-your-own-server)).
 
 ## What your friends should know
 
 Be plain with them before they upload anything:
 
 - **Their statements stay private from other users, not from you.** Every
-  account only sees its own data, but all of it sits in one database on a
-  server you control. Anyone with access to that server (you, or someone who
-  breaks into it) could read their transactions. There is no per-user
-  encryption.
+  account only sees its own data, but all of it sits in one database that you
+  control (stored by Neon). Anyone with access to that database could read
+  their transactions. There is no per-user encryption.
 - **Statement files are not kept.** The PDF or spreadsheet is read in memory
   and thrown away; only the transactions are stored. PDF passwords are never
   stored or logged.
 - **They can delete everything themselves** in Settings → Delete account.
-  Copies in the nightly backups disappear within 14 days
-  (`BACKUP_KEEP_DAYS`).
 - **AI is off for them** unless you add their email to `AI_ALLOWED_EMAILS`
   (see below). When it is off, nothing of theirs is sent to Google.
 
 If a friend does not want their data on someone else's server, the Android
-app (`apps/android`) keeps everything on their own phone instead.
+app keeps everything on their own phone instead.
 
-## What you need
+## Option A: free, on Render and Neon (recommended)
 
-- **A server.** Recommended: a DigitalOcean "Basic" droplet in Bangalore
-  (BLR1), 1 GB memory, Ubuntu 24.04, about US$6 a month. Any provider with a
-  small Ubuntu machine and a public IP works the same way (Hetzner, Linode,
-  AWS Lightsail). Oracle Cloud's Always Free tier costs nothing, but Oracle
-  may stop free machines that sit mostly idle, which a small MoneyLens server
-  does.
-- **An address.** A free DuckDNS name (`yourname.duckdns.org`) is enough. A
-  domain of your own (about ₹800 a year) also works.
-- **About 45 minutes**, a terminal, and the server's SSH login.
+About 30 minutes. You need your GitHub login and an email address.
 
-## 1. Create the server
+### 1. Create the database on Neon
 
-1. Create the droplet: Ubuntu 24.04, Basic, Regular, 1 GB / 1 CPU, region
-   Bangalore. Choose SSH key login (add your Mac's `~/.ssh/id_ed25519.pub`).
-2. Note its public IPv4 address.
-3. Optional but worth it: turn on the provider's weekly backups (about 20%
-   extra) so you can roll back the whole machine.
+1. Sign up at [neon.com](https://neon.com) (GitHub sign-in works). Choose the
+   Free plan.
+2. Create a project named `moneylens`, Postgres version as offered, region
+   **AWS Asia Pacific (Singapore)**, the closest to India.
+3. On the project dashboard, press **Connect**. Turn **Connection pooling
+   off** and copy the connection string. It looks like
+   `postgresql://neondb_owner:…@ep-…ap-southeast-1.aws.neon.tech/neondb?sslmode=require`.
+   Keep it private: it is the key to everyone's data.
 
-## 2. Point an address at it
+### 2. Create the app on Render
 
-DuckDNS: sign in at duckdns.org, add a subdomain such as
-`moneylens-prakash`, and set its IP to the server's address. Check from your
-Mac:
+1. Sign up at [render.com](https://render.com) with GitHub, and allow it to
+   see the `MoneyLens` repository.
+2. Choose **New → Blueprint**, pick `prakashsankaran/MoneyLens`, branch
+   `main`. Render reads `render.yaml` from the repository and proposes one
+   free web service called `moneylens` in Singapore.
+3. Render asks for two values:
+   - `DATABASE_URL`: the Neon connection string from step 1.
+   - `SIGNUP_INVITE_CODES`: one code per friend, comma-separated, 8 to 64
+     characters each, for example `asha-7Hq2xP9k,ravi-Mn4wQ8zt`. Make them
+     hard to guess.
+4. Press **Apply**. The first build takes several minutes. When the service
+   shows **Live**, its address is at the top, for example
+   `https://moneylens-ab12.onrender.com`.
 
-```sh
-dig +short moneylens-prakash.duckdns.org   # prints the server's IP
-```
+Render creates the sign-in secret (`JWT_ACCESS_SECRET`) by itself and
+provides HTTPS. The app trusts its own onrender.com address automatically.
 
-With your own domain, add an `A` record for the name you want (for example
-`money.example.com`) pointing at the IP.
+### 3. Check it and make your account
 
-## 3. Prepare the server
+Open the address on your phone. Create account should ask for an invite
+code; use one of yours. On an iPhone, Safari → Share → Add to Home Screen
+gives you an app icon; on Android, Chrome → menu → Add to Home screen.
 
-```sh
-ssh root@SERVER_IP
+### 4. Invite friends
 
-# Firewall: SSH, HTTP (certificate checks) and HTTPS only.
-ufw allow OpenSSH && ufw allow 80/tcp && ufw allow 443 && ufw --force enable
+Send each friend the address and their own code, and tell them the first
+open can take a minute. They create an account, then go to Imports and upload
+their Google Pay PDF (with its password if it has one) or a bank CSV or Excel
+statement.
 
-# 2 GB of swap, so building the app fits in 1 GB of memory.
-fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
-echo '/swapfile none swap sw 0 0' >> /etc/fstab
+### Everyday tasks on Render
 
-# Docker, and automatic security updates.
-curl -fsSL https://get.docker.com | sh
-apt-get install -y unattended-upgrades git
-```
+- **Update to the latest MoneyLens:** in Render, open the service and press
+  **Manual Deploy → Deploy latest commit**. Database changes apply by
+  themselves when the app starts.
+- **Change a setting** (codes, AI): service → **Environment**, edit, **Save
+  and deploy**. Removing a code stops new sign-ups with it; accounts already
+  made keep working. Set `SIGNUP_MODE` to `closed` to stop all new accounts.
+- **Look at logs:** service → **Logs**.
+- **A friend forgot their password** (MoneyLens sends no email). On your Mac,
+  in the MoneyLens folder:
 
-## 4. Get MoneyLens and fill in the settings
+  ```sh
+  cd apps/api
+  DATABASE_URL='your Neon connection string' EMAIL=friend@example.com \
+    NEW_PASSWORD='a new long phrase' \
+    node --input-type=module < ../../infrastructure/hosting/reset-password.mjs
+  ```
 
-```sh
-git clone https://github.com/prakashsankaran/MoneyLens.git /opt/moneylens
-cd /opt/moneylens/infrastructure/hosting
-cp .env.example .env
-chmod 600 .env
-openssl rand -base64 48 | tr -d '/+=' | cut -c1-48   # run twice: one for each secret
-nano .env
-```
+  Tell them the new password and ask them to change it in Settings.
 
-Fill in:
+- **Backups.** Neon keeps a short history you can restore from in its
+  console. For your own copy, run this on your Mac now and then (Docker
+  Desktop must be running; use the same major version Neon shows, 17 here):
 
-- `MONEYLENS_DOMAIN`: the address from step 2, without `https://`.
-- `POSTGRES_PASSWORD` and `JWT_ACCESS_SECRET`: one generated value each.
-- `SIGNUP_INVITE_CODES`: one code per friend, for example
-  `asha-7Hq2xP9k,ravi-Mn4wQ8zt`. Make them hard to guess. Removing a code later
-  stops new sign-ups with it; accounts already created keep working.
+  ```sh
+  mkdir -p ~/MoneyLens-backups
+  docker run --rm postgres:17-alpine pg_dump --format=custom 'your Neon connection string' \
+    > ~/MoneyLens-backups/moneylens-$(date +%F).dump
+  ```
 
-Leave `SIGNUP_MODE=invite`. `open` lets anyone who finds the address create an
-account; `closed` stops all new accounts once everyone has joined.
+  The dumps contain everyone's transactions: keep them somewhere private.
 
-## 5. Start it
-
-```sh
-docker compose up -d --build     # the first build takes several minutes
-docker compose ps                # every service should say "Up"
-docker compose logs caddy | grep -i certificate
-```
-
-Open `https://YOUR_ADDRESS` on your phone. The padlock should show, and
-Create account should ask for an invite code. Create your own account first.
-
-On an iPhone, Safari → Share → Add to Home Screen gives you an app icon.
-On Android, Chrome → menu → Add to Home screen.
-
-## 6. Invite friends
-
-Send each friend the address and their own code. They create an account,
-then go to Imports and upload their Google Pay PDF (with its password if it
-has one) or a bank CSV or Excel statement.
+- **Take it down:** delete the service in Render and the project in Neon.
+  Deleting the Neon project deletes everyone's data for good.
 
 ## MoneyLens AI on a shared server
 
-Your Gemini key is yours, and the free tier is small. The safe default is
+Your Gemini key is yours, and the free tier is small. The default is
 `AI_PROVIDER=none`: everyone, you included, gets the calculated figures
 without a written explanation.
 
-To use AI yourself only, set in `.env`:
+To use AI yourself only, add these settings (Render: service → Environment;
+Option B: `.env`):
 
 ```sh
 AI_PROVIDER=openai-compatible
@@ -144,60 +140,63 @@ AI_API_KEY=your-key
 AI_ALLOWED_EMAILS=you@example.com
 ```
 
-then `docker compose up -d`. Add a friend's email to `AI_ALLOWED_EMAILS` only
-if you are happy for their monthly totals to go to Google under your key and
-for them to use your daily allowance. `AI_DAILY_MESSAGE_LIMIT` (20 here)
-caps questions per person per day.
+Add a friend's email to `AI_ALLOWED_EMAILS` only if you are happy for their
+monthly totals to go to Google under your key and for them to use your daily
+allowance. `AI_DAILY_MESSAGE_LIMIT` (20) caps questions per person per day.
 
-## Backups
+## Option B: your own server
 
-A dump lands in `infrastructure/hosting/backups/` every 24 hours. A backup on
-the same disk does not survive losing the server, so copy them to your Mac
-now and then:
+If you would rather have a machine that never sleeps, `infrastructure/hosting/`
+also runs MoneyLens on any Ubuntu server with Docker: Oracle Cloud's Always
+Free tier (₹0, but it asks for a card to verify you, and Oracle may stop free
+machines that sit mostly idle) or a small paid server (about US$6 a month).
 
-```sh
-scp 'root@SERVER_IP:/opt/moneylens/infrastructure/hosting/backups/*.dump' ~/MoneyLens-backups/
-```
+| File                 | What it does                                                                  |
+| -------------------- | ----------------------------------------------------------------------------- |
+| `docker-compose.yml` | Postgres, the API, the web app, Caddy (HTTPS) and a nightly backup            |
+| `Caddyfile`          | Gets and renews a free HTTPS certificate for your address; adds HSTS          |
+| `.env.example`       | The settings you fill in: address, secrets, invite codes, AI                  |
+| `backup.sh`          | A compressed database dump every 24 hours, kept for 14 days                   |
+| `reset-password.mjs` | Sets a new password for a friend who forgot theirs (MoneyLens sends no email) |
 
-The dumps contain everyone's transactions: keep the copies somewhere private.
+1. Create an Ubuntu 24.04 server with a public IP and SSH key login.
+2. Point an address at it: a free DuckDNS name (`yourname.duckdns.org`) set
+   to the server's IP, or an `A` record on your own domain.
+3. Prepare it:
 
-To restore one (this replaces what is in the database now):
+   ```sh
+   ssh root@SERVER_IP
+   ufw allow OpenSSH && ufw allow 80/tcp && ufw allow 443 && ufw --force enable
+   fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
+   echo '/swapfile none swap sw 0 0' >> /etc/fstab
+   curl -fsSL https://get.docker.com | sh
+   apt-get install -y unattended-upgrades git
+   ```
 
-```sh
-cd /opt/moneylens/infrastructure/hosting
-docker compose stop api
-docker compose exec -T backup pg_restore --clean --if-exists --no-owner \
-  --dbname=moneylens /backups/moneylens-2026-10-20T000000Z.dump
-docker compose start api
-```
+4. Get MoneyLens and fill in `.env` (address, two generated secrets, invite
+   codes):
 
-## Everyday tasks
+   ```sh
+   git clone https://github.com/prakashsankaran/MoneyLens.git /opt/moneylens
+   cd /opt/moneylens/infrastructure/hosting
+   cp .env.example .env && chmod 600 .env
+   openssl rand -base64 48 | tr -d '/+=' | cut -c1-48   # run twice
+   nano .env
+   ```
 
-**Update to the latest MoneyLens** (database migrations run by themselves):
+5. Start it: `docker compose up -d --build`, then open `https://YOUR_ADDRESS`.
 
-```sh
-cd /opt/moneylens && git pull
-cd infrastructure/hosting && docker compose up -d --build
-```
+Everyday tasks on your own server:
 
-**A friend forgot their password:**
-
-```sh
-cd /opt/moneylens/infrastructure/hosting
-docker compose exec -T -e EMAIL=friend@example.com -e NEW_PASSWORD='a new long phrase' \
-  api node --input-type=module < reset-password.mjs
-```
-
-Tell them the new password and ask them to change it in Settings.
-
-**Stop new sign-ups:** set `SIGNUP_MODE=closed` in `.env`, then
-`docker compose up -d`.
-
-**Look at logs:** `docker compose logs --tail 100 api`.
-
-**Take it down:** `docker compose down` stops everything and keeps the data.
-`docker compose down -v` also deletes the database. Then destroy the droplet
-in the provider's console so you stop paying.
+- **Update:** `cd /opt/moneylens && git pull && cd infrastructure/hosting && docker compose up -d --build`
+- **Password reset:**
+  `docker compose exec -T -e EMAIL=friend@example.com -e NEW_PASSWORD='a new long phrase' api node --input-type=module < reset-password.mjs`
+- **Backups** land in `infrastructure/hosting/backups/`; copy them off the
+  server with `scp`. To restore one:
+  `docker compose stop api`, then
+  `docker compose exec -T backup pg_restore --clean --if-exists --no-owner --dbname=moneylens /backups/FILE.dump`,
+  then `docker compose start api`.
+- **Take it down:** `docker compose down` keeps the data; `down -v` deletes it.
 
 ## What this setup does not do
 
@@ -205,6 +204,6 @@ in the provider's console so you stop paying.
   alerts. Invite codes and the reset script cover a small group of friends.
 - No two-factor sign-in. Accounts are protected by a password, a per-account
   pause after 10 wrong guesses, and the sign-in activity list in Settings.
-- One server, one database. If the machine fails you restore from a backup;
-  there is no automatic failover. That is fine for friends, not for a
+- One app, one database. If something breaks badly you restore from a
+  backup; there is no automatic failover. That is fine for friends, not for a
   business.
