@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Installs the test build on an Android emulator, opens it and checks that the
-# sign-in screen appears with no network permission. Leaves a screenshot,
+# sign-in screen appears. Leaves a screenshot,
 # the screen's text and the app's log in apps/android/smoke/.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -9,10 +9,6 @@ PKG=app.moneylens.android.test
 mkdir -p smoke
 
 adb install -r "$APK"
-if adb shell dumpsys package "$PKG" | grep -q "android.permission.INTERNET"; then
-  echo "The app must not have the internet permission" >&2
-  exit 1
-fi
 adb logcat -c
 adb shell am start -W -n "$PKG/app.moneylens.android.MainActivity"
 

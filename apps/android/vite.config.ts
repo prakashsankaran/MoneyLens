@@ -13,7 +13,9 @@ const shim = (name: string) => here(`./src/backend/shims/${name}.ts`);
  */
 const CSP = [
   "default-src 'self'",
-  "connect-src 'self'",
+  // The only outside address: Gemini, used by the assistant once the person
+  // adds their own key in Settings (src/backend/device-ai.ts).
+  "connect-src 'self' https://generativelanguage.googleapis.com",
   "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
@@ -33,8 +35,9 @@ function androidEntry(): Plugin {
       return undefined;
     },
     transformIndexHtml(html) {
-      // The font is bundled; the app makes no request to Google. The page may
-      // only talk to itself (connect-src 'self'), so even a bug cannot send data out.
+      // The font is bundled, so loading the app makes no request to Google. The
+      // page may only talk to itself and Gemini (see CSP), so even a bug cannot
+      // send data anywhere else.
       return html
         .replace(/\s*<link rel="preconnect"[^>]*>/g, '')
         .replace(/\s*<link\s+href="https:\/\/fonts\.googleapis\.com[^>]*>/g, '')

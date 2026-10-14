@@ -14,13 +14,20 @@ statements, transactions and analysis stay on their own phone.
   Postgres: an in-memory database built from the Prisma schema, saved to the
   app's private storage (IndexedDB) after every change. The API's whole
   integration suite runs against it (`npm test -w @moneylens/android`).
-- **No internet permission.** The Android manifest removes it, so Android
-  itself blocks any network access. A Content-Security-Policy
-  (`connect-src 'self'`) blocks it in the page too, and the font is bundled.
+- **One outside address, used only by AI.** The app has Android's internet
+  permission so the optional AI (below) can work, but its
+  Content-Security-Policy (`connect-src 'self' https://generativelanguage.googleapis.com`)
+  blocks every other address, and the font is bundled. Until someone adds a
+  key, the app sends nothing at all.
 - **No cloud backup.** Android backup and device-to-device transfer are off,
   so the data is not copied to Google Drive.
-- **MoneyLens AI** answers with the calculated figures only
-  (`AI_PROVIDER=none`); no AI service is called.
+- **MoneyLens AI is off until the person turns it on.** Without a key it
+  answers with the calculated figures only. In Settings, each person can add
+  their own free Google Gemini key (stored only on their phone,
+  `src/backend/device-ai.ts`); the assistant and the dashboard brief then send
+  Gemini the question and that month's calculated figures (totals, category
+  totals, top merchant names). Statements, transactions, the account and the
+  password are never sent. Removing the key turns it off again.
 
 Because nothing is stored elsewhere, uninstalling the app or clearing its
 storage deletes the data. Installing a newer version keeps it, as long as the

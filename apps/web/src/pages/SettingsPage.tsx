@@ -15,9 +15,12 @@ import {
 import { MerchantsCard } from '../features/merchants/MerchantsCard';
 import { ActivityCard } from '../features/account/ActivityCard';
 import { PasswordCard } from '../features/account/PasswordCard';
+import { DeviceAICard } from '../features/account/DeviceAICard';
+import { deviceAI } from '../lib/device';
 
 export function SettingsPage() {
   const { user, logout } = useAuth();
+  const ai = deviceAI();
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-5 md:px-6 lg:px-8 lg:py-8">
       <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
@@ -38,6 +41,7 @@ export function SettingsPage() {
       </Card>
       <PasswordCard />
       <ActivityCard />
+      {ai && <DeviceAICard ai={ai} />}
       <CategoriesCard />
       <MerchantsCard />
       <DataCard />

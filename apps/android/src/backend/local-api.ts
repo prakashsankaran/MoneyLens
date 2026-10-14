@@ -3,6 +3,7 @@ import { loadEnv } from '../../../api/src/config/env';
 import { seedCategories } from '../../../api/src/modules/categories/seed-categories';
 import { database, PrismaClient } from './prisma';
 import { cookieJar } from './cookies';
+import { DeviceAIProvider } from './device-ai';
 import { pino } from './shims/pino';
 import type { CookieOptions, LocalRequest, LocalResponse, Router } from './shims/express';
 import type { UploadPart } from './shims/multer';
@@ -50,13 +51,15 @@ async function startBackend(): Promise<Backend> {
     LOG_LEVEL: 'silent',
     // Phones are slower than servers; give big statements time to parse.
     PARSE_TIMEOUT_MS: '60000',
-    // Sends data to an AI service, so it stays off on the phone.
+    // The assistant's AI comes from DeviceAIProvider: off until the person
+    // adds their own key in Settings.
     AI_PROVIDER: 'none',
   });
   const app = createApp({
     env,
     prisma: prisma as never,
     logger: pino() as never,
+    aiProvider: new DeviceAIProvider(),
   }) as unknown as Router;
   return { app, flush };
 }
