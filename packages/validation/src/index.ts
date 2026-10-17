@@ -237,6 +237,13 @@ export const updateImportRowSchema = z
   });
 export type UpdateImportRowInput = z.infer<typeof updateImportRowSchema>;
 
+/** Give many review rows the same category in one step. */
+export const categorizeImportRowsSchema = z.object({
+  rowIds: z.array(idSchema).min(1, 'Choose at least one row').max(20_000),
+  categoryId: idSchema.nullable(),
+});
+export type CategorizeImportRowsInput = z.infer<typeof categorizeImportRowsSchema>;
+
 // ---------------------------------------------------------------------------
 // Analytics
 // ---------------------------------------------------------------------------

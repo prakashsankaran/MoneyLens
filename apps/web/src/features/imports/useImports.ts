@@ -5,7 +5,11 @@ import type {
   ImportReview,
   ImportRowUpdateResult,
 } from '@moneylens/types';
-import type { ColumnMappingInput, UpdateImportRowInput } from '@moneylens/validation';
+import type {
+  CategorizeImportRowsInput,
+  ColumnMappingInput,
+  UpdateImportRowInput,
+} from '@moneylens/validation';
 import { api, send } from '../../lib/api-client';
 import { invalidateFinancialData } from '../categories/useCategories';
 
@@ -89,6 +93,16 @@ export function useUpdateImportRow(importId: string) {
       // Other rows changed on the server too; fetch them.
       if (similarUpdated > 0) void client.invalidateQueries({ queryKey: key, exact: true });
     },
+  });
+}
+
+/** One category for many rows; the server returns the whole review. */
+export function useCategorizeImportRows(importId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CategorizeImportRowsInput) =>
+      send<ImportReview>('POST', `/imports/${importId}/rows/categorize`, input),
+    onSuccess: (review) => client.setQueryData(['imports', importId], review),
   });
 }
 
