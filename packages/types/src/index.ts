@@ -102,7 +102,11 @@ export type AuthEventKind =
   | 'SESSION_REUSE_DETECTED'
   | 'LOGGED_OUT'
   | 'PASSWORD_CHANGED'
-  | 'SIGNED_OUT_EVERYWHERE';
+  | 'SIGNED_OUT_EVERYWHERE'
+  | 'RECOVERY_KEY_CREATED'
+  | 'PASSWORD_RESET_REQUESTED'
+  | 'PASSWORD_RESET_FAILED'
+  | 'PASSWORD_RESET';
 
 export interface AuthActivityItem {
   type: AuthEventKind;
@@ -119,6 +123,24 @@ export interface SignupOptions {
   mode: SignupMode;
 }
 
+/** Ways to reset a forgotten password on this server (`GET /api/auth/reset-options`). */
+export interface PasswordResetOptions {
+  /** A reset link can be emailed (the server has an email account set up). */
+  email: boolean;
+}
+
+/** Whether the signed-in account has a recovery key (`GET /api/auth/recovery-key`). */
+export interface RecoveryKeyStatus {
+  /** ISO instant the current key was made; null when there is none. */
+  createdAt: string | null;
+}
+
+/** A recovery key, shown to its owner once and never again. */
+export interface NewRecoveryKey {
+  recoveryKey: string;
+  createdAt: string;
+}
+
 export interface AuthResult {
   user: PublicUser;
   accessToken: string;
@@ -130,6 +152,11 @@ export interface AuthResult {
    * as an httpOnly cookie instead and never see it.
    */
   refreshToken?: string;
+  /**
+   * After sign-up, and after a reset with a recovery key (which uses the old
+   * key up): the account's new recovery key, shown once.
+   */
+  recoveryKey?: string;
 }
 
 /** Header a native app sends so auth returns the refresh token in the body. */

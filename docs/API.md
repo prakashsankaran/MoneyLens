@@ -60,8 +60,9 @@ No authentication. `{ mode: "open" | "invite" | "closed" }` from
 ### `POST /api/auth/register`
 
 Body: `{ "name": string, "email": string, "password": string (10–128), "inviteCode"?: string (≤64) }`
-→ `201` `{ user, accessToken, expiresIn }` and sets the refresh cookie.
-`409 CONFLICT` if the email exists. With `SIGNUP_MODE=invite`, a missing or
+→ `201` `{ user, accessToken, expiresIn, recoveryKey }` and sets the refresh
+cookie. `recoveryKey` (`XXXX-XXXX-XXXX-XXXX-XXXX-XXXX`) is shown to the owner
+once and stored only as a hash. `409 CONFLICT` if the email exists. With `SIGNUP_MODE=invite`, a missing or
 wrong code → `403 FORBIDDEN` with `details.field = "inviteCode"`; with
 `SIGNUP_MODE=closed` every request → `403 FORBIDDEN`.
 
@@ -96,8 +97,41 @@ Revokes the session family and clears the cookie → `200` `{ loggedOut: true }`
 The account's last 20 sign-in events, newest first →
 `[{ type, at, userAgent }]`. `type` is one of `REGISTERED`,
 `LOGIN_SUCCEEDED`, `LOGIN_FAILED`, `LOGIN_BLOCKED`, `SESSION_REUSE_DETECTED`,
-`LOGGED_OUT`, `PASSWORD_CHANGED`, `SIGNED_OUT_EVERYWHERE`. Events are kept
-for 90 days.
+`LOGGED_OUT`, `PASSWORD_CHANGED`, `SIGNED_OUT_EVERYWHERE`,
+`RECOVERY_KEY_CREATED`, `PASSWORD_RESET_REQUESTED`, `PASSWORD_RESET_FAILED`,
+`PASSWORD_RESET`. Events are kept for 90 days.
+
+### Forgotten passwords
+
+See docs/PASSWORD_RESET.md. All of these share the credential rate limit.
+
+- `GET /api/auth/reset-options` → `{ email: boolean }`: whether this server
+  can email reset links (SMTP_* set).
+- `POST /api/auth/reset-password/recovery-key` with
+  `{ "email", "recoveryKey", "newPassword" (10–128) }` → `200` a new session
+  like login, plus a new `recoveryKey` (the old one is used up). Every other
+  session is revoked. A wrong key or unknown email → the same `400` with
+  `details.fields.recoveryKey`; repeated failures for one email →
+  `429 RATE_LIMITED`, like sign-in.
+- `POST /api/auth/forgot-password` with `{ "email" }` → `200`
+  `{ requested: true }` whether or not the account exists; the link
+  (`APP_URL/reset-password#token=…`, single use, 30 minutes) is emailed in the
+  background, at most 3 an hour per account. `403 FORBIDDEN` when email is
+  not set up.
+- `POST /api/auth/reset-password` with `{ "token", "newPassword" }` → `200` a
+  new session like login; every other session and unused link is revoked. An
+  expired or used token → `400` with `details.fields.token`.
+
+### `GET /api/auth/recovery-key` 🔒
+
+→ `{ createdAt: string | null }`; null when the account has no key (made
+before recovery keys).
+
+### `POST /api/auth/recovery-key` 🔒
+
+Body: `{ "password" }`. Re-checks the password and makes a new key; the old
+one stops working → `201` `{ recoveryKey, createdAt }`. A wrong password →
+`400` with `details.fields.password`.
 
 ### `POST /api/auth/password` 🔒
 

@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '@/auth/AuthProvider';
+import { RecoveryKeyScreen } from '@/features/auth/RecoveryKeyScreen';
 import { Button, Loading } from '@/components/ui';
 import { createQueryClient } from '@/lib/queries';
 import { colors, type } from '@/lib/theme';
@@ -24,7 +25,7 @@ export default function RootLayout() {
 }
 
 function RootStack() {
-  const { status, problem, retry } = useAuth();
+  const { status, problem, retry, recoveryKey, dismissRecoveryKey } = useAuth();
   if (status === 'loading') {
     return (
       <View style={{ flex: 1, backgroundColor: colors.canvas }}>
@@ -52,6 +53,10 @@ function RootStack() {
     );
   }
   const signedIn = status === 'authenticated';
+  // A new recovery key is shown once, before the app opens.
+  if (signedIn && recoveryKey) {
+    return <RecoveryKeyScreen recoveryKey={recoveryKey} onDone={dismissRecoveryKey} />;
+  }
   return (
     <Stack
       screenOptions={{
@@ -77,6 +82,7 @@ function RootStack() {
       <Stack.Protected guard={!signedIn}>
         <Stack.Screen name="sign-in" />
         <Stack.Screen name="register" />
+        <Stack.Screen name="forgot-password" />
       </Stack.Protected>
     </Stack>
   );

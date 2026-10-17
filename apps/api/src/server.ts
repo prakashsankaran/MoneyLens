@@ -3,6 +3,7 @@ import { loadEnv } from './config/env';
 import { createLogger } from './lib/logger';
 import { createPrismaClient } from './lib/prisma';
 import { serveWeb } from './lib/serve-web';
+import { createSmtpMailer } from './lib/smtp-mailer';
 import { pruneAuthEvents } from './modules/auth/auth.service';
 import { seedCategories } from './modules/categories/seed-categories';
 
@@ -14,6 +15,7 @@ const app = createApp({
   prisma,
   logger,
   webApp: env.WEB_DIST_DIR ? serveWeb(env.WEB_DIST_DIR) : undefined,
+  mailer: createSmtpMailer(env),
 });
 
 // A fresh database (a new server) has no categories until this runs.

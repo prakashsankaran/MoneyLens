@@ -1,9 +1,11 @@
 import { lazy } from 'react';
 import { Navigate, Route, Routes } from 'react-router';
 import { AppShell } from './components/layout/AppShell';
+import { ForgotPasswordPage } from './features/auth/ForgotPasswordPage';
 import { LoginPage } from './features/auth/LoginPage';
 import { RegisterPage } from './features/auth/RegisterPage';
 import { RequireAuth } from './features/auth/RequireAuth';
+import { ResetPasswordPage } from './features/auth/ResetPasswordPage';
 import { DashboardPage } from './features/dashboard/DashboardPage';
 import { TransactionsPage } from './features/transactions/TransactionsPage';
 
@@ -39,6 +41,8 @@ export function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route element={<RequireAuth />}>
         <Route element={<AppShell />}>
           <Route index element={<DashboardPage />} />

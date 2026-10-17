@@ -15,6 +15,10 @@ test('import, review, correct and delete', async ({ page }) => {
     .fill(`e2e-${Date.now()}-${Math.random().toString(36).slice(2)}@example.test`);
   await page.getByLabel('Password').fill('correct horse battery');
   await page.getByRole('button', { name: /create/i }).click();
+  // New accounts are shown their recovery key once before the app opens.
+  await expect(page.getByText('Save your recovery key')).toBeVisible();
+  await page.getByLabel('I have saved my recovery key').check();
+  await page.getByRole('button', { name: 'Open MoneyLens' }).click();
   await expect(page.getByText('No transactions yet')).toBeVisible();
 
   await page.getByRole('link', { name: 'Import a statement' }).click();

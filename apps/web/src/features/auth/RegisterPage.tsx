@@ -8,6 +8,7 @@ import { registerSchema, type RegisterInput } from '@moneylens/validation';
 import { Button } from '../../components/Button';
 import { FormField } from '../../components/FormField';
 import { api, ApiError } from '../../lib/api-client';
+import { RecoveryKeyPanel } from '../account/RecoveryKeyPanel';
 import { AuthLayout } from './AuthLayout';
 import { useAuth } from './useAuth';
 
@@ -15,6 +16,8 @@ export function RegisterPage() {
   const { register: createAccount, status } = useAuth();
   const navigate = useNavigate();
   const [formError, setFormError] = useState<string | null>(null);
+  // Shown once, after the account is made and before the app opens.
+  const [recoveryKey, setRecoveryKey] = useState<{ key: string; email: string } | null>(null);
   // Before the answer arrives the form is shown without the invite field;
   // the server still enforces the rule.
   const signup = useQuery({
@@ -30,13 +33,30 @@ export function RegisterPage() {
     formState: { errors, isSubmitting },
   } = useForm<RegisterInput>({ resolver: zodResolver(registerSchema) });
 
+  if (recoveryKey) {
+    return (
+      <AuthLayout
+        title="Save your recovery key"
+        subtitle="Your account is ready. One last step keeps it safe."
+      >
+        <RecoveryKeyPanel
+          recoveryKey={recoveryKey.key}
+          email={recoveryKey.email}
+          doneLabel="Open MoneyLens"
+          onDone={() => void navigate('/', { replace: true })}
+        />
+      </AuthLayout>
+    );
+  }
+
   if (status === 'authenticated') return <Navigate to="/" replace />;
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
     try {
-      await createAccount(values);
-      void navigate('/', { replace: true });
+      const key = await createAccount(values);
+      if (key) setRecoveryKey({ key, email: values.email });
+      else void navigate('/', { replace: true });
     } catch (err) {
       if (err instanceof ApiError && err.code === 'CONFLICT') {
         setError('email', { message: err.message });

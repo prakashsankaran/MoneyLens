@@ -2,10 +2,14 @@ import { Router, type CookieOptions, type Request, type Response } from 'express
 import { MOBILE_CLIENT_HEADER, type AuthResult, type SignupOptions } from '@moneylens/types';
 import {
   changePasswordSchema,
+  createRecoveryKeySchema,
   deleteAccountSchema,
+  forgotPasswordSchema,
   loginSchema,
   refreshTokenSchema,
   registerSchema,
+  resetWithLinkSchema,
+  resetWithRecoveryKeySchema,
 } from '@moneylens/validation';
 import { unauthenticated } from '../../lib/errors';
 import { ok } from '../../lib/respond';
@@ -53,6 +57,7 @@ export function authRoutes(deps: {
       accessToken: session.accessToken,
       expiresIn: tokens.accessTokenTtlSeconds,
     };
+    if (session.recoveryKey) body.recoveryKey = session.recoveryKey;
     if (isMobileClient(req)) body.refreshToken = session.refreshToken;
     else res.cookie(REFRESH_COOKIE, session.refreshToken, cookieOptions(session.refreshExpiresAt));
     ok(res, body, status);
@@ -78,6 +83,28 @@ export function authRoutes(deps: {
   router.post('/login', credentialLimiter, async (req, res) => {
     const input = parseInput(loginSchema, req.body);
     sendSession(req, res, await auth.login(input, req.get('user-agent')));
+  });
+
+  // Forgotten passwords. Each checks a secret (key or link) or sends email,
+  // so all share the credential rate limit.
+  router.get('/reset-options', (_req, res) => {
+    ok(res, auth.resetOptions);
+  });
+
+  router.post('/reset-password/recovery-key', credentialLimiter, async (req, res) => {
+    const input = parseInput(resetWithRecoveryKeySchema, req.body);
+    sendSession(req, res, await auth.resetWithRecoveryKey(input, req.get('user-agent')));
+  });
+
+  router.post('/forgot-password', credentialLimiter, async (req, res) => {
+    const { email } = parseInput(forgotPasswordSchema, req.body);
+    await auth.requestPasswordReset(email, req.get('user-agent'));
+    ok(res, { requested: true });
+  });
+
+  router.post('/reset-password', credentialLimiter, async (req, res) => {
+    const input = parseInput(resetWithLinkSchema, req.body);
+    sendSession(req, res, await auth.resetWithLink(input, req.get('user-agent')));
   });
 
   router.post('/refresh', sameSiteOnly, refreshLimiter, async (req, res) => {
@@ -119,6 +146,15 @@ export function authRoutes(deps: {
       res,
       await auth.changePassword(requireUserId(req), input, req.get('user-agent')),
     );
+  });
+
+  router.get('/recovery-key', authenticate(tokens), async (req, res) => {
+    ok(res, await auth.recoveryKeyStatus(requireUserId(req)));
+  });
+
+  router.post('/recovery-key', authenticate(tokens), credentialLimiter, async (req, res) => {
+    const { password } = parseInput(createRecoveryKeySchema, req.body);
+    ok(res, await auth.createRecoveryKey(requireUserId(req), password, req.get('user-agent')), 201);
   });
 
   router.post('/sign-out-everywhere', authenticate(tokens), async (req, res) => {

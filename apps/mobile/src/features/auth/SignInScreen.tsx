@@ -67,6 +67,11 @@ export function SignInScreen() {
           />
         )}
       />
+      <Text style={[type.small, { textAlign: 'right' }]}>
+        <Link href="/forgot-password" style={{ color: colors.primary, fontWeight: '600' }}>
+          Forgot password?
+        </Link>
+      </Text>
       {problem ? (
         <Text accessibilityRole="alert" style={[type.small, { color: colors.negative }]}>
           {problem}

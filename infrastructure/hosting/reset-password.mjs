@@ -1,5 +1,6 @@
 // Sets a new password for one account and signs it out everywhere, for a
-// friend who forgot theirs (MoneyLens has no email reset). Run on the server:
+// friend who lost both their password and their recovery key. Newer images
+// also have `node dist/reset-password.js`, which asks instead. Run on the server:
 //
 //   docker compose exec -T -e EMAIL=friend@example.com -e NEW_PASSWORD='a long new phrase' \
 //     api node --input-type=module < reset-password.mjs

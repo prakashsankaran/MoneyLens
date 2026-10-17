@@ -136,13 +136,14 @@ drop data. See [docs/DATABASE.md](docs/DATABASE.md).
 
 ## Running
 
-| What               | Command                                                                               |
-| ------------------ | ------------------------------------------------------------------------------------- |
-| API + web together | `npm run dev`                                                                         |
-| API only           | `npm run dev:api`                                                                     |
-| Web only           | `npm run dev:web`                                                                     |
-| Production build   | `npm run build` then `npm start -w @moneylens/api` and serve `apps/web/dist`          |
-| Mobile (Expo)      | `npm run dev:mobile`, then scan the QR code with Expo Go. See `apps/mobile/README.md` |
+| What               | Command                                                                                        |
+| ------------------ | ---------------------------------------------------------------------------------------------- |
+| API + web together | `npm run dev`                                                                                  |
+| API only           | `npm run dev:api`                                                                              |
+| Web only           | `npm run dev:web`                                                                              |
+| Production build   | `npm run build` then `npm start -w @moneylens/api` and serve `apps/web/dist`                   |
+| Mobile (Expo)      | `npm run dev:mobile`, then scan the QR code with Expo Go. See `apps/mobile/README.md`          |
+| Forgotten password | `npm run reset-password` (asks for the email and a new password). See `docs/PASSWORD_RESET.md` |
 
 ### On your iPhone, away from home
 

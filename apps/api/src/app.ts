@@ -8,6 +8,7 @@ import type { PrismaClient } from '@prisma/client';
 import type { Logger } from 'pino';
 import type { Env } from './config/env';
 import { AnalyticsDataSource } from './lib/analytics-data';
+import type { Mailer } from './lib/mailer';
 import { AIService } from './modules/ai/ai.service';
 import { aiRoutes } from './modules/ai/ai.routes';
 import { createAIProvider, type AIProvider } from './modules/ai/providers';
@@ -48,10 +49,15 @@ export interface AppDeps {
    * file for the browser, never imports Node's file system modules.
    */
   webApp?: Router;
+  /**
+   * Sends password reset links (`createSmtpMailer` from SMTP_*); without one
+   * email reset is off. Passed in for the same reason as `webApp`.
+   */
+  mailer?: Mailer;
 }
 
 /** Build the Express app. Dependencies are injected so tests can supply their own. */
-export function createApp({ env, prisma, logger, aiProvider, webApp }: AppDeps): Express {
+export function createApp({ env, prisma, logger, aiProvider, webApp, mailer }: AppDeps): Express {
   const app = express();
   app.disable('x-powered-by');
   if (env.TRUST_PROXY > 0) app.set('trust proxy', env.TRUST_PROXY);
@@ -100,6 +106,11 @@ export function createApp({ env, prisma, logger, aiProvider, webApp }: AppDeps):
     { attempts: env.LOGIN_LOCKOUT_ATTEMPTS, windowMinutes: env.LOGIN_LOCKOUT_MINUTES },
     createHmac('sha256', env.JWT_ACCESS_SECRET).update('moneylens:email-key').digest('hex'),
     { mode: env.SIGNUP_MODE, inviteCodes: env.SIGNUP_INVITE_CODES },
+    {
+      mailer,
+      appUrl: env.APP_URL ?? env.CORS_ORIGINS[0] ?? 'http://localhost:5173',
+      onMailError: (err) => logger.error({ err }, 'Sending a password reset email failed'),
+    },
   );
   const analyticsData = new AnalyticsDataSource(prisma);
   const recurring = new RecurringService(prisma, analyticsData);

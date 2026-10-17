@@ -96,17 +96,17 @@ statement.
   and deploy**. Removing a code stops new sign-ups with it; accounts already
   made keep working. Set `SIGNUP_MODE` to `closed` to stop all new accounts.
 - **Look at logs:** service → **Logs**.
-- **A friend forgot their password** (MoneyLens sends no email). On your Mac,
-  in the MoneyLens folder:
+- **A friend forgot their password.** They choose "Forgot password?" and use
+  the recovery key they saved at sign-up (or an email link, if you set up
+  email: docs/PASSWORD_RESET.md). If they lost the key too, on your Mac, in
+  the MoneyLens folder:
 
   ```sh
-  cd apps/api
-  DATABASE_URL='your Neon connection string' EMAIL=friend@example.com \
-    NEW_PASSWORD='a new long phrase' \
-    node --input-type=module < ../../infrastructure/hosting/reset-password.mjs
+  DATABASE_URL='your Neon connection string' npm run reset-password
   ```
 
-  Tell them the new password and ask them to change it in Settings.
+  Tell them the new password and ask them to change it and make a new
+  recovery key in Settings.
 
 - **Backups.** Neon keeps a short history you can restore from in its
   console. For your own copy, run this on your Mac now and then (Docker
@@ -151,13 +151,13 @@ also runs MoneyLens on any Ubuntu server with Docker: Oracle Cloud's Always
 Free tier (₹0, but it asks for a card to verify you, and Oracle may stop free
 machines that sit mostly idle) or a small paid server (about US$6 a month).
 
-| File                 | What it does                                                                  |
-| -------------------- | ----------------------------------------------------------------------------- |
-| `docker-compose.yml` | Postgres, the API, the web app, Caddy (HTTPS) and a nightly backup            |
-| `Caddyfile`          | Gets and renews a free HTTPS certificate for your address; adds HSTS          |
-| `.env.example`       | The settings you fill in: address, secrets, invite codes, AI                  |
-| `backup.sh`          | A compressed database dump every 24 hours, kept for 14 days                   |
-| `reset-password.mjs` | Sets a new password for a friend who forgot theirs (MoneyLens sends no email) |
+| File                 | What it does                                                             |
+| -------------------- | ------------------------------------------------------------------------ |
+| `docker-compose.yml` | Postgres, the API, the web app, Caddy (HTTPS) and a nightly backup       |
+| `Caddyfile`          | Gets and renews a free HTTPS certificate for your address; adds HSTS     |
+| `.env.example`       | The settings you fill in: address, secrets, invite codes, AI             |
+| `backup.sh`          | A compressed database dump every 24 hours, kept for 14 days              |
+| `reset-password.mjs` | Sets a new password for a friend who lost both password and recovery key |
 
 1. Create an Ubuntu 24.04 server with a public IP and SSH key login.
 2. Point an address at it: a free DuckDNS name (`yourname.duckdns.org`) set
@@ -189,8 +189,9 @@ machines that sit mostly idle) or a small paid server (about US$6 a month).
 Everyday tasks on your own server:
 
 - **Update:** `cd /opt/moneylens && git pull && cd infrastructure/hosting && docker compose up -d --build`
-- **Password reset:**
-  `docker compose exec -T -e EMAIL=friend@example.com -e NEW_PASSWORD='a new long phrase' api node --input-type=module < reset-password.mjs`
+- **Password reset** (a friend lost both password and recovery key):
+  `docker compose exec api node dist/reset-password.js` asks for the email and
+  the new password.
 - **Backups** land in `infrastructure/hosting/backups/`; copy them off the
   server with `scp`. To restore one:
   `docker compose stop api`, then
@@ -200,8 +201,10 @@ Everyday tasks on your own server:
 
 ## What this setup does not do
 
-- No email: no sign-up confirmation, no "forgot password" link, no sign-in
-  alerts. Invite codes and the reset script cover a small group of friends.
+- Email is optional and only used for "Forgot password?" links
+  (docs/PASSWORD_RESET.md). Without it there is no sign-up confirmation or
+  sign-in alert; recovery keys, invite codes and the reset command cover a
+  small group of friends.
 - No two-factor sign-in. Accounts are protected by a password, a per-account
   pause after 10 wrong guesses, and the sign-in activity list in Settings.
 - One app, one database. If something breaks badly you restore from a

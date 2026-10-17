@@ -1,6 +1,12 @@
 import { createContext, useContext } from 'react';
 import type { PublicUser } from '@moneylens/types';
-import type { ChangePasswordInput, LoginInput, RegisterInput } from '@moneylens/validation';
+import type {
+  ChangePasswordInput,
+  LoginInput,
+  RegisterInput,
+  ResetWithLinkInput,
+  ResetWithRecoveryKeyInput,
+} from '@moneylens/validation';
 
 export type AuthStatus = 'loading' | 'authenticated' | 'anonymous';
 
@@ -8,7 +14,12 @@ export interface AuthContextValue {
   status: AuthStatus;
   user: PublicUser | null;
   login(input: LoginInput): Promise<void>;
-  register(input: RegisterInput): Promise<void>;
+  /** Create the account and sign in; resolves with its recovery key, to show once. */
+  register(input: RegisterInput): Promise<string | undefined>;
+  /** Reset a forgotten password with the recovery key and sign in; resolves with the new key. */
+  resetWithRecoveryKey(input: ResetWithRecoveryKeyInput): Promise<string | undefined>;
+  /** Reset a forgotten password with an emailed link and sign in. */
+  resetWithLink(input: ResetWithLinkInput): Promise<void>;
   logout(): Promise<void>;
   /** Change the password; every other device is signed out. */
   changePassword(input: ChangePasswordInput): Promise<void>;

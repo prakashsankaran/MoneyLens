@@ -123,8 +123,13 @@ model User {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   lastLoginAt  DateTime?
+  /// argon2id hash of the recovery key, which resets a forgotten password
+  /// without email. The key itself is shown to the owner once and never stored.
+  recoveryKeyHash      String?
+  recoveryKeyCreatedAt DateTime?
 
   sessions          Session[]
+  passwordResets    PasswordResetToken[]
   transactions      Transaction[]
   categories        Category[]
   merchants         Merchant[]
@@ -151,6 +156,14 @@ enum AuthEventType {
   PASSWORD_CHANGED
   /// Every session was revoked at the owner's request.
   SIGNED_OUT_EVERYWHERE
+  /// A new recovery key was made; any earlier one stopped working.
+  RECOVERY_KEY_CREATED
+  /// A password reset link was emailed.
+  PASSWORD_RESET_REQUESTED
+  /// A reset with a wrong recovery key or an unknown email.
+  PASSWORD_RESET_FAILED
+  /// The password was reset with a recovery key, an emailed link or the server's command.
+  PASSWORD_RESET
 }
 
 /// Security log of sign-in activity, also used to slow down password
@@ -171,6 +184,21 @@ model AuthEvent {
   @@index([userId, createdAt])
   @@index([emailKey, createdAt])
   @@index([createdAt])
+}
+
+/// A single-use link for resetting a forgotten password by email. Only a
+/// SHA-256 hash of the token is stored; the token itself is only in the email.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  createdAt DateTime  @default(now())
+  expiresAt DateTime
+  usedAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 /// Refresh-token session. Only a SHA-256 hash of the token is stored, so a

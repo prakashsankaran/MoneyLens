@@ -214,6 +214,10 @@ export const AUTH_EVENT_LABEL: Record<AuthEventKind, string> = {
   LOGGED_OUT: 'Signed out',
   PASSWORD_CHANGED: 'Password changed, other devices signed out',
   SIGNED_OUT_EVERYWHERE: 'Signed out on every device',
+  RECOVERY_KEY_CREATED: 'New recovery key made',
+  PASSWORD_RESET_REQUESTED: 'Password reset link emailed',
+  PASSWORD_RESET_FAILED: 'Wrong recovery key entered',
+  PASSWORD_RESET: 'Password reset, every device signed out',
 };
 
 /** Events the account owner may want to look into. */
@@ -221,6 +225,7 @@ export const AUTH_EVENT_WARNING: ReadonlySet<AuthEventKind> = new Set([
   'LOGIN_FAILED',
   'LOGIN_BLOCKED',
   'SESSION_REUSE_DETECTED',
+  'PASSWORD_RESET_FAILED',
 ]);
 
 /**
@@ -228,8 +233,12 @@ export const AUTH_EVENT_WARNING: ReadonlySet<AuthEventKind> = new Set([
  * "Chrome on Mac" or "MoneyLens app on Android". Good enough to recognise
  * your own devices; not a security signal on its own.
  */
+/** Recorded as the device for a reset made with `npm run reset-password`. */
+export const SERVER_RESET_AGENT = 'MoneyLens reset-password command';
+
 export function describeDevice(userAgent: string | null): string {
   if (!userAgent) return 'Unknown device';
+  if (userAgent === SERVER_RESET_AGENT) return 'The computer running MoneyLens';
   const ua = userAgent;
   const os = /iPhone|iPad|iOS/i.test(ua)
     ? 'iPhone'

@@ -44,13 +44,23 @@ export function LoginPage() {
           error={errors.email?.message}
           {...register('email')}
         />
-        <FormField
-          label="Password"
-          type="password"
-          autoComplete="current-password"
-          error={errors.password?.message}
-          {...register('password')}
-        />
+        <div>
+          <FormField
+            label="Password"
+            type="password"
+            autoComplete="current-password"
+            error={errors.password?.message}
+            {...register('password')}
+          />
+          <p className="mt-2 text-right text-sm">
+            <Link
+              to="/forgot-password"
+              className="font-medium text-brand-700 hover:underline underline-offset-4 hover:text-brand-800 transition-all duration-200"
+            >
+              Forgot password?
+            </Link>
+          </p>
+        </div>
         {formError && (
           <p role="alert" className="text-sm text-negative">
             {formError}
