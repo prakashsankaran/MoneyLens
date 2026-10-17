@@ -81,7 +81,7 @@ export function RecoveryKeyCard() {
             className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-start"
           >
             <FormField
-              label="Confirm with your password"
+              label="Password to confirm"
               type="password"
               autoComplete="current-password"
               className="sm:flex-1"

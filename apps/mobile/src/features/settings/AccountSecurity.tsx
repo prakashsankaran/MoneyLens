@@ -172,7 +172,7 @@ export function RecoveryKeyCard() {
             </Text>
           )}
           <TextField
-            label="Confirm with your password"
+            label="Password to confirm"
             secureTextEntry
             autoComplete="current-password"
             value={password}

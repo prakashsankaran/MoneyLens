@@ -47,6 +47,10 @@ async function createAccountWithSample(page: Page) {
   await page.getByLabel('Email').fill('asha@example.test');
   await page.getByLabel('Password').fill('correct horse battery');
   await page.getByRole('button', { name: /create/i }).click();
+  // New accounts are shown their recovery key once before the app opens.
+  await expect(page.getByText('Save your recovery key')).toBeVisible();
+  await page.getByLabel('I have saved my recovery key').check();
+  await page.getByRole('button', { name: 'Open MoneyLens' }).click();
   await expect(page.getByText('No transactions yet')).toBeVisible();
 
   await page.getByRole('link', { name: 'Import a statement' }).click();
