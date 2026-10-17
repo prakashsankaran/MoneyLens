@@ -4,11 +4,12 @@ import type { Express, Router } from 'express';
 import { createApp } from '../src/app';
 import { loadEnv } from '../src/config/env';
 import { createLogger } from '../src/lib/logger';
+import type { Mailer } from '../src/lib/mailer';
 import type { AIProvider } from '../src/modules/ai/providers';
 
 export function createTestContext(
   overrides: Record<string, string> = {},
-  deps: { aiProvider?: AIProvider; webApp?: Router } = {},
+  deps: { aiProvider?: AIProvider; webApp?: Router; mailer?: Mailer } = {},
 ) {
   const env = loadEnv({
     ...process.env,

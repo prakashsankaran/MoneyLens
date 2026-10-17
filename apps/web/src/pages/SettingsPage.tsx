@@ -15,6 +15,7 @@ import {
 import { MerchantsCard } from '../features/merchants/MerchantsCard';
 import { ActivityCard } from '../features/account/ActivityCard';
 import { PasswordCard } from '../features/account/PasswordCard';
+import { RecoveryKeyCard } from '../features/account/RecoveryKeyCard';
 import { DeviceAICard } from '../features/account/DeviceAICard';
 import { deviceAI } from '../lib/device';
 
@@ -40,6 +41,7 @@ export function SettingsPage() {
         </Button>
       </Card>
       <PasswordCard />
+      <RecoveryKeyCard />
       <ActivityCard />
       {ai && <DeviceAICard ai={ai} />}
       <CategoriesCard />

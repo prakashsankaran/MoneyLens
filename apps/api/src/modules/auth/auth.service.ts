@@ -1,8 +1,23 @@
-import { createHash, createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { Prisma, type AuthEventType, type PrismaClient, type User } from '@prisma/client';
-import type { AuthActivityItem, PublicUser, SignupMode } from '@moneylens/types';
-import type { ChangePasswordInput, LoginInput, RegisterInput } from '@moneylens/validation';
+import type {
+  AuthActivityItem,
+  NewRecoveryKey,
+  PasswordResetOptions,
+  PublicUser,
+  RecoveryKeyStatus,
+  SignupMode,
+} from '@moneylens/types';
+import type {
+  ChangePasswordInput,
+  LoginInput,
+  RegisterInput,
+  ResetWithLinkInput,
+  ResetWithRecoveryKeyInput,
+} from '@moneylens/validation';
+import { SERVER_RESET_AGENT } from '@moneylens/shared';
 import { AppError, unauthenticated } from '../../lib/errors';
+import type { Mailer } from '../../lib/mailer';
 import { getDummyHash, hashPassword, verifyPassword } from './password';
 import type { TokenService } from './tokens';
 
@@ -11,6 +26,8 @@ export interface IssuedSession {
   accessToken: string;
   refreshToken: string;
   refreshExpiresAt: Date;
+  /** A new recovery key to show the owner once (sign-up, reset with a key). */
+  recoveryKey?: string;
 }
 
 export function toPublicUser(user: User): PublicUser {
@@ -43,6 +60,35 @@ function codeMatches(given: string, codes: readonly string[]): boolean {
   return found;
 }
 
+export interface PasswordResetPolicy {
+  /** Sends reset links; without one, email reset is off. */
+  mailer?: Mailer;
+  /** The web app's address, for the link in the email. */
+  appUrl: string;
+  /** Called when a reset email fails to send (the request itself still succeeds). */
+  onMailError?: (err: unknown) => void;
+}
+
+/** How long an emailed reset link works. */
+export const RESET_LINK_MINUTES = 30;
+/** Reset emails per account per hour, so the form cannot flood someone's inbox. */
+const RESET_EMAILS_PER_HOUR = 3;
+
+// Crockford base32: no I, L, O or U, so a written-down key is not misread.
+const KEY_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+
+/**
+ * A new recovery key: 24 characters (120 random bits), shown in groups of
+ * four. Returns the key as shown and the normalised form that is hashed.
+ */
+export function generateRecoveryKey(): { display: string; normalised: string } {
+  // 256 is a multiple of 32, so masking each byte keeps every character equally likely.
+  const normalised = Array.from(randomBytes(24), (b) => KEY_ALPHABET[b & 31]).join('');
+  return { display: normalised.replace(/(.{4})(?!$)/g, '$1-'), normalised };
+}
+
+const sha256 = (value: string) => createHash('sha256').update(value).digest('hex');
+
 /** Sign-in activity is kept this long, then pruned. */
 export const AUTH_EVENT_RETENTION_DAYS = 90;
 
@@ -61,10 +107,15 @@ export class AuthService {
     /** Keys the email HMAC, so the stored value cannot be reversed with a word list. */
     private readonly emailKeySecret = 'moneylens-test-email-key',
     private readonly signup: SignupPolicy = { mode: 'open', inviteCodes: [] },
+    private readonly reset: PasswordResetPolicy = { appUrl: 'http://localhost:5173' },
   ) {}
 
   get signupMode(): SignupMode {
     return this.signup.mode;
+  }
+
+  get resetOptions(): PasswordResetOptions {
+    return { email: Boolean(this.reset.mailer) };
   }
 
   /** Throws unless this server lets the caller create an account. */
@@ -108,17 +159,21 @@ export class AuthService {
    * window. Counting by email (not IP) slows down guessing one account's
    * password from many addresses; the IP rate limit covers the reverse.
    */
-  private async recentFailures(emailKey: string): Promise<number> {
+  private async recentFailures(
+    emailKey: string,
+    failed: AuthEventType = 'LOGIN_FAILED',
+    succeeded: AuthEventType = 'LOGIN_SUCCEEDED',
+  ): Promise<number> {
     const since = new Date(Date.now() - this.throttle.windowMinutes * 60_000);
     const lastSuccess = await this.prisma.authEvent.findFirst({
-      where: { emailKey, type: 'LOGIN_SUCCEEDED', createdAt: { gte: since } },
+      where: { emailKey, type: succeeded, createdAt: { gte: since } },
       orderBy: { createdAt: 'desc' },
       select: { createdAt: true },
     });
     return this.prisma.authEvent.count({
       where: {
         emailKey,
-        type: 'LOGIN_FAILED',
+        type: failed,
         createdAt: {
           gte: lastSuccess && lastSuccess.createdAt > since ? lastSuccess.createdAt : since,
         },
@@ -129,10 +184,19 @@ export class AuthService {
   async register(input: RegisterInput, userAgent?: string): Promise<IssuedSession> {
     this.checkSignupAllowed(input.inviteCode);
     const passwordHash = await hashPassword(input.password);
+    // Every new account gets a recovery key, shown once, so a forgotten
+    // password can be reset without email.
+    const key = generateRecoveryKey();
     let user: User;
     try {
       user = await this.prisma.user.create({
-        data: { email: input.email, name: input.name, passwordHash },
+        data: {
+          email: input.email,
+          name: input.name,
+          passwordHash,
+          recoveryKeyHash: await hashPassword(key.normalised),
+          recoveryKeyCreatedAt: new Date(),
+        },
       });
     } catch (err) {
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
@@ -146,7 +210,7 @@ export class AuthService {
       emailKey: this.emailKey(user.email),
       userAgent,
     });
-    return session;
+    return { ...session, recoveryKey: key.display };
   }
 
   async login(input: LoginInput, userAgent?: string): Promise<IssuedSession> {
@@ -251,12 +315,199 @@ export class AuthService {
     const passwordHash = await hashPassword(input.newPassword);
     const [updated] = await this.prisma.$transaction([
       this.prisma.user.update({ where: { id: userId }, data: { passwordHash } }),
-      this.prisma.session.updateMany({
-        where: { userId, revokedAt: null },
-        data: { revokedAt: new Date() },
-      }),
+      ...this.signOutAndCancelResets(userId),
     ]);
     await this.record('PASSWORD_CHANGED', { userId, userAgent });
+    return this.issueSession(updated, randomUUID(), userAgent);
+  }
+
+  /** Revokes every session and voids unused reset links (inside a transaction). */
+  private signOutAndCancelResets(userId: string) {
+    const now = new Date();
+    return [
+      this.prisma.session.updateMany({
+        where: { userId, revokedAt: null },
+        data: { revokedAt: now },
+      }),
+      this.prisma.passwordResetToken.updateMany({
+        where: { userId, usedAt: null },
+        data: { usedAt: now },
+      }),
+    ];
+  }
+
+  async recoveryKeyStatus(userId: string): Promise<RecoveryKeyStatus> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw unauthenticated();
+    return {
+      createdAt: user.recoveryKeyHash ? (user.recoveryKeyCreatedAt?.toISOString() ?? null) : null,
+    };
+  }
+
+  /**
+   * Make a new recovery key after re-checking the password. The earlier key,
+   * if any, stops working.
+   */
+  async createRecoveryKey(
+    userId: string,
+    password: string,
+    userAgent?: string,
+  ): Promise<NewRecoveryKey> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw unauthenticated();
+    if (!(await verifyPassword(user.passwordHash, password))) {
+      throw new AppError('VALIDATION_ERROR', 'Password is incorrect', {
+        fields: { password: 'Password is incorrect' },
+      });
+    }
+    const key = generateRecoveryKey();
+    const createdAt = new Date();
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        recoveryKeyHash: await hashPassword(key.normalised),
+        recoveryKeyCreatedAt: createdAt,
+      },
+    });
+    await this.record('RECOVERY_KEY_CREATED', { userId, userAgent });
+    return { recoveryKey: key.display, createdAt: createdAt.toISOString() };
+  }
+
+  /**
+   * Reset a forgotten password with the account's recovery key. The key is
+   * used up: the owner gets a new one to save, every device is signed out,
+   * and this one is signed in. Wrong keys are paused per account like
+   * wrong passwords.
+   */
+  async resetWithRecoveryKey(
+    input: ResetWithRecoveryKeyInput,
+    userAgent?: string,
+  ): Promise<IssuedSession> {
+    const emailKey = this.emailKey(input.email);
+    const user = await this.prisma.user.findUnique({ where: { email: input.email } });
+    if (
+      (await this.recentFailures(emailKey, 'PASSWORD_RESET_FAILED', 'PASSWORD_RESET')) >=
+      this.throttle.attempts
+    ) {
+      throw new AppError(
+        'RATE_LIMITED',
+        `Too many wrong recovery keys for this account. Try again in ${this.throttle.windowMinutes} minutes.`,
+      );
+    }
+    // As with sign-in, always verify a hash so timing does not reveal accounts.
+    const valid = await verifyPassword(
+      user?.recoveryKeyHash ?? (await getDummyHash()),
+      input.recoveryKey,
+    );
+    if (!user?.recoveryKeyHash || !valid) {
+      await this.record('PASSWORD_RESET_FAILED', { userId: user?.id, emailKey, userAgent });
+      throw new AppError('VALIDATION_ERROR', 'That email and recovery key do not match.', {
+        fields: { recoveryKey: 'That email and recovery key do not match.' },
+      });
+    }
+
+    const key = generateRecoveryKey();
+    const [updated] = await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          passwordHash: await hashPassword(input.newPassword),
+          recoveryKeyHash: await hashPassword(key.normalised),
+          recoveryKeyCreatedAt: new Date(),
+        },
+      }),
+      ...this.signOutAndCancelResets(user.id),
+    ]);
+    await this.record('PASSWORD_RESET', { userId: user.id, emailKey, userAgent });
+    const session = await this.issueSession(updated, randomUUID(), userAgent);
+    return { ...session, recoveryKey: key.display };
+  }
+
+  /**
+   * Email a reset link, if this server can send email and the account
+   * exists. The answer is the same either way, so the form does not reveal
+   * who has an account, and the email is sent in the background so timing
+   * does not either.
+   */
+  async requestPasswordReset(email: string, userAgent?: string): Promise<void> {
+    const { mailer } = this.reset;
+    if (!mailer) {
+      throw new AppError('FORBIDDEN', 'This MoneyLens cannot send email. Use your recovery key.');
+    }
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) return;
+    const recent = await this.prisma.authEvent.count({
+      where: {
+        userId: user.id,
+        type: 'PASSWORD_RESET_REQUESTED',
+        createdAt: { gte: new Date(Date.now() - 60 * 60_000) },
+      },
+    });
+    if (recent >= RESET_EMAILS_PER_HOUR) return;
+
+    const token = randomBytes(32).toString('base64url');
+    await this.prisma.passwordResetToken.create({
+      data: {
+        userId: user.id,
+        tokenHash: sha256(token),
+        expiresAt: new Date(Date.now() + RESET_LINK_MINUTES * 60_000),
+      },
+    });
+    await this.record('PASSWORD_RESET_REQUESTED', { userId: user.id, userAgent });
+    // The token goes after # so it never reaches a server log or another site.
+    const link = `${this.reset.appUrl.replace(/\/+$/, '')}/reset-password#token=${token}`;
+    void mailer
+      .send({
+        to: user.email,
+        subject: 'Reset your MoneyLens password',
+        text: [
+          `Hi ${user.name},`,
+          '',
+          'Someone asked to reset the password for your MoneyLens account. To choose a new password, open this link:',
+          '',
+          link,
+          '',
+          `The link works once, for ${RESET_LINK_MINUTES} minutes.`,
+          '',
+          "If this wasn't you, ignore this email. Your password stays the same.",
+        ].join('\n'),
+      })
+      .catch((err: unknown) => this.reset.onMailError?.(err));
+  }
+
+  /** Set a new password with an emailed link. Every device is signed out; this one is signed in. */
+  async resetWithLink(input: ResetWithLinkInput, userAgent?: string): Promise<IssuedSession> {
+    const now = new Date();
+    const record = await this.prisma.passwordResetToken.findUnique({
+      where: { tokenHash: sha256(input.token) },
+    });
+    // Claim the link with a conditional update, so it cannot be used twice.
+    const claimed =
+      record && record.expiresAt > now
+        ? await this.prisma.passwordResetToken.updateMany({
+            where: { id: record.id, usedAt: null },
+            data: { usedAt: now },
+          })
+        : { count: 0 };
+    if (!record || claimed.count !== 1) {
+      throw new AppError(
+        'VALIDATION_ERROR',
+        'This reset link has expired or was already used. Ask for a new one.',
+        { fields: { token: 'This reset link has expired or was already used.' } },
+      );
+    }
+    const [updated] = await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: record.userId },
+        data: { passwordHash: await hashPassword(input.newPassword) },
+      }),
+      ...this.signOutAndCancelResets(record.userId),
+    ]);
+    await this.record('PASSWORD_RESET', {
+      userId: updated.id,
+      emailKey: this.emailKey(updated.email),
+      userAgent,
+    });
     return this.issueSession(updated, randomUUID(), userAgent);
   }
 
@@ -333,4 +584,38 @@ export class AuthService {
       refreshExpiresAt,
     };
   }
+}
+
+/**
+ * Set a new password for an account from the computer running the server
+ * (`npm run reset-password`), for someone with neither their password nor a
+ * recovery key. Every device is signed out and unused reset links stop working.
+ * Returns false when there is no account with that email.
+ */
+export async function resetPasswordFromServer(
+  prisma: PrismaClient,
+  email: string,
+  newPassword: string,
+): Promise<boolean> {
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) return false;
+  const now = new Date();
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: await hashPassword(newPassword) },
+    }),
+    prisma.session.updateMany({
+      where: { userId: user.id, revokedAt: null },
+      data: { revokedAt: now },
+    }),
+    prisma.passwordResetToken.updateMany({
+      where: { userId: user.id, usedAt: null },
+      data: { usedAt: now },
+    }),
+    prisma.authEvent.create({
+      data: { type: 'PASSWORD_RESET', userId: user.id, userAgent: SERVER_RESET_AGENT },
+    }),
+  ]);
+  return true;
 }

@@ -83,6 +83,26 @@
           "isUpdatedAt": false
         },
         {
+          "name": "recoveryKeyHash",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "recoveryKeyCreatedAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
           "name": "sessions",
           "kind": "object",
           "type": "Session",
@@ -92,6 +112,19 @@
           "isUnique": false,
           "isUpdatedAt": false,
           "relationName": "SessionToUser",
+          "relationFromFields": [],
+          "relationToFields": []
+        },
+        {
+          "name": "passwordResets",
+          "kind": "object",
+          "type": "PasswordResetToken",
+          "isList": true,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "PasswordResetTokenToUser",
           "relationFromFields": [],
           "relationToFields": []
         },
@@ -336,6 +369,99 @@
           "isUnique": false,
           "isUpdatedAt": false,
           "relationName": "AuthEventToUser",
+          "relationFromFields": [
+            "userId"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "relationOnDelete": "Cascade"
+        }
+      ],
+      "uniqueFields": []
+    },
+    "PasswordResetToken": {
+      "fields": [
+        {
+          "name": "id",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": true,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "cuid",
+            "args": [
+              1
+            ]
+          }
+        },
+        {
+          "name": "userId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "tokenHash",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": true,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "createdAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": {
+            "name": "now",
+            "args": []
+          }
+        },
+        {
+          "name": "expiresAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "usedAt",
+          "kind": "scalar",
+          "type": "DateTime",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "user",
+          "kind": "object",
+          "type": "User",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "relationName": "PasswordResetTokenToUser",
           "relationFromFields": [
             "userId"
           ],

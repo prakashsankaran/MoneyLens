@@ -48,6 +48,22 @@ const envSchema = z.object({
   /** Comma-separated invite codes for SIGNUP_MODE=invite (one per friend works well). */
   SIGNUP_INVITE_CODES: commaList,
 
+  /**
+   * Email account for password reset links. All three of host, user and
+   * password set: "Email me a reset link" is offered; otherwise it is hidden.
+   */
+  SMTP_HOST: z.string().trim().optional(),
+  SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(465),
+  SMTP_USER: z.string().trim().optional(),
+  SMTP_PASS: z.string().trim().optional(),
+  /** Sender shown on emails; defaults to "MoneyLens <SMTP_USER>". */
+  MAIL_FROM: z.string().trim().optional(),
+  /**
+   * The app's address as people open it, for links in emails. Defaults to
+   * the first of CORS_ORIGINS.
+   */
+  APP_URL: z.string().trim().url().optional(),
+
   /** MoneyLens AI. `none` shows calculated figures only; `mock` is for tests. */
   AI_PROVIDER: z.enum(['none', 'mock', 'anthropic', 'openai-compatible']).default('none'),
   AI_MODEL: z.string().trim().optional(),
@@ -92,6 +108,10 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
     if (env.SIGNUP_INVITE_CODES.some((code) => code.length < 8 || code.length > 64)) {
       throw new Error('Each invite code in SIGNUP_INVITE_CODES must be 8 to 64 characters.');
     }
+  }
+  const smtpSet = [env.SMTP_HOST, env.SMTP_USER, env.SMTP_PASS].filter(Boolean).length;
+  if (smtpSet > 0 && smtpSet < 3) {
+    throw new Error('Email needs all of SMTP_HOST, SMTP_USER and SMTP_PASS (or none of them).');
   }
   if (
     (env.AI_PROVIDER === 'anthropic' || env.AI_PROVIDER === 'openai-compatible') &&

@@ -6,7 +6,7 @@ import { errorMessage } from '@/lib/api';
 import { apiBaseUrl } from '@/lib/config';
 import { useDeleteAllTransactions } from '@/lib/queries';
 import { colors, type } from '@/lib/theme';
-import { ActivityCard, PasswordCard } from './AccountSecurity';
+import { ActivityCard, PasswordCard, RecoveryKeyCard } from './AccountSecurity';
 
 export function SettingsScreen() {
   const { deleteAccount } = useAuth();
@@ -30,6 +30,7 @@ export function SettingsScreen() {
       </Card>
 
       <PasswordCard />
+      <RecoveryKeyCard />
       <ActivityCard />
 
       <Card

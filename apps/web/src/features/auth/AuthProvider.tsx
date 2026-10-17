@@ -54,8 +54,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         );
       },
       async register(input) {
+        const result = await api<AuthResult>('/auth/register', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+        accept(result);
+        return result.recoveryKey;
+      },
+      async resetWithRecoveryKey(input) {
+        const result = await api<AuthResult>('/auth/reset-password/recovery-key', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
+        accept(result);
+        return result.recoveryKey;
+      },
+      async resetWithLink(input) {
         accept(
-          await api<AuthResult>('/auth/register', { method: 'POST', body: JSON.stringify(input) }),
+          await api<AuthResult>('/auth/reset-password', {
+            method: 'POST',
+            body: JSON.stringify(input),
+          }),
         );
       },
       async logout() {

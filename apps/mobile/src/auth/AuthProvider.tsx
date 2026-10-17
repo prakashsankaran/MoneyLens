@@ -2,7 +2,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { AuthResult, PublicUser } from '@moneylens/types';
-import type { ChangePasswordInput, LoginInput, RegisterInput } from '@moneylens/validation';
+import type {
+  ChangePasswordInput,
+  LoginInput,
+  RegisterInput,
+  ResetWithRecoveryKeyInput,
+} from '@moneylens/validation';
 import {
   acceptSession,
   api,
@@ -25,6 +30,14 @@ export interface AuthContextValue {
   retry: () => void;
   login: (input: LoginInput) => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
+  /** Reset a forgotten password with the recovery key and sign in. */
+  resetWithRecoveryKey: (input: ResetWithRecoveryKeyInput) => Promise<void>;
+  /**
+   * A recovery key to show once: after sign-up, or after a reset with a key.
+   * The app shows it before anything else until `dismissRecoveryKey`.
+   */
+  recoveryKey: string | null;
+  dismissRecoveryKey: () => void;
   logout: () => Promise<void>;
   deleteAccount: (password: string) => Promise<void>;
   /** Change the password; every other device is signed out. */
@@ -47,9 +60,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<PublicUser | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const [recoveryKey, setRecoveryKey] = useState<string | null>(null);
 
   const accept = useCallback(async (result: AuthResult) => {
     await acceptSession(result);
+    setRecoveryKey(result.recoveryKey ?? null);
     setUser(result.user);
     setStatus('authenticated');
   }, []);
@@ -103,6 +118,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async register(input) {
         await accept(await send<AuthResult>('POST', '/auth/register', input));
       },
+      async resetWithRecoveryKey(input) {
+        await accept(await send<AuthResult>('POST', '/auth/reset-password/recovery-key', input));
+      },
+      recoveryKey,
+      dismissRecoveryKey: () => setRecoveryKey(null),
       async logout() {
         await signOut();
         signOutLocally();
@@ -124,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       },
     }),
-    [status, user, problem, accept, signOutLocally],
+    [status, user, problem, recoveryKey, accept, signOutLocally],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

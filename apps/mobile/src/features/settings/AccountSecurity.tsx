@@ -1,16 +1,20 @@
 import { ShieldAlert } from 'lucide-react-native';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
+import type { NewRecoveryKey, RecoveryKeyStatus } from '@moneylens/types';
 import {
   AUTH_EVENT_LABEL,
   AUTH_EVENT_WARNING,
   describeDevice,
+  formatDay,
   formatDayTime,
 } from '@moneylens/shared';
 import { changePasswordSchema } from '@moneylens/validation';
 import { useAuth } from '@/auth/AuthProvider';
 import { Button, Card, ErrorState, Loading, TextField } from '@/components/ui';
-import { errorMessage, fieldErrors } from '@/lib/api';
+import { RecoveryKeyPanel } from '@/features/auth/RecoveryKeyPanel';
+import { api, errorMessage, fieldErrors, send } from '@/lib/api';
 import { useAuthActivity } from '@/lib/queries';
 import { colors, type } from '@/lib/theme';
 
@@ -93,6 +97,96 @@ export function PasswordCard() {
           onPress={() => void signOutEverywhere()}
         />
       </View>
+    </Card>
+  );
+}
+
+const RECOVERY_KEY_STATUS = ['auth', 'recovery-key'];
+
+/** Whether the account has a recovery key, and a way to make a new one. */
+export function RecoveryKeyCard() {
+  const queryClient = useQueryClient();
+  const status = useQuery({
+    queryKey: RECOVERY_KEY_STATUS,
+    queryFn: () => api<RecoveryKeyStatus>('/auth/recovery-key'),
+  });
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | undefined>();
+  const [busy, setBusy] = useState(false);
+  const [newKey, setNewKey] = useState<string | null>(null);
+  const createdAt = status.data?.createdAt;
+
+  const submit = async () => {
+    if (!password) {
+      setError('Enter your password');
+      return;
+    }
+    setError(undefined);
+    setBusy(true);
+    try {
+      const made = await send<NewRecoveryKey>('POST', '/auth/recovery-key', { password });
+      setPassword('');
+      setNewKey(made.recoveryKey);
+      await queryClient.invalidateQueries({ queryKey: RECOVERY_KEY_STATUS });
+      await queryClient.invalidateQueries({ queryKey: ['auth-activity'] });
+    } catch (err) {
+      setError(fieldErrors(err).password ?? errorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card
+      title="Recovery key"
+      subtitle="If you forget your password, this key lets you set a new one from the sign-in screen."
+    >
+      {newKey ? (
+        <RecoveryKeyPanel recoveryKey={newKey} doneLabel="Done" onDone={() => setNewKey(null)} />
+      ) : status.isPending ? (
+        <Loading />
+      ) : status.isError ? (
+        <ErrorState message={errorMessage(status.error)} onRetry={() => void status.refetch()} />
+      ) : (
+        <View style={{ gap: 12 }}>
+          {createdAt ? (
+            <Text style={type.body}>
+              You have a recovery key, made {formatDay(createdAt)}. Lost it? Make a new one; the old
+              one will stop working.
+            </Text>
+          ) : (
+            <Text
+              style={[
+                type.body,
+                {
+                  color: colors.warning,
+                  backgroundColor: colors.tint.warning,
+                  padding: 10,
+                  borderRadius: 10,
+                  fontWeight: '600',
+                },
+              ]}
+            >
+              You don't have a recovery key yet. Make one now, so a forgotten password never locks
+              you out.
+            </Text>
+          )}
+          <TextField
+            label="Confirm with your password"
+            secureTextEntry
+            autoComplete="current-password"
+            value={password}
+            onChangeText={setPassword}
+            error={error}
+          />
+          <Button
+            label={createdAt ? 'Make a new key' : 'Make a recovery key'}
+            variant={createdAt ? 'secondary' : 'primary'}
+            busy={busy}
+            onPress={() => void submit()}
+          />
+        </View>
+      )}
     </Card>
   );
 }

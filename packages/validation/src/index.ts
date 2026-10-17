@@ -193,6 +193,40 @@ export const changePasswordSchema = z
   });
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 
+/**
+ * A recovery key as the owner types it: 24 letters and digits, usually in
+ * groups of four. Case, spaces and dashes are ignored, and letters that look
+ * like digits (O, I, L) are read as those digits.
+ */
+export const recoveryKeySchema = z
+  .string()
+  .max(64, 'Enter your recovery key')
+  .transform((v) => v.toUpperCase().replace(/[\s-]/g, '').replace(/O/g, '0').replace(/[IL]/g, '1'))
+  .pipe(z.string().regex(/^[0-9A-Z]{24}$/, 'A recovery key has 24 letters and digits'));
+
+export const resetWithRecoveryKeySchema = z.object({
+  email: emailSchema,
+  recoveryKey: recoveryKeySchema,
+  newPassword: passwordSchema,
+});
+export type ResetWithRecoveryKeyInput = z.infer<typeof resetWithRecoveryKeySchema>;
+
+export const forgotPasswordSchema = z.object({ email: emailSchema });
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+
+/** The token from an emailed reset link, and the new password. */
+export const resetWithLinkSchema = z.object({
+  token: z.string().min(20, 'This reset link is incomplete').max(200),
+  newPassword: passwordSchema,
+});
+export type ResetWithLinkInput = z.infer<typeof resetWithLinkSchema>;
+
+/** Making a new recovery key re-checks the password. */
+export const createRecoveryKeySchema = z.object({
+  password: z.string().min(1, 'Enter your password').max(128),
+});
+export type CreateRecoveryKeyInput = z.infer<typeof createRecoveryKeySchema>;
+
 /** Mobile clients send the refresh token in the body instead of a cookie. */
 export const refreshTokenSchema = z.object({
   refreshToken: z.string().min(16).max(256),

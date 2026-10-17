@@ -122,6 +122,7 @@ describe('describeDevice', () => {
     ],
     ['okhttp/4.12.0', 'MoneyLens app on Android'],
     ['MoneyLens/1 CFNetwork/1568.100.1 Darwin/24.0.0', 'MoneyLens app on iPhone'],
+    ['MoneyLens reset-password command', 'The computer running MoneyLens'],
     ['curl/8.0', 'Unknown device'],
     [null, 'Unknown device'],
   ])('%s → %s', (ua, expected) => {

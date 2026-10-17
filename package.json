@@ -35,6 +35,7 @@
     "db:deploy": "npm run db:deploy -w @moneylens/api",
     "db:seed": "npm run db:seed -w @moneylens/api",
     "db:reset": "npm run db:reset -w @moneylens/api",
+    "reset-password": "npm run --silent reset-password -w @moneylens/api",
     "docker:up": "docker compose -f infrastructure/docker/docker-compose.yml up -d",
     "docker:down": "docker compose -f infrastructure/docker/docker-compose.yml down"
   },

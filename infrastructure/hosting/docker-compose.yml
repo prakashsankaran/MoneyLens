@@ -49,6 +49,12 @@ services:
       AI_BASE_URL: ${AI_BASE_URL:-}
       AI_ALLOWED_EMAILS: ${AI_ALLOWED_EMAILS:-}
       AI_DAILY_MESSAGE_LIMIT: ${AI_DAILY_MESSAGE_LIMIT:-20}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      APP_URL: https://${MONEYLENS_DOMAIN}
     depends_on:
       postgres:
         condition: service_healthy
