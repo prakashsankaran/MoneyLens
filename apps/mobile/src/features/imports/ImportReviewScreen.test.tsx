@@ -84,6 +84,7 @@ jest.mock('@/lib/queries', () => ({
 }));
 
 describe('ImportReviewScreen', () => {
+  // The first render of a full screen loads most of the app, which is slow on CI runners.
   it('groups uncategorised rows by merchant and categorises the selected ones', async () => {
     await render(<ImportReviewScreen />);
     await fireEvent.press(screen.getByRole('tab', { name: 'By merchant' }));
@@ -98,5 +99,5 @@ describe('ImportReviewScreen', () => {
       { rowIds: ['p2', 'p3', 'p1'], categoryId: 'transfers' },
       expect.anything(),
     );
-  });
+  }, 30_000);
 });
