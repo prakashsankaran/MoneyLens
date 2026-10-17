@@ -133,4 +133,83 @@ describe('ImportReviewPage', () => {
       applyToSimilar: true,
     });
   });
+
+  it('categorises uncategorised rows a merchant at a time', async () => {
+    const person = (id: string, merchantName: string, amountPaise: number) => ({
+      ...importReview.rows[0]!,
+      id,
+      merchantName,
+      amountPaise,
+      rawDescription: `UPI-${merchantName.toUpperCase()}`,
+      category: null,
+      categoryConfidence: null,
+    });
+    const review: ImportReview = {
+      ...importReview,
+      rows: [
+        importReview.rows[0]!,
+        person('p1', 'Meena Iyer', 6_000),
+        person('p2', 'Ravi Kumar', 12_000),
+        person('p3', 'Ravi Kumar', 8_000),
+      ],
+    };
+    const calls = mockApi(({ method, url, body }) => {
+      if (url.includes('/categories')) return { data: categoryTree };
+      if (method === 'POST' && url.endsWith('/rows/categorize')) {
+        const { rowIds } = body as { rowIds: string[] };
+        return {
+          data: {
+            ...review,
+            rows: review.rows.map((r) =>
+              rowIds.includes(r.id)
+                ? {
+                    ...r,
+                    category: { id: 'restaurants', name: 'Restaurants', slug: 'restaurants' },
+                  }
+                : r,
+            ),
+          },
+        };
+      }
+      if (method === 'POST' && url.endsWith('/confirm')) {
+        return {
+          data: {
+            import: { ...review.import, status: 'CONFIRMED' },
+            committed: 4,
+            learnedMerchants: 2,
+          },
+        };
+      }
+      if (url.includes('/imports/imp1')) return { data: review };
+      return undefined;
+    });
+    renderPage();
+    await userEvent.click(await screen.findByRole('tab', { name: 'Uncategorised (3)' }));
+    const groups = screen.getByRole('region', { name: 'Uncategorised rows by merchant' });
+    // Biggest group first, with its row count and total.
+    const items = within(groups).getAllByRole('listitem');
+    expect(items[0]).toHaveTextContent('Ravi Kumar');
+    expect(items[0]).toHaveTextContent('2 rows');
+    expect(items[1]).toHaveTextContent('Meena Iyer');
+
+    await userEvent.click(within(groups).getByRole('checkbox', { name: 'Select all' }));
+    expect(within(groups).getByText('2 selected · 3 rows')).toBeInTheDocument();
+    await userEvent.selectOptions(
+      within(groups).getByRole('combobox', { name: 'Category for selected merchants' }),
+      'restaurants',
+    );
+    await userEvent.click(within(groups).getByRole('button', { name: 'Apply' }));
+    expect(calls.find((c) => c.url.endsWith('/rows/categorize'))?.body).toEqual({
+      rowIds: ['p2', 'p3', 'p1'],
+      categoryId: 'restaurants',
+    });
+    expect(
+      await screen.findByText('Every row you are importing has a category.'),
+    ).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /^Import \d+ transactions$/ }));
+    expect(
+      await screen.findByText(/categories you picked for 2 merchants will be filled in/),
+    ).toBeInTheDocument();
+  });
 });

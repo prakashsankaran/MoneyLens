@@ -947,6 +947,8 @@ export interface ImportNeedsInputDetails {
 export interface ImportConfirmResult {
   import: ImportRecord;
   committed: number;
+  /** Merchants whose category from this review will be filled in on later imports. */
+  learnedMerchants: number;
 }
 
 // ---------------------------------------------------------------------------

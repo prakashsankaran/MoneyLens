@@ -19,6 +19,12 @@ afterAll(async () => {
 
 const auth = (token: string) => ({ Authorization: `Bearer ${token}` });
 
+async function categoryBySlug(token: string, parent: string, child: string) {
+  const categories = await request(app).get('/api/categories').set(auth(token));
+  const top = categories.body.data.find((c: { slug: string }) => c.slug === parent);
+  return top.children.find((c: { slug: string }) => c.slug === child) as { id: string };
+}
+
 /** Each upload gets a unique trailing comment line so the same-file guard does not trigger. */
 function unique(buffer: Buffer): Buffer {
   return Buffer.concat([buffer, Buffer.from(`\n,Opening Balance ${Math.random()},,,,,\n`)]);
@@ -433,6 +439,146 @@ describe('import review and confirm', () => {
       .data;
     expect(next.rows[0]?.category?.slug).toBe('shopping');
     expect(next.rows[0]?.categoryConfidence).toBe(1);
+  });
+
+  it('sets one category on many rows at once', async () => {
+    const user = await registerUser(app);
+    const csv = [
+      'Date,Description,Amount',
+      '01/09/2026,UPI RAVI KUMAR,-120',
+      '02/09/2026,UPI RAVI KUMAR,-80',
+      '03/09/2026,UPI MEENA IYER,-60',
+      '04/09/2026,UPI ANAND RAO,-40',
+    ].join('\n');
+    const review: ImportReview = (await upload(user.accessToken, Buffer.from(csv)).expect(201)).body
+      .data;
+    const id = review.import.id;
+    const groceries = await categoryBySlug(user.accessToken, 'food', 'groceries');
+
+    const res = await request(app)
+      .post(`/api/imports/${id}/rows/categorize`)
+      .set(auth(user.accessToken))
+      .send({ rowIds: review.rows.slice(0, 3).map((r) => r.id), categoryId: groceries.id })
+      .expect(200);
+    const after: ImportReview = res.body.data;
+    expect(after.rows.map((r) => r.category?.slug ?? null)).toEqual([
+      'groceries',
+      'groceries',
+      'groceries',
+      null,
+    ]);
+    expect(after.stats.uncategorized).toBe(1);
+
+    // Another user's import, an empty list and hidden categories are refused.
+    const other = await registerUser(app);
+    await request(app)
+      .post(`/api/imports/${id}/rows/categorize`)
+      .set(auth(other.accessToken))
+      .send({ rowIds: [review.rows[0]!.id], categoryId: null })
+      .expect(404);
+    await request(app)
+      .post(`/api/imports/${id}/rows/categorize`)
+      .set(auth(user.accessToken))
+      .send({ rowIds: [], categoryId: null })
+      .expect(400);
+    const secret = await request(app)
+      .post('/api/categories')
+      .set(auth(other.accessToken))
+      .send({ name: 'Secret stuff' })
+      .expect(201);
+    await request(app)
+      .post(`/api/imports/${id}/rows/categorize`)
+      .set(auth(user.accessToken))
+      .send({ rowIds: [review.rows[3]!.id], categoryId: secret.body.data.id })
+      .expect(400);
+
+    // Rows of a different import are untouched.
+    const another: ImportReview = (
+      await upload(user.accessToken, Buffer.from(csv.replace('01/09', '05/09'))).expect(201)
+    ).body.data;
+    await request(app)
+      .post(`/api/imports/${id}/rows/categorize`)
+      .set(auth(user.accessToken))
+      .send({ rowIds: [another.rows[3]!.id], categoryId: groceries.id })
+      .expect(200);
+    const untouched: ImportReview = (
+      await request(app).get(`/api/imports/${another.import.id}`).set(auth(user.accessToken))
+    ).body.data;
+    expect(untouched.rows[3]?.category).toBeNull();
+  });
+
+  it('remembers categories picked in review for merchants that had none', async () => {
+    const user = await registerUser(app);
+    const groceries = await categoryBySlug(user.accessToken, 'food', 'groceries');
+    const dining = await categoryBySlug(user.accessToken, 'food', 'restaurants');
+
+    // First statement: both people are left uncategorised.
+    const first: ImportReview = (
+      await upload(
+        user.accessToken,
+        Buffer.from(
+          'Date,Description,Amount\n01/08/2026,UPI RAVI KUMAR,-100\n02/08/2026,UPI MEENA IYER,-50\n',
+        ),
+      ).expect(201)
+    ).body.data;
+    expect(first.rows.every((r) => r.category === null)).toBe(true);
+    await request(app)
+      .post(`/api/imports/${first.import.id}/confirm`)
+      .set(auth(user.accessToken))
+      .expect(200);
+
+    // Second statement: Ravi gets one category, Meena's rows are split.
+    const second: ImportReview = (
+      await upload(
+        user.accessToken,
+        Buffer.from(
+          [
+            'Date,Description,Amount',
+            '01/09/2026,UPI RAVI KUMAR,-120',
+            '02/09/2026,UPI RAVI KUMAR,-80',
+            '03/09/2026,UPI MEENA IYER,-60',
+            '04/09/2026,UPI MEENA IYER,-40',
+          ].join('\n'),
+        ),
+      ).expect(201)
+    ).body.data;
+    const [ravi1, ravi2, meena1, meena2] = second.rows;
+    const categorize = (rowIds: string[], categoryId: string) =>
+      request(app)
+        .post(`/api/imports/${second.import.id}/rows/categorize`)
+        .set(auth(user.accessToken))
+        .send({ rowIds, categoryId })
+        .expect(200);
+    await categorize([ravi1!.id, ravi2!.id], groceries.id);
+    await categorize([meena1!.id], groceries.id);
+    await categorize([meena2!.id], dining.id);
+    const confirmed = await request(app)
+      .post(`/api/imports/${second.import.id}/confirm`)
+      .set(auth(user.accessToken))
+      .expect(200);
+    expect(confirmed.body.data.learnedMerchants).toBe(1);
+
+    // Ravi's August payment, left uncategorised, picks up the category too.
+    const august: TransactionList = (
+      await request(app)
+        .get('/api/transactions?pageSize=50')
+        .set(auth(user.accessToken))
+        .expect(200)
+    ).body.data;
+    const raviAugust = august.items.find((t) => t.amountPaise === 100_00);
+    expect(raviAugust?.subcategory?.slug).toBe('groceries');
+    expect(august.items.find((t) => t.amountPaise === 50_00)?.category).toBeNull();
+
+    // The next statement fills Ravi in and still leaves Meena to the user.
+    const third: ImportReview = (
+      await upload(
+        user.accessToken,
+        Buffer.from(
+          'Date,Description,Amount\n01/10/2026,UPI RAVI KUMAR,-90\n02/10/2026,UPI MEENA IYER,-30\n',
+        ),
+      ).expect(201)
+    ).body.data;
+    expect(third.rows.map((r) => r.category?.slug ?? null)).toEqual(['groceries', null]);
   });
 
   it('hides other users’ imports', async () => {

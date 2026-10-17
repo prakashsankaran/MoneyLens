@@ -1,6 +1,10 @@
 import { Router, type RequestHandler } from 'express';
 import multer from 'multer';
-import { columnMappingSchema, updateImportRowSchema } from '@moneylens/validation';
+import {
+  categorizeImportRowsSchema,
+  columnMappingSchema,
+  updateImportRowSchema,
+} from '@moneylens/validation';
 import { AppError } from '../../lib/errors';
 import { ok } from '../../lib/respond';
 import { requireUserId } from '../../middleware/authenticate';
@@ -89,6 +93,11 @@ export function importRoutes(service: ImportsService, opts: { maxUploadMb: numbe
   router.patch('/:id/rows/:rowId', async (req, res) => {
     const input = parseInput(updateImportRowSchema, req.body);
     ok(res, await service.updateRow(requireUserId(req), req.params.id, req.params.rowId, input));
+  });
+
+  router.post('/:id/rows/categorize', async (req, res) => {
+    const input = parseInput(categorizeImportRowsSchema, req.body);
+    ok(res, await service.categorizeRows(requireUserId(req), req.params.id, input));
   });
 
   router.post('/:id/confirm', async (req, res) => {

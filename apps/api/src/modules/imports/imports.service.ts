@@ -9,7 +9,7 @@ import type {
   ImportRow,
   ImportRowUpdateResult,
 } from '@moneylens/types';
-import type { UpdateImportRowInput } from '@moneylens/validation';
+import type { CategorizeImportRowsInput, UpdateImportRowInput } from '@moneylens/validation';
 import {
   resolveCategoryAssignment,
   systemCategoryPaths,
@@ -477,6 +477,22 @@ export class ImportsService {
     return { row: toImportRow(updated), stats: statsOf(all), similarUpdated };
   }
 
+  /** Set one category on many review rows, e.g. every row from a few merchants. */
+  async categorizeRows(
+    userId: string,
+    importId: string,
+    input: CategorizeImportRowsInput,
+  ): Promise<ImportReview> {
+    const record = await this.findOwned(userId, importId);
+    this.assertReviewable(record);
+    await resolveCategoryAssignment(this.prisma, userId, input.categoryId);
+    await this.prisma.importTransaction.updateMany({
+      where: { importId, id: { in: input.rowIds } },
+      data: { categoryId: input.categoryId, categoryConfidence: input.categoryId ? 1 : null },
+    });
+    return this.review(userId, importId);
+  }
+
   /**
    * Commit the rows the user kept. Merchants are created (with the statement
    * text remembered as an alias) and every new transaction links back to this
@@ -509,6 +525,8 @@ export class ImportsService {
         const parentOf = new Map(categories.map((c) => [c.id, c.parentId]));
 
         const merchantIds = new Map<string, string>();
+        // Categories the user picked in review (confidence 1), per merchant.
+        const picked = new Map<string, Set<string>>();
         const txIds: string[] = [];
         const data: Prisma.TransactionCreateManyInput[] = [];
         for (const row of rows) {
@@ -529,6 +547,11 @@ export class ImportsService {
 
           // A category deleted since upload is dropped rather than failing the import.
           const known = row.categoryId !== null && parentOf.has(row.categoryId);
+          if (merchantId && known && row.categoryConfidence === 1) {
+            const set = picked.get(merchantId) ?? new Set<string>();
+            set.add(row.categoryId as string);
+            picked.set(merchantId, set);
+          }
           const parentId = known ? parentOf.get(row.categoryId as string) : null;
           const transactionId = randomUUID();
           txIds.push(transactionId);
@@ -564,16 +587,46 @@ export class ImportsService {
           `;
         }
 
-        return tx.import.update({
+        // Remember the category for merchants that had none, so the next
+        // statement fills it in. Skipped when the user split a merchant's rows
+        // across categories, since there is no single answer to remember.
+        let learnedMerchants = 0;
+        for (const [merchantId, categoryIds] of picked) {
+          if (categoryIds.size !== 1) continue;
+          const [categoryId] = categoryIds;
+          const learned = await tx.merchant.updateMany({
+            where: { id: merchantId, userId, userCategoryId: null, defaultCategoryId: null },
+            data: { userCategoryId: categoryId },
+          });
+          if (learned.count === 0) continue;
+          learnedMerchants += 1;
+          // Its other uncategorised transactions, from earlier imports too, get it as well.
+          const parentId = parentOf.get(categoryId as string) ?? null;
+          await tx.transaction.updateMany({
+            where: { userId, merchantId, categoryId: null },
+            data: {
+              categoryId: parentId ?? categoryId,
+              subcategoryId: parentId ? categoryId : null,
+              categoryConfidence: 1,
+            },
+          });
+        }
+
+        const confirmed = await tx.import.update({
           where: { id },
           data: { status: 'CONFIRMED', committedCount: data.length, confirmedAt: new Date() },
         });
+        return { confirmed, learnedMerchants };
       },
       { timeout: 60_000, maxWait: 10_000 },
     );
 
     await this.onChange(userId);
-    return { import: toImportRecord(result), committed: result.committedCount };
+    return {
+      import: toImportRecord(result.confirmed),
+      committed: result.confirmed.committedCount,
+      learnedMerchants: result.learnedMerchants,
+    };
   }
 
   /** Delete an import and every transaction it added. */

@@ -19,6 +19,7 @@ import { CategorySelect } from '../categories/CategorySelect';
 import { useCategories } from '../categories/useCategories';
 import { Amount } from '../transactions/Amount';
 import { useMerchants } from '../transactions/useTransactions';
+import { UncategorisedGroups } from './UncategorisedGroups';
 import {
   useConfirmImport,
   useDeleteImport,
@@ -26,7 +27,7 @@ import {
   useUpdateImportRow,
 } from './useImports';
 
-type View = 'all' | 'attention' | 'excluded';
+type View = 'all' | 'attention' | 'uncategorised' | 'excluded';
 const PAGE = 100;
 
 function needsAttention(row: ImportRow): boolean {
@@ -103,6 +104,13 @@ function ReviewContent({ review }: { review: ImportReview }) {
             <p className="mt-1 text-sm text-ink-500">
               They now appear in your transactions, dashboard and analytics.
             </p>
+            {confirm.data.learnedMerchants > 0 && (
+              <p className="mt-1 text-sm text-ink-500">
+                The categories you picked for {confirm.data.learnedMerchants}{' '}
+                {confirm.data.learnedMerchants === 1 ? 'merchant' : 'merchants'} will be filled in
+                on your next import.
+              </p>
+            )}
             <div className="mt-4 flex flex-wrap gap-4 text-sm font-medium">
               <Link
                 to="/transactions"
@@ -131,6 +139,7 @@ function ReviewContent({ review }: { review: ImportReview }) {
         : true,
   );
   const attentionCount = review.rows.filter(needsAttention).length;
+  const uncategorisedRows = review.rows.filter((r) => r.decision === 'INCLUDE' && !r.category);
   // How many rows share each merchant name, for "apply to similar".
   const merchantCounts = new Map<string, number>();
   for (const r of review.rows) {
@@ -177,6 +186,15 @@ function ReviewContent({ review }: { review: ImportReview }) {
           Totals cover the rows that will be imported.
           {stats.uncategorized > 0 &&
             ` ${stats.uncategorized} ${stats.uncategorized === 1 ? 'row has' : 'rows have'} no category yet.`}
+          {editable && uncategorisedRows.length > 0 && view !== 'uncategorised' && (
+            <button
+              type="button"
+              onClick={() => setView('uncategorised')}
+              className="font-medium text-brand-700 hover:underline underline-offset-4 hover:text-brand-800 transition-all duration-200"
+            >
+              Categorise by merchant
+            </button>
+          )}
         </p>
       </section>
 
@@ -201,6 +219,12 @@ function ReviewContent({ review }: { review: ImportReview }) {
           [
             ['all', `All (${review.rows.length})`],
             ['attention', `Needs a look (${attentionCount})`],
+            ...(editable
+              ? ([['uncategorised', `Uncategorised (${uncategorisedRows.length})`]] as [
+                  View,
+                  string,
+                ][])
+              : []),
             ['excluded', `Excluded (${stats.excluded})`],
           ] as [View, string][]
         ).map(([key, label]) => (
@@ -225,30 +249,42 @@ function ReviewContent({ review }: { review: ImportReview }) {
       </div>
 
       <MerchantDatalist id={merchantListId} merchants={merchants.data ?? []} />
-      <ul className="mt-4 divide-y divide-ink-100 rounded-2xl border border-ink-200 bg-surface shadow-card">
-        {rows.slice(0, limit).map((row) => (
-          <ReviewRow
-            key={row.id}
-            importId={record.id}
-            row={row}
-            categories={categories.data ?? []}
-            editable={editable}
-            similarCount={(row.merchantName ? (merchantCounts.get(row.merchantName) ?? 1) : 1) - 1}
-            merchantListId={merchantListId}
-          />
-        ))}
-        {rows.length === 0 && (
-          <li className="px-4 py-6 text-center text-sm text-ink-500">Nothing to show here.</li>
-        )}
-      </ul>
-      {rows.length > limit && (
-        <button
-          type="button"
-          onClick={() => setLimit((l) => l + PAGE)}
-          className="mt-3 text-sm font-medium text-brand-700 hover:underline underline-offset-4 hover:text-brand-800 transition-all duration-200"
-        >
-          Show {Math.min(PAGE, rows.length - limit)} more
-        </button>
+      {view === 'uncategorised' ? (
+        <UncategorisedGroups
+          importId={record.id}
+          rows={uncategorisedRows}
+          categories={categories.data ?? []}
+        />
+      ) : (
+        <>
+          <ul className="mt-4 divide-y divide-ink-100 rounded-2xl border border-ink-200 bg-surface shadow-card">
+            {rows.slice(0, limit).map((row) => (
+              <ReviewRow
+                key={row.id}
+                importId={record.id}
+                row={row}
+                categories={categories.data ?? []}
+                editable={editable}
+                similarCount={
+                  (row.merchantName ? (merchantCounts.get(row.merchantName) ?? 1) : 1) - 1
+                }
+                merchantListId={merchantListId}
+              />
+            ))}
+            {rows.length === 0 && (
+              <li className="px-4 py-6 text-center text-sm text-ink-500">Nothing to show here.</li>
+            )}
+          </ul>
+          {rows.length > limit && (
+            <button
+              type="button"
+              onClick={() => setLimit((l) => l + PAGE)}
+              className="mt-3 text-sm font-medium text-brand-700 hover:underline underline-offset-4 hover:text-brand-800 transition-all duration-200"
+            >
+              Show {Math.min(PAGE, rows.length - limit)} more
+            </button>
+          )}
+        </>
       )}
 
       {editable && (
