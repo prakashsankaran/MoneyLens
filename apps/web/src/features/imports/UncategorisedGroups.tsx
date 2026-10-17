@@ -1,48 +1,9 @@
 import { useState } from 'react';
-import { formatINR } from '@moneylens/shared';
+import { groupRowsByMerchant, merchantGroupSummary } from '@moneylens/shared';
 import type { CategoryNode, ImportRow } from '@moneylens/types';
 import { Button } from '../../components/Button';
 import { CategorySelect } from '../categories/CategorySelect';
 import { useCategorizeImportRows } from './useImports';
-
-interface Group {
-  merchant: string;
-  rowIds: string[];
-  outPaise: number;
-  inPaise: number;
-  sample: string | null;
-}
-
-/** Uncategorised rows grouped by merchant, biggest groups first. */
-export function groupByMerchant(rows: ImportRow[]): Group[] {
-  const groups = new Map<string, Group>();
-  for (const row of rows) {
-    const merchant = row.merchantName ?? 'Unknown';
-    const group = groups.get(merchant) ?? {
-      merchant,
-      rowIds: [],
-      outPaise: 0,
-      inPaise: 0,
-      sample: row.rawDescription,
-    };
-    group.rowIds.push(row.id);
-    if (row.flow === 'IN') group.inPaise += row.amountPaise;
-    else group.outPaise += row.amountPaise;
-    groups.set(merchant, group);
-  }
-  return [...groups.values()].sort(
-    (a, b) => b.rowIds.length - a.rowIds.length || a.merchant.localeCompare(b.merchant),
-  );
-}
-
-function groupSummary(g: Group): string {
-  const count = `${g.rowIds.length} ${g.rowIds.length === 1 ? 'row' : 'rows'}`;
-  const money = [
-    g.outPaise > 0 && `${formatINR(g.outPaise)} out`,
-    g.inPaise > 0 && `${formatINR(g.inPaise)} in`,
-  ].filter(Boolean);
-  return [count, ...money].join(' · ');
-}
 
 /**
  * Categorise uncategorised rows a merchant at a time: pick a category per
@@ -58,7 +19,7 @@ export function UncategorisedGroups({
   categories: CategoryNode[];
 }) {
   const categorize = useCategorizeImportRows(importId);
-  const groups = groupByMerchant(rows);
+  const groups = groupRowsByMerchant(rows);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkCategory, setBulkCategory] = useState('');
 
@@ -155,7 +116,7 @@ export function UncategorisedGroups({
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-medium">{g.merchant}</span>
                   <span className="block truncate text-xs text-ink-500">
-                    {groupSummary(g)}
+                    {merchantGroupSummary(g)}
                     {g.sample && ` · ${g.sample}`}
                   </span>
                 </span>

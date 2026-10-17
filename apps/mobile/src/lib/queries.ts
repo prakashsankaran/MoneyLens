@@ -29,6 +29,7 @@ import type {
   TransactionUpdateResult,
 } from '@moneylens/types';
 import type {
+  CategorizeImportRowsInput,
   ChatInput,
   SimulationInput,
   UpdateImportRowInput,
@@ -197,6 +198,16 @@ export function useUpdateImportRow(importId: string) {
       );
       if (similarUpdated > 0) void client.invalidateQueries({ queryKey: key, exact: true });
     },
+  });
+}
+
+/** One category for many review rows; the server returns the whole review. */
+export function useCategorizeImportRows(importId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CategorizeImportRowsInput) =>
+      send<ImportReview>('POST', `/imports/${importId}/rows/categorize`, input),
+    onSuccess: (review) => client.setQueryData(['imports', importId], review),
   });
 }
 
