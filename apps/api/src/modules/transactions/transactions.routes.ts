@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   confirmDeleteAllSchema,
+  createTransactionSchema,
   transactionQuerySchema,
   updateTransactionSchema,
 } from '@moneylens/validation';
@@ -15,6 +16,17 @@ export function transactionRoutes(service: TransactionsService): Router {
   router.get('/', async (req, res) => {
     const query = parseInput(transactionQuerySchema, req.query);
     ok(res, await service.list(requireUserId(req), query));
+  });
+
+  router.post('/', async (req, res) => {
+    const input = parseInput(createTransactionSchema, req.body);
+    ok(res, await service.create(requireUserId(req), input), 201);
+  });
+
+  // Same filters as the list; every match, as CSV text.
+  router.get('/export', async (req, res) => {
+    const query = parseInput(transactionQuerySchema, req.query);
+    ok(res, await service.exportCsv(requireUserId(req), query));
   });
 
   router.get('/:id', async (req, res) => {

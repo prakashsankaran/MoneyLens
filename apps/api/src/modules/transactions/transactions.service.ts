@@ -1,8 +1,17 @@
 import type { Prisma, PrismaClient, TransactionFlow, TransactionType } from '@prisma/client';
 import { summarizePeriod } from '@moneylens/analytics';
-import { dayRangeUtc } from '@moneylens/shared';
-import type { TransactionDetail, TransactionList, TransactionUpdateResult } from '@moneylens/types';
-import type { TransactionQuery, UpdateTransactionInput } from '@moneylens/validation';
+import { dayKeyOf, dayRangeUtc, istDate, parseDayKey } from '@moneylens/shared';
+import type {
+  TransactionCsvExport,
+  TransactionDetail,
+  TransactionList,
+  TransactionUpdateResult,
+} from '@moneylens/types';
+import type {
+  CreateTransactionInput,
+  TransactionQuery,
+  UpdateTransactionInput,
+} from '@moneylens/validation';
 import { resolveCategoryAssignment } from '../../lib/categories';
 import { notFound, AppError } from '../../lib/errors';
 import { findOrCreateMerchant } from '../../lib/merchants';
@@ -14,6 +23,10 @@ import {
   transactionInclude,
 } from '../../lib/transaction-mapper';
 import { ignoreChanges, type TransactionsChanged } from '../../lib/change-hooks';
+import { transactionsCsv } from './transactions-csv';
+
+/** An export larger than this is not a personal history; narrow the filters. */
+export const MAX_EXPORT_ROWS = 100_000;
 
 /** Special category filter value for transactions without a category. */
 export const UNCATEGORIZED_FILTER = 'uncategorized';
@@ -71,6 +84,26 @@ export function buildTransactionWhere(
 
 const EPOCH = new Date(0);
 
+/** The instant for a day and an optional "HH:MM" in IST; no time means midday. */
+function istInstant(day: string, time?: string): Date {
+  const { year, month, day: d } = parseDayKey(day);
+  const [hour, minute] = time ? time.split(':').map(Number) : [12, 0];
+  return istDate(year, month, d, hour, minute);
+}
+
+/** "HH:MM" of an instant in IST. */
+function istTimeOf(date: Date): string {
+  return new Date(date.getTime() + 330 * 60_000).toISOString().slice(11, 16);
+}
+
+function notInFuture(day: string | undefined, now: Date): void {
+  if (day && day > dayKeyOf(now)) {
+    throw new AppError('VALIDATION_ERROR', 'Choose today or an earlier date', {
+      fields: { date: 'Choose today or an earlier date' },
+    });
+  }
+}
+
 export class TransactionsService {
   constructor(
     private readonly prisma: PrismaClient,
@@ -118,6 +151,76 @@ export class TransactionsService {
     };
   }
 
+  /** Every transaction matching the filters (not just one page), as CSV. */
+  async exportCsv(
+    userId: string,
+    q: TransactionQuery,
+    now = new Date(),
+  ): Promise<TransactionCsvExport> {
+    const where = buildTransactionWhere(userId, q);
+    const count = await this.prisma.transaction.count({ where });
+    if (count > MAX_EXPORT_ROWS) {
+      throw new AppError(
+        'VALIDATION_ERROR',
+        `That is ${count} transactions, more than ${MAX_EXPORT_ROWS} can be exported at once. Choose a shorter date range.`,
+      );
+    }
+    const rows = await this.prisma.transaction.findMany({
+      where,
+      include: transactionInclude,
+      orderBy: SORTS[q.sort],
+    });
+    const range =
+      q.from || q.to ? `${q.from ?? 'start'}-to-${q.to ?? dayKeyOf(now)}` : dayKeyOf(now);
+    return { filename: `moneylens-transactions-${range}.csv`, csv: transactionsCsv(rows), count };
+  }
+
+  /**
+   * Add a payment by hand, such as cash. Without a category it takes the
+   * merchant's usual one, so "Chai stall" lands where it did last time.
+   */
+  async create(
+    userId: string,
+    input: CreateTransactionInput,
+    now = new Date(),
+  ): Promise<TransactionDetail> {
+    notInFuture(input.date, now);
+    const id = await this.prisma.$transaction(async (tx) => {
+      const merchant = await findOrCreateMerchant(tx, userId, input.merchantName);
+      let categoryId = input.categoryId;
+      let confidence: number | null = categoryId ? 1 : null;
+      if (categoryId === undefined) {
+        const usual = await tx.merchant.findUnique({
+          where: { id: merchant.id },
+          select: { userCategoryId: true, defaultCategoryId: true },
+        });
+        categoryId = usual?.userCategoryId ?? usual?.defaultCategoryId ?? null;
+        confidence = categoryId ? (usual?.userCategoryId ? 1 : 0.9) : null;
+      }
+      const assignment = await resolveCategoryAssignment(tx, userId, categoryId);
+      const created = await tx.transaction.create({
+        data: {
+          userId,
+          transactionDate: istInstant(input.date, input.time),
+          amount: input.amount,
+          transactionType: input.transactionType ?? (input.flow === 'OUT' ? 'DEBIT' : 'CREDIT'),
+          flow: input.flow,
+          merchantId: merchant.id,
+          merchantName: merchant.name,
+          ...assignment,
+          categoryConfidence: confidence,
+          paymentMethod: input.paymentMethod,
+          source: 'MANUAL',
+          notes: input.notes || null,
+        },
+        select: { id: true },
+      });
+      return created.id;
+    });
+    await this.onChange(userId);
+    return this.get(userId, id);
+  }
+
   async get(userId: string, id: string): Promise<TransactionDetail> {
     const row = await this.prisma.transaction.findFirst({
       where: { id, userId },
@@ -154,6 +257,44 @@ export class TransactionsService {
         data.transactionType = input.transactionType;
         const flow = FLOW_FOR_TYPE[input.transactionType];
         if (flow) data.flow = flow;
+      }
+      if (input.paymentMethod !== undefined) data.paymentMethod = input.paymentMethod;
+
+      const figures = (['amount', 'date', 'time', 'flow'] as const).filter(
+        (k) => input[k] !== undefined,
+      );
+      if (figures.length > 0) {
+        if (existing.source !== 'MANUAL') {
+          throw new AppError(
+            'VALIDATION_ERROR',
+            "Only payments you added yourself can have their amount, date or direction changed. Imported ones keep the statement's figures.",
+            { fields: Object.fromEntries(figures.map((k) => [k, 'Not editable'])) },
+          );
+        }
+        notInFuture(input.date, new Date());
+        if (input.amount !== undefined) data.amount = input.amount;
+        if (input.date !== undefined || input.time !== undefined) {
+          data.transactionDate = istInstant(
+            input.date ?? dayKeyOf(existing.transactionDate),
+            input.time ?? istTimeOf(existing.transactionDate),
+          );
+        }
+        if (input.flow !== undefined) {
+          const type =
+            (data.transactionType as TransactionType | undefined) ?? existing.transactionType;
+          const fixed = FLOW_FOR_TYPE[type];
+          if (fixed && fixed !== input.flow) {
+            // Money in vs out decides between a payment and money received.
+            if (type === 'DEBIT' || type === 'CREDIT') {
+              data.transactionType = input.flow === 'OUT' ? 'DEBIT' : 'CREDIT';
+            } else {
+              throw new AppError('VALIDATION_ERROR', 'That type does not match money in or out', {
+                fields: { flow: 'Does not match the type' },
+              });
+            }
+          }
+          data.flow = input.flow;
+        }
       }
 
       await tx.transaction.update({ where: { id }, data });

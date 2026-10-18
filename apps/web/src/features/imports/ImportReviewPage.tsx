@@ -79,8 +79,8 @@ function ReviewContent({ review }: { review: ImportReview }) {
       <Card className="mt-4" title={`We couldn't read ${record.filename}`}>
         <p className="text-sm text-ink-700">{record.errorMessage}</p>
         <p className="mt-3 text-sm text-ink-500">
-          Check that the file is a Google Pay statement PDF, or a CSV or Excel export with a date, a
-          description and an amount column, then try again.
+          Check that the file is a statement PDF (Google Pay, PhonePe, Paytm or a bank), or a CSV or
+          Excel export with a date, a description and an amount column, then try again.
         </p>
         <Link
           to="/imports"

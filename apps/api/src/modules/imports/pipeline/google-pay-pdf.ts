@@ -141,6 +141,11 @@ function readSummary(lines: PdfLine[]): { sentPaise: number; receivedPaise: numb
   return sentPaise !== null && receivedPaise !== null ? { sentPaise, receivedPaise } : null;
 }
 
+/** True when the lines have Google Pay's heading row. */
+export function hasGooglePayHeading(lines: PdfLine[]): boolean {
+  return lines.some((line) => findColumns(line) !== null);
+}
+
 /**
  * Read transactions from the statement's text lines. Pure: the PDF reading is
  * separate, so this can be tested with hand-built lines.

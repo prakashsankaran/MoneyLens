@@ -14,6 +14,7 @@ import {
 } from '../features/categories/useCategories';
 import { MerchantsCard } from '../features/merchants/MerchantsCard';
 import { ActivityCard } from '../features/account/ActivityCard';
+import { BackupCard } from '../features/account/BackupCard';
 import { PasswordCard } from '../features/account/PasswordCard';
 import { RecoveryKeyCard } from '../features/account/RecoveryKeyCard';
 import { DeviceAICard } from '../features/account/DeviceAICard';
@@ -46,6 +47,7 @@ export function SettingsPage() {
       {ai && <DeviceAICard ai={ai} />}
       <CategoriesCard />
       <MerchantsCard />
+      <BackupCard />
       <DataCard />
     </div>
   );

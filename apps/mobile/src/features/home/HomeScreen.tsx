@@ -54,7 +54,7 @@ export function HomeScreen() {
       {!hasData ? (
         <Empty
           title="No transactions yet"
-          message="Import a Google Pay PDF, or a CSV or Excel statement from your bank, and your dashboard fills in."
+          message="Import a statement from Google Pay, PhonePe, Paytm or your bank, and your dashboard fills in."
         >
           <Button label="Import a statement" onPress={() => router.push('/imports')} />
         </Empty>

@@ -74,7 +74,10 @@ describe('TransactionsPage', () => {
     expect(within(dialog).getByText('sw•••@icici')).toBeInTheDocument();
     expect(within(dialog).getByText(/Suggested automatically/)).toBeInTheDocument();
 
-    await userEvent.selectOptions(within(dialog).getByRole('combobox'), 'restaurants');
+    await userEvent.selectOptions(
+      within(dialog).getByRole('combobox', { name: 'Category' }),
+      'restaurants',
+    );
     await userEvent.click(
       within(dialog).getByRole('checkbox', { name: /every Swiggy transaction/ }),
     );

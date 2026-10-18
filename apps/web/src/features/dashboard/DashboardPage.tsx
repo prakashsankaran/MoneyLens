@@ -73,8 +73,8 @@ export function DashboardPage() {
       {!hasData ? (
         <Card className="mt-6" title="No transactions yet">
           <p className="text-sm text-ink-500">
-            Your dashboard fills in once transactions are added. Import a CSV statement from your
-            bank to get started; Google Pay PDF and Excel statements are coming next.
+            Your dashboard fills in once transactions are added. Import a statement from Google Pay,
+            PhonePe, Paytm or your bank to get started, or add a cash payment by hand.
           </p>
           <Link
             to="/imports"

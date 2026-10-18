@@ -183,3 +183,319 @@ export function unlabelledWorkbook(): Promise<Buffer> {
     },
   ]);
 }
+
+/** One printed line of a table statement: text at x, or right-aligned to `right`. */
+type Cell = { text: string; x: number } | { text: string; right: number };
+
+/**
+ * A statement PDF laid out as a table, the way banks, PhonePe and Paytm
+ * print them. Each entry of `lines` is one printed line; `gap` adds space
+ * above it. All names and numbers are invented.
+ */
+async function tablePdf(
+  pages: { preamble: string[]; heading: Cell[][]; lines: { cells: Cell[]; gap?: number }[] }[],
+): Promise<Buffer> {
+  const doc = await PDFDocument.create();
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  for (const spec of pages) {
+    const page = doc.addPage([842, 595]);
+    const draw = (cell: Cell, top: number, size = 8) => {
+      const x = 'x' in cell ? cell.x : cell.right - font.widthOfTextAtSize(cell.text, size);
+      page.drawText(cell.text, { x, y: 595 - top, size, font });
+    };
+    let top = 40;
+    for (const line of spec.preamble) {
+      draw({ text: line, x: 40 }, top, 10);
+      top += 14;
+    }
+    top += 10;
+    for (const row of spec.heading) {
+      for (const cell of row) draw(cell, top);
+      top += 10;
+    }
+    top += 8;
+    for (const line of spec.lines) {
+      top += line.gap ?? 0;
+      for (const cell of line.cells) draw(cell, top);
+      top += 11;
+    }
+    draw(
+      { text: 'This is a computer generated statement and does not need a signature.', x: 40 },
+      570,
+      7,
+    );
+  }
+  return Buffer.from(await doc.save());
+}
+
+/** An HDFC Bank style account statement: withdrawal, deposit and balance columns. */
+export function hdfcStatementPdf(): Promise<Buffer> {
+  const heading: Cell[][] = [
+    [
+      { text: 'Date', x: 40 },
+      { text: 'Narration', x: 95 },
+      { text: 'Chq./Ref.No.', x: 330 },
+      { text: 'Value Dt', x: 430 },
+      { text: 'Withdrawal', x: 500 },
+      { text: 'Deposit', x: 590 },
+      { text: 'Closing', x: 680 },
+    ],
+    [
+      { text: 'Amt.', x: 500 },
+      { text: 'Amt.', x: 590 },
+      { text: 'Balance', x: 680 },
+    ],
+  ];
+  const row = (
+    date: string,
+    narration: string,
+    ref: string,
+    withdrawal: string,
+    deposit: string,
+    balance: string,
+  ): Cell[] => [
+    { text: date, x: 40 },
+    { text: narration, x: 95 },
+    { text: ref, x: 330 },
+    { text: date, x: 430 },
+    ...(withdrawal ? [{ text: withdrawal, right: 560 }] : []),
+    ...(deposit ? [{ text: deposit, right: 650 }] : []),
+    { text: balance, right: 750 },
+  ];
+  return tablePdf([
+    {
+      preamble: [
+        'HDFC BANK LTD',
+        'Statement of account',
+        'MR ASHA VERMA',
+        'Account No : XXXXXXXX1234',
+      ],
+      heading,
+      lines: [
+        {
+          cells: [
+            { text: 'Opening Balance', x: 95 },
+            { text: '20,000.00', right: 750 },
+          ],
+        },
+        {
+          cells: row(
+            '01/10/26',
+            'UPI-SWIGGY-SWIGGY@ICICI-ICIC0000001',
+            '0000424512345678',
+            '450.00',
+            '',
+            '19,550.00',
+          ),
+          gap: 4,
+        },
+        { cells: [{ text: '-424512345678-PAYMENT FROM PHONE', x: 95 }] },
+        {
+          cells: row(
+            '02/10/26',
+            'NEFT CR-ACME SOFTWARE PVT LTD-SALARY OCT',
+            'N275262612345',
+            '',
+            '85,000.00',
+            '1,04,550.00',
+          ),
+          gap: 4,
+        },
+        {
+          cells: row(
+            '03/10/26',
+            'POS 4321XXXXXXXX9876 DMART AVENUE',
+            '000000000000',
+            '2,340.75',
+            '',
+            '1,02,209.25',
+          ),
+          gap: 4,
+        },
+        {
+          cells: row(
+            '13/10/26',
+            'ATW-4321XXXXXXXX9876-S1ANBG12-BENGALURU',
+            '000000004567',
+            '5,000.00',
+            '',
+            '97,209.25',
+          ),
+          gap: 4,
+        },
+      ],
+    },
+    {
+      preamble: ['HDFC BANK LTD', 'Page 2'],
+      heading,
+      lines: [
+        {
+          cells: row(
+            '15/10/26',
+            'UPI-NETFLIX-NETFLIX@HDFCBANK-HDFC0000001',
+            '0000428812345678',
+            '649.00',
+            '',
+            '96,560.25',
+          ),
+          gap: 4,
+        },
+        {
+          cells: row(
+            '16/10/26',
+            'UPI-RAVI KUMAR-RAVI@OKAXIS-UTIB0000001-REFUND',
+            '0000429912345678',
+            '',
+            '300.00',
+            '96,860.25',
+          ),
+          gap: 4,
+        },
+        { cells: [{ text: 'STATEMENT SUMMARY :-', x: 40 }], gap: 20 },
+        {
+          cells: [
+            { text: 'Opening Balance', x: 40 },
+            { text: 'Closing Bal', x: 300 },
+          ],
+        },
+      ],
+    },
+  ]);
+}
+
+/** A PhonePe transaction statement: a Type column and multi-line details. */
+export function phonePeStatementPdf(): Promise<Buffer> {
+  const heading: Cell[][] = [
+    [
+      { text: 'Date', x: 40 },
+      { text: 'Transaction Details', x: 170 },
+      { text: 'Type', x: 560 },
+      { text: 'Amount', x: 660 },
+    ],
+  ];
+  const entry = (date: string, time: string, details: string[], type: string, amount: string) => [
+    {
+      cells: [
+        { text: date, x: 40 },
+        { text: details[0] ?? '', x: 170 },
+        { text: type, x: 560 },
+        { text: amount, right: 700 },
+      ],
+      gap: 8,
+    },
+    {
+      cells: [
+        { text: time, x: 40 },
+        { text: details[1] ?? '', x: 170 },
+      ],
+    },
+    ...details.slice(2).map((d) => ({ cells: [{ text: d, x: 170 }] })),
+  ];
+  return tablePdf([
+    {
+      preamble: ['Transaction Statement for 98XXXXXX10', 'Oct 01, 2026 - Oct 17, 2026', 'PhonePe'],
+      heading,
+      lines: [
+        ...entry(
+          'Oct 01, 2026',
+          '09:15 am',
+          [
+            'Paid to Swiggy',
+            'Transaction ID T2610010915123456789',
+            'UTR No. 424512345678',
+            'Paid by XXXXXX1234',
+          ],
+          'DEBIT',
+          'Rs.450',
+        ),
+        ...entry(
+          'Oct 02, 2026',
+          '06:40 pm',
+          [
+            'Received from Ravi Kumar',
+            'Transaction ID T2610021840123456789',
+            'UTR No. 424612345678',
+            'Credited to XXXXXX1234',
+          ],
+          'CREDIT',
+          'Rs.1,200',
+        ),
+        ...entry(
+          'Oct 05, 2026',
+          '01:05 pm',
+          [
+            'Paid to Blinkit',
+            'Transaction ID T2610051305123456789',
+            'UTR No. 424712345678',
+            'Paid by XXXXXX1234',
+          ],
+          'DEBIT',
+          'Rs.836.50',
+        ),
+      ],
+    },
+  ]);
+}
+
+/** A Paytm UPI statement: signed amounts and a "Your Account" column. */
+export function paytmStatementPdf(): Promise<Buffer> {
+  const heading: Cell[][] = [
+    [
+      { text: 'Date & Time', x: 40 },
+      { text: 'Transaction Details', x: 150 },
+      { text: 'Your Account', x: 480 },
+      { text: 'Amount', x: 680 },
+    ],
+  ];
+  const entry = (
+    date: string,
+    time: string,
+    details: string[],
+    account: string,
+    amount: string,
+  ) => [
+    {
+      cells: [
+        { text: date, x: 40 },
+        { text: details[0] ?? '', x: 150 },
+        { text: account, x: 480 },
+        { text: amount, right: 730 },
+      ],
+      gap: 8,
+    },
+    {
+      cells: [
+        { text: time, x: 40 },
+        { text: details[1] ?? '', x: 150 },
+      ],
+    },
+    ...details.slice(2).map((d) => ({ cells: [{ text: d, x: 150 }] })),
+  ];
+  return tablePdf([
+    {
+      preamble: ['Paytm Statement for 98XXXXXX10', "01 OCT'26 - 17 OCT'26"],
+      heading,
+      lines: [
+        ...entry(
+          '01 Oct 2026',
+          '9:15 AM',
+          [
+            'Paid to Zomato',
+            'UPI ID: zomato@paytm on 01 Oct',
+            'UPI Ref No: 424512345111',
+            'Tag: # Food',
+          ],
+          'HDFC Bank - 34',
+          '- Rs.380',
+        ),
+        ...entry(
+          '03 Oct 2026',
+          '7:02 PM',
+          ['Received from Meera', 'UPI ID: meera@ybl on 03 Oct', 'UPI Ref No: 424512345222'],
+          'HDFC Bank - 34',
+          '+ Rs.2,000',
+        ),
+      ],
+    },
+  ]);
+}

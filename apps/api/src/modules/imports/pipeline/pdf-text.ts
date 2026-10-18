@@ -5,7 +5,8 @@ export interface PdfLine {
   page: number;
   /** Distance from the top of the page, in PDF points. */
   y: number;
-  items: { x: number; text: string }[];
+  /** Words with their left edge and, when the PDF gives it, their width. */
+  items: { x: number; text: string; w?: number }[];
 }
 
 /** Statements longer than this are not personal exports. */
@@ -16,6 +17,7 @@ const LINE_TOLERANCE = 2;
 interface PositionedText {
   str: string;
   transform: number[];
+  width?: number;
 }
 
 /**
@@ -25,13 +27,19 @@ interface PositionedText {
 export function groupLines(page: number, height: number, items: PositionedText[]): PdfLine[] {
   const words = items
     .filter((i) => i.str.trim())
-    .map((i) => ({ x: i.transform[4] ?? 0, y: height - (i.transform[5] ?? 0), text: i.str.trim() }))
+    .map((i) => ({
+      x: i.transform[4] ?? 0,
+      y: height - (i.transform[5] ?? 0),
+      text: i.str.trim(),
+      w: i.width,
+    }))
     .sort((a, b) => a.y - b.y || a.x - b.x);
   const lines: PdfLine[] = [];
   for (const w of words) {
     const last = lines.at(-1);
-    if (last && Math.abs(last.y - w.y) <= LINE_TOLERANCE) last.items.push({ x: w.x, text: w.text });
-    else lines.push({ page, y: w.y, items: [{ x: w.x, text: w.text }] });
+    const item = w.w === undefined ? { x: w.x, text: w.text } : { x: w.x, text: w.text, w: w.w };
+    if (last && Math.abs(last.y - w.y) <= LINE_TOLERANCE) last.items.push(item);
+    else lines.push({ page, y: w.y, items: [item] });
   }
   for (const line of lines) line.items.sort((a, b) => a.x - b.x);
   return lines;
@@ -97,7 +105,7 @@ export async function extractPdfLines(
       const { height } = page.getViewport({ scale: 1 });
       const content = await page.getTextContent();
       const items: PositionedText[] = content.items.flatMap((i) =>
-        'str' in i ? [{ str: i.str, transform: i.transform as number[] }] : [],
+        'str' in i ? [{ str: i.str, transform: i.transform as number[], width: i.width }] : [],
       );
       lines.push(...groupLines(n, height, items));
       page.cleanup();

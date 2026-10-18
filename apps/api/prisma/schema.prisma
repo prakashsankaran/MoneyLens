@@ -41,6 +41,8 @@ enum TransactionSource {
   GOOGLE_PAY
   CSV
   XLSX
+  /// A bank, PhonePe or Paytm statement PDF (Google Pay PDFs keep GOOGLE_PAY).
+  PDF
   MANUAL
   OTHER
 }

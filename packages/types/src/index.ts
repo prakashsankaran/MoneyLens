@@ -20,7 +20,7 @@ export type TransactionType = (typeof TRANSACTION_TYPES)[number];
 export const TRANSACTION_FLOWS = ['OUT', 'IN'] as const;
 export type TransactionFlow = (typeof TRANSACTION_FLOWS)[number];
 
-export const TRANSACTION_SOURCES = ['GOOGLE_PAY', 'CSV', 'XLSX', 'MANUAL', 'OTHER'] as const;
+export const TRANSACTION_SOURCES = ['GOOGLE_PAY', 'CSV', 'XLSX', 'PDF', 'MANUAL', 'OTHER'] as const;
 export type TransactionSource = (typeof TRANSACTION_SOURCES)[number];
 
 export const TRANSACTION_STATUSES = ['CONFIRMED', 'PENDING_REVIEW', 'EXCLUDED'] as const;
@@ -880,6 +880,30 @@ export interface TransactionUpdateResult {
   transaction: TransactionDetail;
   /** Other transactions recategorised because the change was applied to the merchant. */
   alsoUpdated: number;
+}
+
+/** GET /api/transactions/export: the matching transactions as a CSV file. */
+export interface TransactionCsvExport {
+  filename: string;
+  csv: string;
+  count: number;
+}
+
+/** What a restore brought back. */
+export interface RestoreResult {
+  transactions: number;
+  merchants: number;
+  categories: number;
+  rules: number;
+  budgets: number;
+  /** True when the account's earlier data was replaced. */
+  replaced: boolean;
+}
+
+/** GET /api/backup/status: what restoring would replace. */
+export interface BackupStatus {
+  transactions: number;
+  imports: number;
 }
 
 // ---------------------------------------------------------------------------

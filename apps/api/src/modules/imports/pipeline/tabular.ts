@@ -98,10 +98,10 @@ const HEADER_SYNONYMS: Record<TableField, string[]> = {
     'upi transaction id',
     'rrn',
   ],
-  upi: ['upi id', 'vpa', 'upi handle'],
+  upi: ['upi id', 'vpa', 'upi handle', 'other transaction details'],
 };
 
-function normaliseHeader(cell: string): string {
+export function normaliseHeader(cell: string): string {
   return cell
     .toLowerCase()
     .replace(/\(.*?\)/g, ' ')
@@ -139,11 +139,11 @@ export function isUsableHeader(map: ColumnMap): boolean {
   return map.date !== undefined && map.description !== undefined && hasAmount;
 }
 
-const DIRECTION_OUT = /^(dr|debit|d|withdrawal|out|paid|sent)$/i;
-const DIRECTION_IN = /^(cr|credit|c|deposit|in|received)$/i;
+export const DIRECTION_OUT = /^(dr|debit|d|withdrawal|out|paid|sent)$/i;
+export const DIRECTION_IN = /^(cr|credit|c|deposit|in|received)$/i;
 
 /** Rows that summarise rather than record a transaction. */
-const SUMMARY_ROW =
+export const SUMMARY_ROW =
   /^(total|opening balance|closing balance|balance b\/f|balance c\/f|grand total)/i;
 
 /** Rows searched for a heading row, and rows shown when the user picks columns. */
@@ -279,7 +279,8 @@ export function parseTable(
       return;
     }
 
-    const upiFromColumn = cell(record, 'upi').toLowerCase() || null;
+    // Paytm's column holds a UPI ID or an account number; keep only a UPI ID.
+    const upiFromColumn = extractUpiId(cell(record, 'upi'));
     rows.push({
       rowIndex: lineOf(i),
       date,

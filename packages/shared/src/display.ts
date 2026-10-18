@@ -3,6 +3,7 @@ import type {
   AssistantAnswerStatus,
   CategoryBreakdownItem,
   Insight,
+  PaymentMethod,
   TransactionSource,
   TransactionType,
 } from '@moneylens/types';
@@ -51,10 +52,20 @@ export const TYPE_LABELS: Record<TransactionType, string> = {
   UNKNOWN: 'Unknown',
 };
 
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  CASH: 'Cash',
+  UPI: 'UPI',
+  CARD: 'Card',
+  NETBANKING: 'Net banking',
+  WALLET: 'Wallet',
+  OTHER: 'Other',
+};
+
 export const SOURCE_LABELS: Record<TransactionSource, string> = {
   GOOGLE_PAY: 'Google Pay statement',
   CSV: 'CSV import',
   XLSX: 'Excel import',
+  PDF: 'PDF statement',
   MANUAL: 'Added manually',
   OTHER: 'Other',
 };
