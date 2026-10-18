@@ -69,7 +69,7 @@ export class BackupService {
   async export(userId: string, now = new Date()): Promise<BackupFile> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { name: true },
+      select: { name: true, peopleOutCategoryId: true, peopleInCategoryId: true },
     });
     if (!user) throw notFound('Account not found');
 
@@ -179,6 +179,10 @@ export class BackupService {
         createdAt: p.createdAt.toISOString(),
       })),
       dismissedRecurring: dismissed.map((d) => d.key),
+      preferences: {
+        peopleOutCategory: ref(user.peopleOutCategoryId),
+        peopleInCategory: ref(user.peopleInCategoryId),
+      },
     };
   }
 
@@ -393,6 +397,17 @@ export class BackupService {
           isActive: p.isActive,
           createdAt: new Date(p.createdAt),
         })),
+      });
+    }
+
+    // The monthly email is a setting of this server's email, so it stays as it is.
+    if (backup.preferences) {
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          peopleOutCategoryId: category(backup.preferences.peopleOutCategory),
+          peopleInCategoryId: category(backup.preferences.peopleInCategory),
+        },
       });
     }
 

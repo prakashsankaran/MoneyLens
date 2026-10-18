@@ -12,6 +12,7 @@ import type {
 import type { CategorizeImportRowsInput, UpdateImportRowInput } from '@moneylens/validation';
 import {
   resolveCategoryAssignment,
+  peopleCategories,
   systemCategoryPaths,
   visibleCategoryWhere,
 } from '../../lib/categories';
@@ -381,15 +382,16 @@ export class ImportsService {
   }
 
   private async categorizationContext(userId: string): Promise<CategorizationContext> {
-    const [rules, merchants, categoryIdByPath] = await Promise.all([
+    const [rules, merchants, categoryIdByPath, people] = await Promise.all([
       this.prisma.userCategoryRule.findMany({
         where: { userId },
         select: { matchField: true, pattern: true, categoryId: true, priority: true },
       }),
       merchantsByKey(this.prisma, userId),
       systemCategoryPaths(this.prisma),
+      peopleCategories(this.prisma, userId),
     ]);
-    return { rules, merchantsByKey: merchants, categoryIdByPath };
+    return { rules, merchantsByKey: merchants, categoryIdByPath, people };
   }
 
   async list(userId: string): Promise<ImportRecord[]> {

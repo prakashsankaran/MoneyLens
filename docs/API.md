@@ -716,6 +716,38 @@ items). An `amount` of `null` removes that budget; categories not listed are
 left alone. The category must be a system category or one of the user's own.
 → the month's `BudgetsResponse`.
 
+## Preferences
+
+### `GET /api/preferences` 🔒
+
+→ `{ monthlySummary: { available, enabled, sendTo, lastSentFor }, people: {
+outCategoryId, inCategoryId } }`. `available` is false when the server has no
+email account (`SMTP_*`).
+
+### `PATCH /api/preferences` 🔒
+
+Body (at least one field):
+
+```jsonc
+{
+  "monthlySummaryEmail": true, // 400 when email is not set up
+  "peopleOutCategoryId": "…", // money sent to people; null clears
+  "peopleInCategoryId": null, // money received from people
+}
+```
+
+A people category is used on import when nothing else categorises a row whose
+name reads like a person's (two to four words with no business wording, or
+one word with a personal UPI ID) and whose UPI ID is not a shop's QR code.
+Setting one also fills in the account's earlier uncategorised payments like
+that. → `{ preferences, recategorised }`.
+
+### `POST /api/preferences/monthly-summary/send` 🔒
+
+Emails the summary of the last complete month with transactions to the
+account's address now. → `{ month, sentTo }`. At most three every 10 minutes.
+See [MONTHLY_EMAIL.md](MONTHLY_EMAIL.md).
+
 ## MoneyLens AI
 
 Answers are built from calculated figures; the model only explains them. See
@@ -760,6 +792,19 @@ provider. `429` after `AI_CHAT_RATE_LIMIT` questions in a minute or
 → `MoneyBrief`: `{ month, status, facts, text, provider, generatedAt }`. At
 most five calculated statements and, when a provider is set up, a 3–4
 sentence summary written from them. Cached until the figures change.
+
+### `POST /api/ai/suggest-categories` 🔒
+
+Body: `{ "importId": "…" }`. Suggests a category for up to 60 of the
+import's uncategorised merchants (biggest first). Only the merchant name, the
+direction (money in or out) and one statement line with UPI IDs and long
+numbers masked are sent to the provider: no amounts, dates or account
+numbers. Nothing is saved; the app shows the suggestions and the user applies
+the ones they agree with (`POST /api/imports/:id/rows/categorize`).
+→ `{ status: "ok" | "not-configured" | "unavailable", suggestions: [{ merchant,
+categoryId }], message }`. Answers naming a category that does not exist are
+dropped. Shares the `AI_CHAT_RATE_LIMIT` per-minute limit; `404` for another
+user's import.
 
 ### `GET /api/ai/conversations` 🔒 · `GET /api/ai/conversations/:id` 🔒
 

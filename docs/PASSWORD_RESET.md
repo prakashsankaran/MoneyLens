@@ -59,6 +59,9 @@ A separate Gmail account just for MoneyLens is a good idea.
    # APP_URL=https://your-moneylens-address   (defaults to the first CORS_ORIGINS)
    ```
 
+The same settings also turn on the optional monthly summary email
+([MONTHLY_EMAIL.md](MONTHLY_EMAIL.md)).
+
 `APP_URL` is the address people open MoneyLens at; the link in the email
 points there. On a laptop that is `http://localhost:5173`, which only works
 on that laptop, so email links are most useful on a hosted MoneyLens.

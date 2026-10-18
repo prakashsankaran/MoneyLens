@@ -212,4 +212,67 @@ describe('ImportReviewPage', () => {
       await screen.findByText(/categories you picked for 2 merchants will be filled in/),
     ).toBeInTheDocument();
   });
+
+  it('shows MoneyLens AI suggestions and applies them only when asked', async () => {
+    const shop = (id: string, merchantName: string) => ({
+      ...importReview.rows[0]!,
+      id,
+      merchantName,
+      rawDescription: `UPI-${merchantName.toUpperCase()}`,
+      category: null,
+      categoryConfidence: null,
+    });
+    const review: ImportReview = {
+      ...importReview,
+      rows: [shop('s1', 'Hotel Annapoorna'), shop('s2', 'Zorble Gadgets')],
+    };
+    const calls = mockApi(({ method, url, body }) => {
+      if (url.includes('/categories')) return { data: categoryTree };
+      if (url.endsWith('/ai/status')) return { data: { configured: true } };
+      if (url.endsWith('/ai/suggest-categories')) {
+        return {
+          data: {
+            status: 'ok',
+            suggestions: [{ merchant: 'Hotel Annapoorna', categoryId: 'restaurants' }],
+            message: null,
+          },
+        };
+      }
+      if (method === 'POST' && url.endsWith('/rows/categorize')) {
+        const { rowIds } = body as { rowIds: string[] };
+        return {
+          data: {
+            ...review,
+            rows: review.rows.map((r) =>
+              rowIds.includes(r.id)
+                ? {
+                    ...r,
+                    category: { id: 'restaurants', name: 'Restaurants', slug: 'restaurants' },
+                  }
+                : r,
+            ),
+          },
+        };
+      }
+      if (url.includes('/imports/imp1')) return { data: review };
+      return undefined;
+    });
+    renderPage();
+    await userEvent.click(await screen.findByRole('tab', { name: 'Uncategorised (2)' }));
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Suggest categories with MoneyLens AI' }),
+    );
+    expect(calls.find((c) => c.url.endsWith('/ai/suggest-categories'))?.body).toEqual({
+      importId: 'imp1',
+    });
+    expect(await screen.findByText('Food: Restaurants')).toBeInTheDocument();
+    // Nothing is saved yet.
+    expect(calls.some((c) => c.url.endsWith('/rows/categorize'))).toBe(false);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Use all 1 suggestion' }));
+    expect(calls.find((c) => c.url.endsWith('/rows/categorize'))?.body).toEqual({
+      rowIds: ['s1'],
+      categoryId: 'restaurants',
+    });
+  });
 });

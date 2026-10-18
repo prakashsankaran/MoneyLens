@@ -167,6 +167,18 @@ check applies. The result is cached in memory for 12 hours, keyed by user,
 month, a hash of the statements and the provider. The brief is rewritten
 when the figures change. A provider failure is not cached.
 
+## Category suggestions on import
+
+On an import's **Uncategorised** tab, "Suggest categories with MoneyLens AI"
+sends the provider a numbered list of up to 60 uncategorised merchants (name,
+money in or out, one statement line with identifiers masked) and the
+account's category keys such as `food/groceries`. No amounts, dates,
+account numbers or UPI IDs are sent. The model answers with a JSON object of
+merchant number to key, or null when unsure or for a person; answers with
+unknown keys are dropped (`ai/category-suggest.ts`). Nothing is saved: each
+suggestion is shown next to its merchant and applied only when the user
+chooses it. The same per-account allowlist (`AI_ALLOWED_EMAILS`) applies.
+
 ## Evaluation
 
 `apps/api/test/ai.test.ts` runs the nine example questions from the product

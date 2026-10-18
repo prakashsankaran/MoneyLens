@@ -7,6 +7,7 @@ import {
   merchantKey,
   toDisplayName,
 } from './merchants';
+import { looksLikePerson } from './people';
 
 export interface CategorizationContext {
   /** User corrections promoted to rules; checked first. */
@@ -15,9 +16,12 @@ export interface CategorizationContext {
   merchantsByKey: Map<string, { id: string; name: string; categoryId: string | null }>;
   /** System category ids by "parent-slug/child-slug". */
   categoryIdByPath: Map<string, string>;
+  /** The user's categories for payments to (OUT) and from (IN) people, if set. */
+  people?: { OUT: string | null; IN: string | null };
 }
 
-export type CategorySource = 'rule' | 'merchant' | 'known-merchant' | 'keyword' | 'type' | 'none';
+export type CategorySource =
+  'rule' | 'merchant' | 'known-merchant' | 'keyword' | 'type' | 'people' | 'none';
 
 export interface Categorization {
   merchantName: string;
@@ -36,12 +40,14 @@ export const CONFIDENCE: Record<Exclude<CategorySource, 'none'>, number> = {
   'known-merchant': 0.85,
   type: 0.8,
   keyword: 0.6,
+  people: 0.5,
 };
 
 /**
  * Resolve the merchant and category for a parsed row. Order: user rules, then
  * the user's own merchant mapping, then well-known merchants, then generic
- * keywords. Deterministic and explainable via `source`.
+ * keywords, then the user's category for payments to or from people.
+ * Deterministic and explainable via `source`.
  */
 export function categorize(row: ParsedRow, ctx: CategorizationContext): Categorization {
   const text = row.counterparty?.trim()
@@ -94,6 +100,16 @@ export function categorize(row: ParsedRow, ctx: CategorizationContext): Categori
       const id = ctx.categoryIdByPath.get(kw.category);
       if (id) return result(id, 'keyword');
     }
+  }
+
+  const peopleCategory = ctx.people?.[row.flow];
+  if (
+    peopleCategory &&
+    row.type !== 'REFUND' &&
+    row.type !== 'CASHBACK' &&
+    looksLikePerson(merchantName, row.upiId)
+  ) {
+    return result(peopleCategory, 'people');
   }
 
   return result(null, 'none');

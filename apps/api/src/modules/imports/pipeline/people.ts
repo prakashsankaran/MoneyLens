@@ -1,0 +1,69 @@
+/**
+ * Telling a payment to a person ("Paid to Arjun Mehta", a UPI ID such as
+ * arjun.mehta@okhdfcbank) from a payment to a shop. Used only for rows that
+ * nothing else categorised, so a wrong guess costs one correction.
+ */
+
+// Words that make a name a business, including the "Sri", "Shree" and "New"
+// that start so many shop names. Matched as whole words. A name that gets
+// past this list and is a business is fixed with one correction, which the
+// merchant then remembers.
+const BUSINESS_WORDS = new Set(
+  `STORE STORES SHOP SHOPPE MART ENTERPRISE ENTERPRISES TRADER TRADERS TRADING AGENCY AGENCIES
+  SERVICE SERVICES SOLUTIONS INDUSTRIES CORP CORPORATION COMPANY CO PVT PRIVATE LTD LIMITED LLP INC
+  BANK FINANCE FINANCIAL CAPITAL INSURANCE TECH TECHNOLOGIES SYSTEMS FOOD FOODS CAFE HOTEL HOTELS
+  RESTAURANT KITCHEN BAKERY BAKERS SWEETS MEDICAL MEDICALS PHARMA PHARMACY CHEMIST CHEMISTS CLINIC
+  HOSPITAL DIAGNOSTIC DIAGNOSTICS LAB LABS MOTORS AUTOMOBILES AUTO PETROL FUEL FUELS GAS ELECTRICAL
+  ELECTRICALS ELECTRONICS HARDWARE TEXTILES FASHION FASHIONS BOUTIQUE SALON SPA STUDIO ACADEMY
+  SCHOOL COLLEGE INSTITUTE CENTRE CENTER MARKET SUPERMARKET BAZAAR EMPORIUM DEPOT POINT HUB WORLD
+  PLAZA MALL TRAVEL TRAVELS TOURS CAB CABS LOGISTICS COURIER EXPRESS ONLINE DIGITAL INDIA
+  INTERNATIONAL GLOBAL GROUP ASSOCIATES BROTHERS BROS SONS TRUST FOUNDATION SOCIETY CLUB TEMPLE
+  CHURCH MASJID GOVT GOVERNMENT MUNICIPAL BOARD AUTHORITY DEPARTMENT RECHARGE BILL BILLS PAYMENT
+  PAYMENTS WALLET MERCHANT QR PAYTM PHONEPE GPAY GOOGLE AMAZON FLIPKART JIO AIRTEL BSNL TATA
+  RELIANCE ADANI CARD CREDIT LOAN EMI FUND FUNDS SECURITIES INVESTMENTS BROKING COLLECTIONS
+  REFUND CASHBACK INTEREST SALARY ATM CASH CHARGES TAX GST
+  GENERAL GADGETS LEARNING EDUCATION CLASSES TUTORIALS COACHING MOBILES MOBILE COMPUTERS OPTICALS
+  JEWELLERS JEWELLERY FURNITURE PAINTS TYRES GARAGE WORKS ENGINEERING CONSTRUCTIONS BUILDERS
+  DEVELOPERS PROPERTIES REALTY HOMES HOME LIVING CARE HEALTH HEALTHCARE FITNESS GYM YOGA DAIRY MILK
+  FRUITS VEGETABLES FLOWERS CAKES CHAI TEA JUICE BHAVAN BHAWAN SAGAR VILAS DARSHINI MESS CANTEEN
+  TIFFIN TIFFINS CATERERS DHABA PIZZA BURGER CHICKEN MUTTON FISH MEAT BAR PUB LOUNGE WINES LIQUOR
+  BEVERAGES DISTRIBUTORS WHOLESALE RETAIL MARKETING MEDIA PRINTERS XEROX STATIONERY BOOKS TOYS GIFTS
+  NOVELTIES COLLECTION COLLECTIONS SILKS SAREES TAILORS LAUNDRY CLEANERS BEAUTY PARLOUR PARLOR
+  SALOON PET PETS VET DENTAL EYE NURSING LODGE RESORT RESORTS STAY INN RESIDENCY TRANSPORT MOVERS
+  PACKERS CARGO AGRO FARM FARMS NURSERY SEEDS STEEL IRON CEMENT GLASS PLASTICS PACKAGING IMPEX
+  EXPORTS IMPORTS OVERSEAS VENTURES HOLDINGS PARTNERS CONSULTANTS CONSULTANCY ADVOCATES ACCOUNTS
+  APP APPS SOFTWARE NETWORKS TELECOM CABLE BROADBAND ENERGY POWER SOLAR WATER AQUA GAMES GAMING
+  SPORTS EVENTS ENTERTAINMENT CINEMAS THEATRE MULTIPLEX PARKING TOLL FASTAG METRO RAILWAYS IRCTC
+  AIRLINES AIRWAYS BUS TICKETS BOOKING SUBSCRIPTION PREMIUM PRIME PLUS PRO SMART FRESH DAILY QUICK
+  ZONE SPOT CORNER GALLERY HOUSE PALACE PARADISE CITY
+  SRI SHRI SHREE OM JAI NEW THE MY`.split(/\s+/),
+);
+
+// UPI handles that belong to shop QR codes and payment gateways.
+const MERCHANT_UPI =
+  /^(paytmqr|paytm[-.]|bharatpe|q\d|qr|mab\.|gpay-|pay\.|razorpay|rzp|cashfree|payu|ezetap|yespay|bqr|stq|msw|vyapar|merchant|biz|shop|store|pos\.)/i;
+
+/** True when a UPI ID looks like a person's (name or phone number), not a shop's QR code. */
+export function personalUpiId(upiId: string | null | undefined): boolean {
+  const local = upiId?.split('@')[0]?.trim();
+  if (!local) return false;
+  if (MERCHANT_UPI.test(local)) return false;
+  // A phone number, or a name with at most a few digits (arjun.mehta12).
+  if (/^\d{10}$/.test(local)) return true;
+  return /^[a-z]/i.test(local) && local.replace(/\D/g, '').length <= 4;
+}
+
+/**
+ * Whether a payee or payer name reads as a person's name: two to four
+ * alphabetic words with no business wording. A single word ("Meera") counts
+ * only with a personal UPI ID, because many shops have one-word names.
+ */
+export function looksLikePerson(name: string, upiId?: string | null): boolean {
+  if (upiId && !personalUpiId(upiId)) return false;
+  const words = name.toUpperCase().replace(/\./g, ' ').split(/\s+/).filter(Boolean);
+  if (words.length === 0 || words.length > 4) return false;
+  if (!words.every((w) => /^[A-Z]+$/.test(w))) return false;
+  if (words.some((w) => BUSINESS_WORDS.has(w))) return false;
+  if (words.join('').length < 3) return false;
+  return words.length > 1 || personalUpiId(upiId);
+}
