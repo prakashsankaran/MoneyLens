@@ -30,10 +30,14 @@ import {
 type View = 'all' | 'attention' | 'uncategorised' | 'excluded';
 const PAGE = 100;
 
+/** Below this, a category is a guess, such as one for a payment to a person. */
+const GUESSED_CATEGORY = 0.5;
+
 function needsAttention(row: ImportRow): boolean {
   return (
     row.decision === 'DUPLICATE' ||
-    (row.decision === 'INCLUDE' && !row.category) ||
+    (row.decision === 'INCLUDE' &&
+      (!row.category || (row.categoryConfidence ?? 1) <= GUESSED_CATEGORY)) ||
     row.warnings.length > 0
   );
 }

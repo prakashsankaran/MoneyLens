@@ -50,7 +50,7 @@ test('google pay pdf with password, excel import, merchant rename', async ({ pag
   await page.goto('/settings');
   await page.getByRole('button', { name: 'Rename Arjun Mehta' }).click();
   await page.getByLabel('New name for Arjun Mehta').fill('Arjun (flatmate)');
-  await page.getByRole('button', { name: 'Save' }).click();
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page.getByText('Arjun (flatmate)')).toBeVisible();
 
   await page.getByLabel('Your password').fill('correct horse battery');

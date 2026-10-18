@@ -55,3 +55,28 @@ export async function systemCategoryPaths(db: Db): Promise<Map<string, string>> 
   }
   return paths;
 }
+
+/**
+ * The user's categories for payments to (OUT) and from (IN) people, keeping
+ * only ones that still exist, so a deleted category simply stops applying.
+ */
+export async function peopleCategories(
+  db: Db,
+  userId: string,
+): Promise<{ OUT: string | null; IN: string | null }> {
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { peopleOutCategoryId: true, peopleInCategoryId: true },
+  });
+  const ids = [user?.peopleOutCategoryId, user?.peopleInCategoryId].filter(
+    (id): id is string => !!id,
+  );
+  if (ids.length === 0) return { OUT: null, IN: null };
+  const found = await db.category.findMany({
+    where: { id: { in: ids }, ...visibleCategoryWhere(userId) },
+    select: { id: true },
+  });
+  const ok = new Set(found.map((c) => c.id));
+  const keep = (id: string | null | undefined) => (id && ok.has(id) ? id : null);
+  return { OUT: keep(user?.peopleOutCategoryId), IN: keep(user?.peopleInCategoryId) };
+}

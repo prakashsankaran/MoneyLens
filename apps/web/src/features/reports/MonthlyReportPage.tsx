@@ -1,7 +1,7 @@
 import { LuPrinter } from 'react-icons/lu';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { formatINR, formatMonthKey } from '@moneylens/shared';
 import type { CategoryComparisonRow, Insight, MonthlyReport, PeriodTotals } from '@moneylens/types';
 import { DonutChart } from '../../components/charts/DonutChart';
@@ -26,7 +26,12 @@ function diff(now: number, before: number): string {
 }
 
 export function MonthlyReportPage() {
-  const [month, setMonth] = useState<string | undefined>(undefined);
+  // The monthly email links here with ?month=YYYY-MM.
+  const [params] = useSearchParams();
+  const [month, setMonth] = useState<string | undefined>(() => {
+    const m = params.get('month');
+    return m && /^\d{4}-(0[1-9]|1[0-2])$/.test(m) ? m : undefined;
+  });
   const [compare, setCompare] = useState<string | undefined>(undefined);
   const { data, isPending, isError, error, refetch, isFetching } = useMonthlyReport(month, compare);
 

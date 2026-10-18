@@ -117,18 +117,26 @@ enum RuleMatchField {
 // ---------------------------------------------------------------------------
 
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  name         String
+  id                    String    @id @default(cuid())
+  email                 String    @unique
+  name                  String
   /// argon2id hash. Plaintext passwords are never stored or logged.
-  passwordHash String
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  lastLoginAt  DateTime?
+  passwordHash          String
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  lastLoginAt           DateTime?
   /// argon2id hash of the recovery key, which resets a forgotten password
   /// without email. The key itself is shown to the owner once and never stored.
-  recoveryKeyHash      String?
-  recoveryKeyCreatedAt DateTime?
+  recoveryKeyHash       String?
+  recoveryKeyCreatedAt  DateTime?
+  /// Email a summary of each month once it ends (needs SMTP_* on the server).
+  monthlySummaryEmail   Boolean   @default(false)
+  /// "YYYY-MM" of the last monthly summary sent, so each month goes once.
+  monthlySummarySentFor String?
+  /// Categories for payments to and from people (UPI to a person's name)
+  /// that nothing else categorises. A category id; ignored if it is deleted.
+  peopleOutCategoryId   String?
+  peopleInCategoryId    String?
 
   sessions          Session[]
   passwordResets    PasswordResetToken[]

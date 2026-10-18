@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import type { ApiFailure } from '@moneylens/types';
-import { briefQuerySchema, chatSchema } from '@moneylens/validation';
+import { briefQuerySchema, chatSchema, suggestCategoriesSchema } from '@moneylens/validation';
 import { ok } from '../../lib/respond';
 import { requireUserId } from '../../middleware/authenticate';
 import { parseInput } from '../../middleware/validate';
@@ -34,6 +34,10 @@ export function aiRoutes(ai: AIService, { chatPerMinute }: { chatPerMinute: numb
   router.post('/chat', chatLimit, async (req, res) => {
     const input = parseInput(chatSchema, req.body);
     ok(res, await ai.chat(requireUserId(req), input));
+  });
+  router.post('/suggest-categories', chatLimit, async (req, res) => {
+    const { importId } = parseInput(suggestCategoriesSchema, req.body);
+    ok(res, await ai.suggestCategories(requireUserId(req), importId));
   });
   router.get('/brief', briefLimit, async (req, res) => {
     const { month } = parseInput(briefQuerySchema, req.query);

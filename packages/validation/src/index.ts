@@ -335,6 +335,21 @@ export const categorizeImportRowsSchema = z.object({
 });
 export type CategorizeImportRowsInput = z.infer<typeof categorizeImportRowsSchema>;
 
+/** Ask MoneyLens AI to suggest categories for an import's uncategorised merchants. */
+export const suggestCategoriesSchema = z.object({ importId: idSchema });
+export type SuggestCategoriesInput = z.infer<typeof suggestCategoriesSchema>;
+
+export const updatePreferencesSchema = z
+  .object({
+    monthlySummaryEmail: z.boolean().optional(),
+    peopleOutCategoryId: idSchema.nullable().optional(),
+    peopleInCategoryId: idSchema.nullable().optional(),
+  })
+  .refine((v) => Object.values(v).some((x) => x !== undefined), {
+    message: 'Nothing to change',
+  });
+export type UpdatePreferencesInput = z.infer<typeof updatePreferencesSchema>;
+
 // ---------------------------------------------------------------------------
 // Analytics
 // ---------------------------------------------------------------------------
@@ -641,6 +656,13 @@ export const backupFileSchema = z.object({
     .max(1000),
   /** Recurring series the owner dismissed, by their detection key. */
   dismissedRecurring: z.array(z.string().max(300)).max(10_000),
+  /** Categories for payments to and from people. Older backups have none. */
+  preferences: z
+    .object({
+      peopleOutCategory: categoryRef.nullable(),
+      peopleInCategory: categoryRef.nullable(),
+    })
+    .optional(),
 });
 export type BackupFile = z.infer<typeof backupFileSchema>;
 

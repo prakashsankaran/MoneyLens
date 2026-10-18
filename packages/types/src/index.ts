@@ -907,6 +907,51 @@ export interface BackupStatus {
 }
 
 // ---------------------------------------------------------------------------
+// Preferences: the monthly email and payments to people
+// ---------------------------------------------------------------------------
+
+/** GET /api/preferences */
+export interface Preferences {
+  monthlySummary: {
+    /** False when the server has no email account (SMTP_*) set up. */
+    available: boolean;
+    enabled: boolean;
+    /** Where it goes: the account's email address. */
+    sendTo: string;
+    /** "YYYY-MM" of the last summary sent, if any. */
+    lastSentFor: string | null;
+  };
+  people: {
+    /** Category for money sent to people that nothing else categorises. */
+    outCategoryId: string | null;
+    /** Category for money received from people. */
+    inCategoryId: string | null;
+  };
+}
+
+/** PATCH /api/preferences */
+export interface PreferencesUpdateResult {
+  preferences: Preferences;
+  /** Earlier uncategorised payments to or from people that were filled in. */
+  recategorised: number;
+}
+
+/** POST /api/preferences/monthly-summary/send */
+export interface MonthlySummarySent {
+  month: string;
+  sentTo: string;
+}
+
+/** POST /api/ai/suggest-categories: MoneyLens AI's guesses for an import's uncategorised merchants. */
+export interface CategorySuggestions {
+  status: 'ok' | 'not-configured' | 'unavailable';
+  /** Only merchants the model was confident about; each is applied by the user. */
+  suggestions: { merchant: string; categoryId: string }[];
+  /** Why there are none, when status is not "ok". */
+  message: string | null;
+}
+
+// ---------------------------------------------------------------------------
 // Imports
 // ---------------------------------------------------------------------------
 

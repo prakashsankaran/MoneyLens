@@ -34,6 +34,8 @@ import { importRoutes } from './modules/imports/imports.routes';
 import { merchantRoutes } from './modules/merchants/merchants.routes';
 import { MerchantsService } from './modules/merchants/merchants.service';
 import { PlanService } from './modules/plan/plan.service';
+import { PreferencesService } from './modules/preferences/preferences.service';
+import { preferencesRoutes } from './modules/preferences/preferences.routes';
 import { budgetRoutes, moneyPlanRoutes } from './modules/plan/plan.routes';
 import { RecurringService } from './modules/recurring/recurring.service';
 import { TransactionsService } from './modules/transactions/transactions.service';
@@ -52,8 +54,8 @@ export interface AppDeps {
    */
   webApp?: Router;
   /**
-   * Sends password reset links (`createSmtpMailer` from SMTP_*); without one
-   * email reset is off. Passed in for the same reason as `webApp`.
+   * Sends password reset links and monthly summaries (`createSmtpMailer` from
+   * SMTP_*); without one, both are off. Passed in for the same reason as `webApp`.
    */
   mailer?: Mailer;
 }
@@ -102,6 +104,7 @@ export function createApp({ env, prisma, logger, aiProvider, webApp, mailer }: A
     accessTokenTtlSeconds: env.ACCESS_TOKEN_TTL_SECONDS,
     refreshTokenTtlDays: env.REFRESH_TOKEN_TTL_DAYS,
   });
+  const appUrl = env.APP_URL ?? env.CORS_ORIGINS[0] ?? 'http://localhost:5173';
   const auth = new AuthService(
     prisma,
     tokens,
@@ -110,7 +113,7 @@ export function createApp({ env, prisma, logger, aiProvider, webApp, mailer }: A
     { mode: env.SIGNUP_MODE, inviteCodes: env.SIGNUP_INVITE_CODES },
     {
       mailer,
-      appUrl: env.APP_URL ?? env.CORS_ORIGINS[0] ?? 'http://localhost:5173',
+      appUrl,
       onMailError: (err) => logger.error({ err }, 'Sending a password reset email failed'),
     },
   );
@@ -164,6 +167,18 @@ export function createApp({ env, prisma, logger, aiProvider, webApp, mailer }: A
     backupRoutes(new BackupService(prisma, onChange), { maxUploadMb: env.MAX_UPLOAD_MB }),
   );
   api.use('/merchants', requireAuth, merchantRoutes(new MerchantsService(prisma, onChange)));
+  api.use(
+    '/preferences',
+    requireAuth,
+    preferencesRoutes(
+      new PreferencesService(prisma, insights, onChange, {
+        mailer,
+        appUrl,
+        onMailError: (err, userId) =>
+          logger.error({ err, userId }, 'Sending a monthly summary failed'),
+      }),
+    ),
+  );
   api.use(
     '/analytics',
     requireAuth,

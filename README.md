@@ -204,6 +204,8 @@ invite-only sign-up, follow [HOSTING.md](docs/HOSTING.md).
 - [DEVELOPMENT.md](docs/DEVELOPMENT.md): workflow and conventions
 - [IMPORT_PIPELINE.md](docs/IMPORT_PIPELINE.md): statement import pipeline, supported formats and duplicate detection
 - [AI_ARCHITECTURE.md](docs/AI_ARCHITECTURE.md): MoneyLens AI: providers, context, guardrails
+- [PASSWORD_RESET.md](docs/PASSWORD_RESET.md): forgotten passwords, and the free Gmail setup for email
+- [MONTHLY_EMAIL.md](docs/MONTHLY_EMAIL.md): the optional monthly summary email
 - [PLAN.md](docs/PLAN.md): architecture proposal and phased plan
 - [PHASE4_SUMMARY.md](docs/PHASE4_SUMMARY.md): insights, recurring payments, health score and monthly report
 - [PHASE7_SUMMARY.md](docs/PHASE7_SUMMARY.md): the mobile app

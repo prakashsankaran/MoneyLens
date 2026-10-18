@@ -18,6 +18,8 @@ import { BackupCard } from '../features/account/BackupCard';
 import { PasswordCard } from '../features/account/PasswordCard';
 import { RecoveryKeyCard } from '../features/account/RecoveryKeyCard';
 import { DeviceAICard } from '../features/account/DeviceAICard';
+import { MonthlyEmailCard } from '../features/preferences/MonthlyEmailCard';
+import { PeopleCategoriesCard } from '../features/preferences/PeopleCategoriesCard';
 import { deviceAI } from '../lib/device';
 
 export function SettingsPage() {
@@ -46,7 +48,10 @@ export function SettingsPage() {
       <ActivityCard />
       {ai && <DeviceAICard ai={ai} />}
       <CategoriesCard />
+      <PeopleCategoriesCard />
       <MerchantsCard />
+      {/* The phone app has no email; it would only say email is not set up. */}
+      {!ai && <MonthlyEmailCard />}
       <BackupCard />
       <DataCard />
     </div>

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
+  CategorySuggestions,
   ImportConfirmResult,
   ImportRecord,
   ImportReview,
@@ -103,6 +104,13 @@ export function useCategorizeImportRows(importId: string) {
     mutationFn: (input: CategorizeImportRowsInput) =>
       send<ImportReview>('POST', `/imports/${importId}/rows/categorize`, input),
     onSuccess: (review) => client.setQueryData(['imports', importId], review),
+  });
+}
+
+/** MoneyLens AI's category guesses for an import's uncategorised merchants. Nothing is saved. */
+export function useSuggestCategories(importId: string) {
+  return useMutation({
+    mutationFn: () => send<CategorySuggestions>('POST', '/ai/suggest-categories', { importId }),
   });
 }
 

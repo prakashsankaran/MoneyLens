@@ -119,4 +119,45 @@ describe('categorize', () => {
       source: 'none',
     });
   });
+
+  describe('payments to people', () => {
+    const people = { OUT: 'cat-family', IN: 'cat-other-income' };
+
+    it("uses the user's people category when nothing else fits", () => {
+      expect(
+        categorize(row('Paid to Arjun Mehta', { counterparty: 'Arjun Mehta' }), ctx({ people })),
+      ).toMatchObject({ categoryId: 'cat-family', source: 'people', confidence: 0.5 });
+      expect(
+        categorize(
+          row('UPI/412345678901/MEERA/meera@ybl/Payment', { flow: 'IN', upiId: 'meera@ybl' }),
+          ctx({ people }),
+        ),
+      ).toMatchObject({ categoryId: 'cat-other-income', source: 'people' });
+    });
+
+    it('leaves people uncategorised without the setting, and never overrides better matches', () => {
+      expect(
+        categorize(row('Paid to Arjun Mehta', { counterparty: 'Arjun Mehta' }), ctx()),
+      ).toMatchObject({ categoryId: null, source: 'none' });
+      expect(
+        categorize(row('Paid to Swiggy', { counterparty: 'Swiggy' }), ctx({ people })),
+      ).toMatchObject({ source: 'known-merchant' });
+      expect(
+        categorize(
+          row('Paid to Sri Krishna Stores', { counterparty: 'Sri Krishna Stores' }),
+          ctx({ people }),
+        ),
+      ).toMatchObject({ categoryId: null });
+      expect(
+        categorize(
+          row('Refund from Arjun Mehta', {
+            counterparty: 'Arjun Mehta',
+            flow: 'IN',
+            type: 'REFUND',
+          }),
+          ctx({ people }),
+        ),
+      ).toMatchObject({ categoryId: null });
+    });
+  });
 });

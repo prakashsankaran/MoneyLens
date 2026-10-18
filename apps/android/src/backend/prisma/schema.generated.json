@@ -103,6 +103,47 @@
           "isUpdatedAt": false
         },
         {
+          "name": "monthlySummaryEmail",
+          "kind": "scalar",
+          "type": "Boolean",
+          "isList": false,
+          "isRequired": true,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false,
+          "default": false
+        },
+        {
+          "name": "monthlySummarySentFor",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "peopleOutCategoryId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
+          "name": "peopleInCategoryId",
+          "kind": "scalar",
+          "type": "String",
+          "isList": false,
+          "isRequired": false,
+          "isId": false,
+          "isUnique": false,
+          "isUpdatedAt": false
+        },
+        {
           "name": "sessions",
           "kind": "object",
           "type": "Session",
