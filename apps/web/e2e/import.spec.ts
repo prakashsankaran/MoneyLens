@@ -43,7 +43,7 @@ test('import, review, correct and delete', async ({ page }) => {
     .first()
     .click();
   const dialog = page.getByRole('dialog', { name: 'Transaction' });
-  await dialog.getByRole('combobox').selectOption({ label: 'Coffee' });
+  await dialog.getByRole('combobox', { name: 'Category' }).selectOption({ label: 'Coffee' });
   await dialog.getByRole('checkbox', { name: /every Chai Point transaction/i }).check();
   await dialog.getByRole('button', { name: 'Save changes' }).click();
   await expect(dialog.getByText(/2 other transactions/)).toBeVisible();
