@@ -12,12 +12,44 @@ export interface DeviceAI {
   clearKey(): void;
 }
 
+/** Saving a file on the phone, where the web view cannot download. */
+export interface DeviceFiles {
+  /** Opens the share sheet with the file, so the person chooses where it goes. */
+  save(name: string, text: string, mimeType: string): Promise<void>;
+}
+
 declare global {
   interface Window {
-    moneylensDevice?: { ai: DeviceAI };
+    moneylensDevice?: { ai: DeviceAI; files?: DeviceFiles };
   }
 }
 
 export function deviceAI(): DeviceAI | undefined {
   return typeof window === 'undefined' ? undefined : window.moneylensDevice?.ai;
+}
+
+/**
+ * Save a text file: a download in the browser, the share sheet on the phone.
+ * Resolves to how it was saved, for the message shown afterwards.
+ */
+export async function saveTextFile(
+  name: string,
+  text: string,
+  mimeType: string,
+): Promise<'downloaded' | 'shared'> {
+  const files = typeof window === 'undefined' ? undefined : window.moneylensDevice?.files;
+  if (files) {
+    await files.save(name, text, mimeType);
+    return 'shared';
+  }
+  const url = URL.createObjectURL(new Blob([text], { type: mimeType }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = name;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  // Revoke after the click has been handled.
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return 'downloaded';
 }

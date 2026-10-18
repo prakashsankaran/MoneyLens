@@ -100,7 +100,7 @@ export function ImportsPage() {
             <input
               ref={inputRef}
               type="file"
-              accept=".pdf,.csv,.xlsx,application/pdf,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              accept=".pdf,.csv,.xlsx,.xls,.txt,application/pdf,text/csv,text/plain,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
               className="sr-only"
               disabled={upload.isPending}
               onChange={(e) => {
@@ -110,9 +110,10 @@ export function ImportsPage() {
             />
           </label>
           <p className="mt-4 max-w-md text-xs text-ink-500">
-            Google Pay statement PDFs, and CSV or Excel (.xlsx) exports from most Indian banks. If
-            the columns are not recognised, you can choose them. Your file is read and then
-            discarded; it is not stored, and neither is a PDF password.
+            Statement PDFs from Google Pay, PhonePe, Paytm and most banks (password-protected is
+            fine), and CSV, Excel or text downloads from your bank. If the columns are not
+            recognised, you can choose them. Your file is read and then discarded; it is not stored,
+            and neither is a PDF password.
           </p>
         </div>
         {upload.isError && !pending && (

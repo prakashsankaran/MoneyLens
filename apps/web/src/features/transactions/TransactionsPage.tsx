@@ -1,18 +1,21 @@
-import { LuFileUp, LuSlidersHorizontal } from 'react-icons/lu';
+import { LuDownload, LuFileUp, LuPlus, LuSlidersHorizontal } from 'react-icons/lu';
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { formatINR } from '@moneylens/shared';
 import type { TransactionItem } from '@moneylens/types';
+import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { ErrorCard, PageHeader } from '../../components/PageHeader';
 import { ProvenanceBadge } from '../../components/ProvenanceBadge';
+import { saveTextFile } from '../../lib/device';
 import { formatDay, TYPE_LABELS } from '../../lib/format';
+import { AddTransactionDialog } from './AddTransactionDialog';
 import { CategorySelect } from '../categories/CategorySelect';
 import { useCategories } from '../categories/useCategories';
 import { Amount } from './Amount';
 import { activeFilterCount, apiQueryFrom, PAGE_SIZE, withFilter, type FilterKey } from './filters';
 import { TransactionDetailDialog } from './TransactionDetailDialog';
-import { useMerchants, useTransactionList } from './useTransactions';
+import { exportTransactionsCsv, useMerchants, useTransactionList } from './useTransactions';
 
 const inputClass = 'h-11 w-full rounded-lg border border-ink-300 bg-surface px-3 text-sm';
 
@@ -26,6 +29,10 @@ export function TransactionsPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showMore, setShowMore] = useState(() => activeFilterCount(params) > 2);
   const [search, setSearch] = useState(params.get('q') ?? '');
+  const [adding, setAdding] = useState(false);
+  const [exportState, setExportState] = useState<
+    { kind: 'busy' } | { kind: 'done'; text: string } | { kind: 'error'; text: string } | null
+  >(null);
 
   const set = (key: FilterKey, value: string) => setParams(withFilter(params, key, value));
 
@@ -46,21 +53,72 @@ export function TransactionsPage() {
   const pages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
   const filtered = activeFilterCount(params) > 0 || !!q;
 
+  const downloadCsv = async () => {
+    setExportState({ kind: 'busy' });
+    try {
+      const file = await exportTransactionsCsv(query);
+      const how = await saveTextFile(file.filename, file.csv, 'text/csv');
+      const what = `${file.count} ${file.count === 1 ? 'transaction' : 'transactions'}`;
+      setExportState({
+        kind: 'done',
+        text:
+          how === 'shared'
+            ? `${what} ready to save or send.`
+            : `Downloaded ${what} as ${file.filename}.`,
+      });
+    } catch (err) {
+      setExportState({ kind: 'error', text: (err as Error).message });
+    }
+  };
+
   return (
     <div className="mx-auto max-w-[1200px] px-4 py-5 md:px-6 lg:px-8 lg:py-8">
       <PageHeader
         title="Transactions"
-        description="Everything you have imported. Select a transaction to correct it."
+        description="Everything you have imported or added. Select a transaction to correct it."
         actions={
-          <Link
-            to="/imports"
-            className="inline-flex h-11 items-center gap-2 rounded-full bg-brand-600 px-5 text-sm font-semibold text-white hover:bg-brand-700 transition-all duration-200 active:scale-[0.98]"
-          >
-            <LuFileUp className="size-4" aria-hidden="true" />
-            Import statement
-          </Link>
+          // On a phone: Import full width, then the two smaller actions side by side.
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
+            <Button
+              variant="ghost"
+              onClick={() => void downloadCsv()}
+              disabled={exportState?.kind === 'busy' || !data?.total}
+              title={filtered ? 'Download the transactions that match these filters' : undefined}
+            >
+              <LuDownload className="size-4" aria-hidden="true" />
+              {exportState?.kind === 'busy' ? 'Preparing…' : 'Download CSV'}
+            </Button>
+            <Button variant="secondary" onClick={() => setAdding(true)}>
+              <LuPlus className="size-4" aria-hidden="true" />
+              Add payment
+            </Button>
+            <Link
+              to="/imports"
+              className="order-first col-span-2 inline-flex h-11 items-center justify-center gap-2 rounded-full bg-brand-600 px-5 text-sm font-semibold text-white hover:bg-brand-700 transition-all duration-200 active:scale-[0.98] sm:order-none"
+            >
+              <LuFileUp className="size-4" aria-hidden="true" />
+              Import statement
+            </Link>
+          </div>
         }
       />
+      {exportState && exportState.kind !== 'busy' && (
+        <p
+          role={exportState.kind === 'error' ? 'alert' : 'status'}
+          className={`mt-3 text-sm ${exportState.kind === 'error' ? 'text-negative' : 'text-positive'}`}
+        >
+          {exportState.text}
+        </p>
+      )}
+      {adding && (
+        <AddTransactionDialog
+          onClose={() => setAdding(false)}
+          onAdded={(tx) => {
+            setAdding(false);
+            setSelectedId(tx.id);
+          }}
+        />
+      )}
 
       <section aria-label="Filters" className="mt-6 space-y-3">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-[2fr_1fr_1fr_1.5fr_auto]">
@@ -206,7 +264,7 @@ export function TransactionsPage() {
                 'Try a wider date range or clear some filters.'
               ) : (
                 <>
-                  Import a bank or UPI statement to get started.{' '}
+                  Import a bank or UPI statement, or add a cash payment, to get started.{' '}
                   <Link
                     to="/imports"
                     className="font-medium text-brand-700 hover:underline underline-offset-4 hover:text-brand-800 transition-all duration-200"

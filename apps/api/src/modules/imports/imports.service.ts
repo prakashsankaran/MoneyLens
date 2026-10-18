@@ -32,7 +32,12 @@ import {
 } from './pipeline/types';
 import { ignoreChanges, type TransactionsChanged } from '../../lib/change-hooks';
 
-const SUPPORTED = new Set(['csv', 'xlsx', 'pdf']);
+/**
+ * File types read. Banks' ".xls" downloads are often text (a web page table
+ * or tab-separated values) rather than real Excel files, so they are read as
+ * text; ".txt" is a delimited download such as HDFC's.
+ */
+const SUPPORTED = new Set(['csv', 'txt', 'xls', 'xlsx', 'pdf']);
 
 /** Statements this large are almost certainly not a personal export. */
 export const MAX_ROWS = 20_000;
@@ -72,10 +77,15 @@ function sniff(buffer: Buffer): 'pdf' | 'zip' | 'ole' | 'binary' | 'text' {
  */
 function assertContentMatches(ext: string, buffer: Buffer): void {
   const kind = sniff(buffer);
-  const expected = ext === 'csv' ? 'text' : ext === 'xlsx' ? 'zip' : 'pdf';
+  const expected = ext === 'xlsx' ? 'zip' : ext === 'pdf' ? 'pdf' : 'text';
   if (kind === expected) return;
   const messages: Record<string, string> = {
     csv: 'This file has a .csv name but is not a text CSV file. Export the statement as CSV and try again.',
+    txt: 'This file has a .txt name but is not a text file. Download the statement as CSV or text and try again.',
+    xls:
+      kind === 'ole'
+        ? 'This is an old-format Excel file (.xls), which MoneyLens cannot read. Open it in Excel or Google Sheets, save it as .xlsx or CSV, and upload that. Or download the PDF statement instead.'
+        : 'This file has a .xls name but is not an Excel or text file.',
     xlsx:
       kind === 'ole'
         ? 'This file is an encrypted or old-format Excel workbook. Remove its password, or save it as .xlsx or CSV, and try again.'
@@ -195,16 +205,10 @@ export class ImportsService {
   async upload(userId: string, file: UploadedFile): Promise<ImportReview> {
     const filename = safeFilename(file.filename);
     const ext = fileExtension(filename);
-    if (ext === 'xls') {
-      throw new AppError(
-        'UNSUPPORTED_MEDIA_TYPE',
-        'Old .xls workbooks are not supported. Open the file in Excel or Google Sheets, save it as .xlsx or CSV, and upload that.',
-      );
-    }
     if (!SUPPORTED.has(ext)) {
       throw new AppError(
         'UNSUPPORTED_MEDIA_TYPE',
-        'Upload a Google Pay statement PDF, or a bank statement as .csv or .xlsx.',
+        'Upload a statement PDF (Google Pay, PhonePe, Paytm or your bank), or a bank statement as .csv, .xlsx, .xls or .txt.',
       );
     }
     if (file.buffer.length === 0) {

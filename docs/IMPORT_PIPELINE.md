@@ -1,7 +1,10 @@
 # Import pipeline
 
-> **Status (Phase 3):** Google Pay statement PDFs (including password
-> protected ones), bank CSV and Excel (.xlsx) exports are imported end to end:
+> **Status:** Google Pay statement PDFs (including password protected ones),
+> other statement PDFs with a transaction table (PhonePe, Paytm, HDFC, ICICI,
+> SBI, Axis, Kotak and similar), bank CSV, .txt, Excel (.xlsx) and the
+> old-style .xls exports banks send (HTML or Excel 2003 XML tables) are
+> imported end to end:
 > upload, parse, categorise, duplicate check, review, confirm, delete. A
 > scanned (image-only) PDF is explained, not read; OCR is a later addition.
 
@@ -19,17 +22,17 @@ Upload ─► validate file ─► hash ─► select parser ─► extract rows
    ─► POST /imports/:id/confirm ─► Transaction rows ─► analytics
 ```
 
-| Stage      | What happens                                                                                                                                                                                                                                                                                                                                   | Code                                                       |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| Validate   | One `file` field in memory, `MAX_UPLOAD_MB` limit, plus optional `password` and `mapping` fields. Extensions `.pdf`, `.csv`, `.xlsx` (`.xls` gets a "save as .xlsx or CSV" message). Content sniffing: a `.csv` must be text, a `.xlsx` a ZIP, a `.pdf` a PDF. An encrypted workbook (OLE container) is explained                              | `imports.routes.ts`, `imports.service.ts`                  |
-| Store      | **The raw file is not stored.** Only its SHA-256, size, MIME type and a sanitised filename are kept. Re-uploading the same bytes returns `409` with the earlier import's id                                                                                                                                                                    | `ImportsService.upload`                                    |
-| Parse      | `selectParser` picks the registered `TransactionParser` with the highest `canParse()` score: `csv@1`, `xlsx@1`, `google-pay-pdf@1`. Parsers are pure and never touch the database. Problems the user can fix (password, unrecognised columns) return `400` with `details.reason` and no history entry; anything else becomes a `FAILED` import | `pipeline/registry.ts`, `*-parser.ts`, `google-pay-pdf.ts` |
-| Normalise  | Dates → IST instants (date-only values become 12:00 IST), amounts → positive paise + `flow`, type inferred from wording, UPI ID and reference extracted                                                                                                                                                                                        | `dates.ts`, `amounts.ts`, `normalize.ts`                   |
-| Duplicates | Scored against the user's transactions near the statement dates (see below). A likely duplicate is marked `DUPLICATE` (excluded by default) with a reason the user can read. Never deleted                                                                                                                                                     | `pipeline/duplicates.ts`                                   |
-| Categorise | Merchant text comes from the statement's counterparty when it states one (Google Pay "Paid to …"), else from the narration. Then: user rules → user's merchant mapping → self transfer by type → ~50 well-known Indian merchants → keyword rules → uncategorised. Stores `categoryConfidence`                                                  | `pipeline/categorize.ts`, `merchants.ts`                   |
-| Review     | Summary (calculated by `importStats` in `@moneylens/analytics`), file warnings, and per row: include/exclude, category, merchant name, type, and "duplicate". A category, merchant or type change can be applied to the same merchant's other rows. Edits only while `READY_FOR_REVIEW`                                                        | `ImportReviewPage.tsx`                                     |
-| Confirm    | One database transaction: claims the import (so a double submit cannot commit twice), finds or creates merchants with the statement text as an alias, inserts the transactions, links each staged row to its transaction                                                                                                                       | `ImportsService.confirm`                                   |
-| Delete     | Deleting an import deletes exactly the transactions it created (`Transaction.sourceFileId`)                                                                                                                                                                                                                                                    | `ImportsService.remove`                                    |
+| Stage      | What happens                                                                                                                                                                                                                                                                                                                                                                  | Code                                              |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Validate   | One `file` field in memory, `MAX_UPLOAD_MB` limit, plus optional `password` and `mapping` fields. Extensions `.pdf`, `.csv`, `.txt`, `.xls`, `.xlsx`. Content sniffing: a `.csv`, `.txt` or `.xls` must be text (a real binary `.xls` gets a "save as .xlsx or CSV" message), a `.xlsx` a ZIP, a `.pdf` a PDF. An encrypted workbook (OLE container) is explained             | `imports.routes.ts`, `imports.service.ts`         |
+| Store      | **The raw file is not stored.** Only its SHA-256, size, MIME type and a sanitised filename are kept. Re-uploading the same bytes returns `409` with the earlier import's id                                                                                                                                                                                                   | `ImportsService.upload`                           |
+| Parse      | `selectParser` picks the registered `TransactionParser` with the highest `canParse()` score: `csv@1`, `xlsx@1`, `pdf@1` (Google Pay layout first, then any table). Parsers are pure and never touch the database. Problems the user can fix (password, unrecognised columns) return `400` with `details.reason` and no history entry; anything else becomes a `FAILED` import | `pipeline/registry.ts`, `*-parser.ts`, `pdf-*.ts` |
+| Normalise  | Dates → IST instants (date-only values become 12:00 IST), amounts → positive paise + `flow`, type inferred from wording, UPI ID and reference extracted                                                                                                                                                                                                                       | `dates.ts`, `amounts.ts`, `normalize.ts`          |
+| Duplicates | Scored against the user's transactions near the statement dates (see below). A likely duplicate is marked `DUPLICATE` (excluded by default) with a reason the user can read. Never deleted                                                                                                                                                                                    | `pipeline/duplicates.ts`                          |
+| Categorise | Merchant text comes from the statement's counterparty when it states one (Google Pay "Paid to …"), else from the narration. Then: user rules → user's merchant mapping → self transfer by type → ~50 well-known Indian merchants → keyword rules → uncategorised. Stores `categoryConfidence`                                                                                 | `pipeline/categorize.ts`, `merchants.ts`          |
+| Review     | Summary (calculated by `importStats` in `@moneylens/analytics`), file warnings, and per row: include/exclude, category, merchant name, type, and "duplicate". A category, merchant or type change can be applied to the same merchant's other rows. Edits only while `READY_FOR_REVIEW`                                                                                       | `ImportReviewPage.tsx`                            |
+| Confirm    | One database transaction: claims the import (so a double submit cannot commit twice), finds or creates merchants with the statement text as an alias, inserts the transactions, links each staged row to its transaction                                                                                                                                                      | `ImportsService.confirm`                          |
+| Delete     | Deleting an import deletes exactly the transactions it created (`Transaction.sourceFileId`)                                                                                                                                                                                                                                                                                   | `ImportsService.remove`                           |
 
 ## CSV parser (`csv@1`)
 
@@ -55,6 +58,10 @@ Built for the exports Indian banks and apps produce:
   drops.
 - **References** are normalised for matching: leading zeros are removed and
   placeholders such as `0000000000` are ignored.
+- **.txt and .xls:** a `.txt` export is read like a CSV. Many banks' ".xls"
+  downloads are really an HTML table or an Excel 2003 XML workbook; those are
+  turned into rows (cell spans and `ss:Index` gaps respected) and read the same
+  way, recorded as `html-table@1`.
 
 ## Parser contract
 
@@ -155,6 +162,41 @@ Date & time      Transaction details                      Amount
   refused with a message suggesting CSV or Excel for bank statements; an
   image-only PDF is reported as probably scanned.
 
+## Other statement PDFs (`pdf-table@1`)
+
+`pdf@1` first tries the Google Pay layout above (skipped when the statement
+names Paytm or PhonePe at the top). Any other PDF is read as a table, in
+`pipeline/pdf-table.ts`. The same assumption applies: the layouts come from
+public descriptions and synthetic fixtures (HDFC-style, PhonePe and Paytm
+PDFs in `test/fixtures/statements.ts`), not from real statements.
+
+- **Heading row:** found by matching words to known headings (Date, Txn Date,
+  Narration, Transaction Details, Withdrawal Amt., Debit, Deposit, Credit,
+  Amount, Dr/Cr, Type, Balance, Ref No./Cheque No., UPI ID, …), up to four
+  words per heading, across two lines when a heading wraps. Unknown headings
+  become ignored columns, so text under them is not glued to the narration.
+- **Cells:** each word goes to the column it sits under. Amount-looking text
+  goes to the nearest numeric column by centre, because banks right-align
+  figures.
+- **Rows** start at a date in the date column. Following lines join the
+  narration until a big vertical gap, a page break, the table's end or a
+  summary line ("Opening Balance", "Total"). A time-only line sets the time;
+  lines such as "Transaction ID", "UTR" and "Paid by" are kept out of the
+  description.
+- **Direction:** from separate debit/credit columns, a Dr/Cr or Type column,
+  or wording ("Paid to", "Received from"). The counterparty in that wording
+  becomes the merchant candidate.
+- **Reference:** UTR, then UPI Ref, then the reference column, then a number in
+  the narration.
+- **Running balance check:** with a Balance column, each row's balance is
+  checked against the previous one (oldest-first or newest-first, using the
+  opening balance when stated). A row whose direction was a guess is settled
+  by the balance; a mismatch becomes a file warning.
+- **Issuer:** read from the text above the first heading only, and recorded
+  as `pdf-table@1:phonepe`, `:paytm`, `:hdfc` and so on.
+- No table found → `400` explaining that the PDF has no transaction table and
+  suggesting the CSV or Excel download.
+
 ## Duplicate detection
 
 `findDuplicates` (pure, in `pipeline/duplicates.ts`) compares each new row
@@ -183,7 +225,7 @@ duplicate, during review.
 ## Still to come
 
 - An `OcrEngine` interface for scanned PDFs (Phase 8 or later).
-- Statement layouts beyond Google Pay as PDFs (bank PDFs).
+- More checks against real bank and wallet PDFs as people try them.
 
 Parsers are tested with synthetic fixture files only (`apps/api/test/fixtures`):
 CSVs, workbooks and PDFs built at test time, plus one password-protected PDF

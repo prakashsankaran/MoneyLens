@@ -101,7 +101,7 @@ export const transactionQuerySchema = z
       )
       .pipe(z.array(idSchema).min(1).max(200))
       .optional(),
-    source: csvEnum(['GOOGLE_PAY', 'CSV', 'XLSX', 'MANUAL', 'OTHER'] as const).optional(),
+    source: csvEnum(['GOOGLE_PAY', 'CSV', 'XLSX', 'PDF', 'MANUAL', 'OTHER'] as const).optional(),
     status: z.enum(['CONFIRMED', 'EXCLUDED']).default('CONFIRMED'),
     sort: z.enum(TRANSACTION_SORTS).default('date_desc'),
     page: z.coerce.number().int().min(1).max(10_000).default(1),
@@ -118,6 +118,55 @@ export const transactionQuerySchema = z
 export type TransactionQuery = z.infer<typeof transactionQuerySchema>;
 export type TransactionQueryInput = z.input<typeof transactionQuerySchema>;
 
+const TRANSACTION_TYPES = [
+  'DEBIT',
+  'CREDIT',
+  'REFUND',
+  'CASHBACK',
+  'TRANSFER',
+  'SELF_TRANSFER',
+  'UNKNOWN',
+] as const;
+const PAYMENT_METHOD_VALUES = ['CASH', 'UPI', 'CARD', 'NETBANKING', 'WALLET', 'OTHER'] as const;
+/** Types that only go one way; the rest (transfers, unknown) can go either way. */
+const ONE_WAY_TYPES: Record<string, 'IN' | 'OUT'> = {
+  DEBIT: 'OUT',
+  CREDIT: 'IN',
+  REFUND: 'IN',
+  CASHBACK: 'IN',
+};
+const positiveAmount = rupeeAmountSchema.refine((v) => Number(v) > 0, 'Enter an amount above zero');
+/** "HH:MM", 24-hour, India Standard Time. */
+export const timeOfDaySchema = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Enter a time like 14:30');
+
+/** POST /api/transactions: a payment added by hand, such as cash. */
+export const createTransactionSchema = z
+  .object({
+    date: dayKeySchema,
+    time: timeOfDaySchema.optional(),
+    amount: positiveAmount,
+    flow: z.enum(['OUT', 'IN']),
+    /** Defaults to a payment for money out and money in for money in. */
+    transactionType: z.enum(TRANSACTION_TYPES).optional(),
+    merchantName: z
+      .string()
+      .trim()
+      .min(1, 'Enter who you paid, or who paid you')
+      .max(80, 'Use at most 80 characters'),
+    /** A top-level or subcategory id. Left out: the merchant's usual category, if any. */
+    categoryId: idSchema.nullable().optional(),
+    paymentMethod: z.enum(PAYMENT_METHOD_VALUES).default('CASH'),
+    notes: z.string().trim().max(500, 'Use at most 500 characters').optional(),
+  })
+  .refine((v) => !v.transactionType || (ONE_WAY_TYPES[v.transactionType] ?? v.flow) === v.flow, {
+    message: 'That type does not match money in or out',
+    path: ['transactionType'],
+  });
+export type CreateTransactionInput = z.infer<typeof createTransactionSchema>;
+export type CreateTransactionFormInput = z.input<typeof createTransactionSchema>;
+
 export const updateTransactionSchema = z
   .object({
     /** A top-level or subcategory id; null clears the category. */
@@ -128,6 +177,14 @@ export const updateTransactionSchema = z
       .enum(['DEBIT', 'CREDIT', 'REFUND', 'CASHBACK', 'TRANSFER', 'SELF_TRANSFER', 'UNKNOWN'])
       .optional(),
     status: z.enum(['CONFIRMED', 'EXCLUDED']).optional(),
+    paymentMethod: z.enum(PAYMENT_METHOD_VALUES).nullable().optional(),
+    /** Only for transactions added by hand; imported ones keep the statement's figures. */
+    amount: positiveAmount.optional(),
+    /** Only for transactions added by hand. Keeps the time of day unless `time` is sent. */
+    date: dayKeySchema.optional(),
+    time: timeOfDaySchema.optional(),
+    /** Only for transactions added by hand. */
+    flow: z.enum(['OUT', 'IN']).optional(),
     /**
      * Also use this category for the merchant's other transactions and for
      * future imports from the same merchant.
@@ -445,3 +502,147 @@ export const chatSchema = z.object({
 export type ChatInput = z.input<typeof chatSchema>;
 
 export const briefQuerySchema = z.object({ month: monthKeySchema.optional() });
+
+// ---------------------------------------------------------------------------
+// Backup and restore
+// ---------------------------------------------------------------------------
+
+export const BACKUP_FORMAT = 'moneylens-backup';
+export const BACKUP_VERSION = 1;
+/** More than any personal history; keeps a restore within memory and time limits. */
+export const BACKUP_MAX_TRANSACTIONS = 100_000;
+
+const backupText = (max: number) => z.string().max(max);
+const optionalText = (max: number) => backupText(max).nullable();
+/** A rupee amount as written by the backup, e.g. "450" or "1250.5". */
+const backupAmount = z.string().regex(/^\d{1,12}(\.\d{1,2})?$/, 'Expected an amount');
+const isoDateTime = z.iso.datetime({ offset: true });
+/**
+ * A category reference that works across databases: system categories by
+ * slug ("system:food" or "system:food/food-delivery"), the owner's own
+ * categories by their id in the backup ("custom:<id>").
+ */
+const categoryRef = z
+  .string()
+  .regex(/^(system:[a-z0-9-]{1,60}(\/[a-z0-9-]{1,60})?|custom:[A-Za-z0-9_-]{1,64})$/);
+
+export const backupFileSchema = z.object({
+  format: z.literal(BACKUP_FORMAT, { message: 'This is not a MoneyLens backup file' }),
+  version: z.literal(BACKUP_VERSION, {
+    message: 'This backup was made by a newer version of MoneyLens. Update the app first.',
+  }),
+  exportedAt: isoDateTime,
+  account: z.object({ name: backupText(80) }),
+  categories: z
+    .array(
+      z.object({
+        id: z.string().min(1).max(64),
+        parent: categoryRef.nullable(),
+        name: backupText(80).min(1),
+        slug: z.string().regex(/^[a-z0-9-]{1,80}$/),
+        icon: optionalText(40),
+        color: optionalText(20),
+        sortOrder: z.number().int(),
+      }),
+    )
+    .max(1000),
+  merchants: z
+    .array(
+      z.object({
+        id: z.string().min(1).max(64),
+        name: backupText(120).min(1),
+        normalizedName: backupText(120).min(1),
+        defaultCategory: categoryRef.nullable(),
+        userCategory: categoryRef.nullable(),
+        confidence: z.number().min(0).max(1),
+        aliases: z.array(backupText(200).min(1)).max(200),
+      }),
+    )
+    .max(50_000),
+  rules: z
+    .array(
+      z.object({
+        matchField: z.enum(['MERCHANT', 'DESCRIPTION', 'UPI_ID']),
+        pattern: backupText(200).min(1),
+        category: categoryRef,
+        priority: z.number().int(),
+      }),
+    )
+    .max(10_000),
+  transactions: z
+    .array(
+      z.object({
+        date: isoDateTime,
+        amount: backupAmount,
+        currency: z.string().length(3),
+        type: z.enum([
+          'DEBIT',
+          'CREDIT',
+          'REFUND',
+          'CASHBACK',
+          'TRANSFER',
+          'SELF_TRANSFER',
+          'UNKNOWN',
+        ]),
+        flow: z.enum(['IN', 'OUT']),
+        merchantId: z.string().max(64).nullable(),
+        merchantName: optionalText(200),
+        description: optionalText(1000),
+        category: categoryRef.nullable(),
+        subcategory: categoryRef.nullable(),
+        paymentMethod: z.enum(['UPI', 'CARD', 'NETBANKING', 'CASH', 'WALLET', 'OTHER']).nullable(),
+        upiId: optionalText(200),
+        reference: optionalText(100),
+        source: z.enum(['GOOGLE_PAY', 'CSV', 'XLSX', 'PDF', 'MANUAL', 'OTHER']),
+        status: z.enum(['CONFIRMED', 'PENDING_REVIEW', 'EXCLUDED']),
+        categoryConfidence: z.number().min(0).max(1).nullable(),
+        notes: optionalText(500),
+      }),
+    )
+    .max(BACKUP_MAX_TRANSACTIONS),
+  budgets: z
+    .array(
+      z.object({
+        category: categoryRef,
+        month: z.string().regex(/^\d{4}-\d{2}-01$/),
+        amount: backupAmount,
+      }),
+    )
+    .max(20_000),
+  financialProfile: z
+    .object({
+      monthlyIncome: backupAmount.nullable(),
+      fixedExpenses: backupAmount.nullable(),
+      emis: backupAmount.nullable(),
+      insurance: backupAmount.nullable(),
+      investments: backupAmount.nullable(),
+      savingsTarget: backupAmount.nullable(),
+      emergencyFundTarget: backupAmount.nullable(),
+      emergencyFundCurrent: backupAmount.nullable(),
+      upcomingExpenses: z
+        .array(
+          z.object({ label: backupText(60), amount: z.string().max(20), dueMonth: monthKeySchema }),
+        )
+        .max(20)
+        .nullable(),
+    })
+    .nullable(),
+  moneyPlans: z
+    .array(
+      z.object({
+        name: backupText(120),
+        inputs: z.unknown(),
+        allocation: z.unknown(),
+        schemaVersion: z.number().int(),
+        isActive: z.boolean(),
+        createdAt: isoDateTime,
+      }),
+    )
+    .max(1000),
+  /** Recurring series the owner dismissed, by their detection key. */
+  dismissedRecurring: z.array(z.string().max(300)).max(10_000),
+});
+export type BackupFile = z.infer<typeof backupFileSchema>;
+
+/** Restoring over existing data needs this typed confirmation. */
+export const REPLACE_CONFIRMATION = 'REPLACE';

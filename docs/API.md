@@ -239,13 +239,43 @@ Query (all optional):
 | `flow`                   | `IN` or `OUT`                                                             |
 | `recurring`              | `true` or `false` (part of a detected, non-dismissed recurring series)    |
 | `ids`                    | Comma-separated transaction ids (≤ 200), e.g. an insight's evidence       |
-| `source`                 | Comma-separated `CSV,GOOGLE_PAY,XLSX,MANUAL,OTHER`                        |
+| `source`                 | Comma-separated `CSV,GOOGLE_PAY,XLSX,PDF,MANUAL,OTHER`                    |
 | `status`                 | `CONFIRMED` (default) or `EXCLUDED`                                       |
 | `sort`                   | `date_desc` (default), `date_asc`, `amount_desc`, `amount_asc`            |
 | `page`, `pageSize`       | Defaults 1 and 25; `pageSize` ≤ 100                                       |
 
 → `{ items: TransactionItem[], page, pageSize, total, summary }`. `summary` is
 the engine's period totals over **every** match, not just the page.
+
+### `POST /api/transactions` 🔒
+
+Adds a payment that is on no statement, such as cash. Body:
+
+```jsonc
+{
+  "date": "2026-10-17", // IST day, today or earlier
+  "time": "18:30", // optional; without it the payment sits at 12:00 IST
+  "amount": "450", // rupees, positive
+  "flow": "OUT", // or "IN"
+  "merchantName": "Vegetable market", // who was paid, or who paid
+  "categoryId": null, // optional; without it the merchant's usual category is used
+  "paymentMethod": "CASH", // default; also UPI, CARD, NETBANKING, WALLET, OTHER
+  "transactionType": "DEBIT", // optional, must match the flow
+  "notes": "Weekly shop", // optional
+}
+```
+
+The transaction is stored with `source: "MANUAL"` and counts in every total.
+→ `201` with the `TransactionDetail`.
+
+### `GET /api/transactions/export` 🔒
+
+The same filters as `GET /api/transactions` (paging ignored), up to 100,000
+rows. → `{ filename, csv, count }`. The CSV starts with a BOM, uses CRLF line
+endings and has the columns Date, Time, Merchant, Description, Category,
+Subcategory, Kind, Dr/Cr, Amount, Payment method, UPI ID, Reference, Notes,
+Source. Text that a spreadsheet would run as a formula is prefixed with `'`.
+Importing the file back into the same account marks every row as a duplicate.
 
 ### `GET /api/transactions/:id` 🔒
 
@@ -263,7 +293,14 @@ Body (at least one field):
   "notes": "Team lunch", // null clears
   "transactionType": "REFUND", // flow follows the type for DEBIT/CREDIT/REFUND/CASHBACK
   "status": "EXCLUDED", // excluded transactions leave every total
+  "paymentMethod": "UPI", // null clears
   "applyToMerchant": true, // needs categoryId
+  // Only for transactions added by hand (source MANUAL); imported ones
+  // keep the statement's figures and get a 400:
+  "amount": "500",
+  "date": "2026-10-16",
+  "time": "09:00",
+  "flow": "IN",
 }
 ```
 
@@ -280,6 +317,37 @@ recategorised. → `{ transaction: TransactionDetail, alsoUpdated: number }`.
 Body: `{ "confirm": "DELETE" }`. Deletes every transaction, import, recurring
 group, insight and MoneyLens AI conversation for the user. Merchants and category rules are kept →
 `{ deleted: { transactions, imports } }`.
+
+## Backup
+
+### `GET /api/backup` 🔒
+
+→ the whole account as one backup document: `{ format: "moneylens-backup",
+version: 1, exportedAt, account: { name }, categories, merchants, rules,
+transactions, budgets, financialProfile, moneyPlans, dismissedRecurring }`.
+Categories are referenced as `system:<parent>/<slug>` or `custom:<id>`, so a
+backup restores into another MoneyLens database. Passwords, sessions, imports
+and MoneyLens AI conversations are not included.
+
+### `GET /api/backup/status` 🔒
+
+→ `{ transactions, imports }` for the signed-in account, so the app can warn
+before a restore replaces anything.
+
+### `POST /api/backup/restore` 🔒
+
+`multipart/form-data` with one `file` (the backup `.json`, `MAX_UPLOAD_MB`
+limit) and, when the account already has data, `replace=REPLACE`. Without it
+an account with data returns `409` with
+`details: { reason: "HAS_DATA", transactions, imports }`. A file that is not a
+backup, is damaged, or comes from a newer version returns `400` with
+`details.reason = "INVALID_BACKUP"`. Replacing clears the account's money data
+first; the clear and the load run in one database transaction, so a failure
+leaves the account as it was. → `{ transactions, merchants, categories, rules,
+budgets, replaced }`.
+
+To copy everything from one account to another on the same database, run
+`npm run move-data` (see the README).
 
 ## Imports
 

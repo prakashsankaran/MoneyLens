@@ -14,6 +14,7 @@
     "db:seed": "tsx --env-file-if-exists=.env prisma/seed.ts",
     "db:reset": "prisma migrate reset --force",
     "reset-password": "tsx --env-file-if-exists=.env src/reset-password.ts",
+    "move-data": "tsx --env-file-if-exists=.env src/move-data.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

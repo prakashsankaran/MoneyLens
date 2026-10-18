@@ -3,7 +3,13 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { ImportReview, TransactionList } from '@moneylens/types';
 import { seedCategories } from '../prisma/seed';
-import { bankWorkbook, googlePayPdf, unlabelledWorkbook } from './fixtures/statements';
+import {
+  bankWorkbook,
+  googlePayPdf,
+  hdfcStatementPdf,
+  phonePeStatementPdf,
+  unlabelledWorkbook,
+} from './fixtures/statements';
 import { createTestContext, registerUser } from './helpers';
 
 const { app, prisma } = createTestContext({ MAX_UPLOAD_MB: '0.05' });
@@ -89,8 +95,10 @@ describe('POST /api/imports', () => {
     const ole = Buffer.from('d0cf11e0a1b11ae1', 'hex');
     const xls = await upload(user.accessToken, ole, 'old.xls').expect(415);
     expect(xls.body.error.message).toMatch(/save it as \.xlsx or CSV/);
-    const res = await upload(user.accessToken, Buffer.from('hello'), 'notes.txt').expect(415);
-    expect(res.body.error.message).toMatch(/Google Pay statement PDF/);
+    const res = await upload(user.accessToken, Buffer.from('hello'), 'notes.doc').expect(415);
+    expect(res.body.error.message).toMatch(
+      /statement PDF \(Google Pay, PhonePe, Paytm or your bank\)/,
+    );
   });
 
   it('checks file contents, not just the extension', async () => {
@@ -145,6 +153,51 @@ describe('POST /api/imports', () => {
     expect(res.body.data.import.errorMessage).toBeTruthy();
     const history = await request(app).get('/api/imports').set(auth(user.accessToken)).expect(200);
     expect(history.body.data[0].status).toBe('FAILED');
+  });
+});
+
+describe('bank and wallet statement PDFs', () => {
+  it('stages and confirms a bank statement PDF as a PDF import', async () => {
+    const user = await registerUser(app);
+    const review: ImportReview = (
+      await upload(user.accessToken, await hdfcStatementPdf(), 'Acct_Statement.pdf').expect(201)
+    ).body.data;
+    expect(review.import).toMatchObject({
+      status: 'READY_FOR_REVIEW',
+      source: 'PDF',
+      parserName: 'pdf-table@1:hdfc',
+      statementStart: '2026-10-01',
+      statementEnd: '2026-10-16',
+    });
+    expect(review.rows.map((r) => r.merchantName)).toEqual(
+      expect.arrayContaining(['Swiggy', 'Netflix']),
+    );
+    await request(app)
+      .post(`/api/imports/${review.import.id}/confirm`)
+      .set(auth(user.accessToken))
+      .expect(200);
+    const list: TransactionList = (
+      await request(app).get('/api/transactions?source=PDF').set(auth(user.accessToken)).expect(200)
+    ).body.data;
+    expect(list.total).toBe(6);
+  });
+
+  it('reads a PhonePe statement, and a text ".xls" from a bank', async () => {
+    const user = await registerUser(app);
+    const phonePe: ImportReview = (
+      await upload(user.accessToken, await phonePeStatementPdf(), 'PhonePe_Statement.pdf').expect(
+        201,
+      )
+    ).body.data;
+    expect(phonePe.import.parserName).toBe('pdf-table@1:phonepe');
+    expect(phonePe.rows.map((r) => r.merchantName)).toEqual(['Swiggy', 'Ravi Kumar', 'Blinkit']);
+
+    const tsv = Buffer.from(
+      'Txn Date\tDescription\tDebit\tCredit\n1 Oct 2026\tUPI/DR/424612345678/ZEPTO/zepto@ybl\t620.00\t\n',
+    );
+    const sbi: ImportReview = (await upload(user.accessToken, tsv, 'statement.xls').expect(201))
+      .body.data;
+    expect(sbi.rows).toHaveLength(1);
   });
 });
 

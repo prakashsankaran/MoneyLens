@@ -142,3 +142,66 @@ describe('edge cases', () => {
     expect(result.warnings.filter((w) => w.startsWith('Line '))).toHaveLength(10);
   });
 });
+
+describe('bank downloads that are text under another name', () => {
+  it('reads an SBI style tab-separated ".xls" file', async () => {
+    const text = [
+      'Account Name\t:\tMRS ASHA VERMA',
+      'Account Number\t:\t00000012345678901',
+      '',
+      'Txn Date\tValue Date\tDescription\tRef No./Cheque No.\tDebit\tCredit\tBalance',
+      '1 Oct 2026\t1 Oct 2026\tBY TRANSFER-UPI/CR/424512345678/MEERA/meera@okhdfc\tTRANSFER FROM 1234\t\t1,500.00\t21,500.00',
+      '2 Oct 2026\t2 Oct 2026\tTO TRANSFER-UPI/DR/424612345678/ZEPTO/zepto@ybl\tTRANSFER TO 5678\t620.00\t\t20,880.00',
+    ].join('\n');
+    expect(parser.canParse(csv('', 'statement.xls'))).toBeGreaterThan(0.5);
+    const result = await parser.parse(csv(text, 'statement.xls'));
+    expect(result.rows.map((r) => [dayKeyOf(r.date), r.amountPaise, r.flow, r.upiId])).toEqual([
+      ['2026-10-01', 1_500_00, 'IN', 'meera@okhdfc'],
+      ['2026-10-02', 620_00, 'OUT', 'zepto@ybl'],
+    ]);
+  });
+
+  it('reads a web-page table saved as ".xls"', async () => {
+    const html = `<html><head><meta charset="utf-8"><style>td{}</style></head><body>
+      <table><tr><td colspan="4">Kotak Mahindra Bank &ndash; Account Statement</td></tr></table>
+      <table border="1">
+        <tr><th>Sl. No.</th><th>Transaction Date</th><th>Description</th><th>Chq / Ref No.</th><th>Amount</th><th>Dr / Cr</th><th>Balance</th></tr>
+        <tr><td>1</td><td>03-10-2026</td><td>UPI/SWIGGY/424512345678/swiggy@icici&nbsp;</td><td>UPI-424512345678</td><td>1,250.00</td><td>DR</td><td>18,750.00</td></tr>
+        <tr><td>2</td><td>04-10-2026</td><td>NEFT-ACME &amp; CO-SALARY</td><td>N27712345</td><td>90,000.00</td><td>CR</td><td>1,08,750.00</td></tr>
+      </table></body></html>`;
+    const result = await parser.parse(csv(html, 'Statement.xls'));
+    expect(result.parserName).toBe('html-table@1');
+    expect(result.rows.map((r) => [r.amountPaise, r.flow, r.description])).toEqual([
+      [1_250_00, 'OUT', 'UPI/SWIGGY/424512345678/swiggy@icici'],
+      [90_000_00, 'IN', 'NEFT-ACME & CO-SALARY'],
+    ]);
+  });
+
+  it('reads an Excel 2003 XML workbook saved as ".xls"', async () => {
+    const xml = `<?xml version="1.0"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+ <Worksheet ss:Name="Statement"><Table>
+  <Row><Cell><Data ss:Type="String">Transaction Date</Data></Cell><Cell><Data ss:Type="String">Transaction Remarks</Data></Cell><Cell><Data ss:Type="String">Withdrawal Amount (INR )</Data></Cell><Cell><Data ss:Type="String">Deposit Amount (INR )</Data></Cell></Row>
+  <Row><Cell><Data ss:Type="String">05/10/2026</Data></Cell><Cell><Data ss:Type="String">UPI/BLINKIT/blinkit@hdfcbank</Data></Cell><Cell><Data ss:Type="Number">412.5</Data></Cell></Row>
+  <Row><Cell><Data ss:Type="String">06/10/2026</Data></Cell><Cell><Data ss:Type="String">INTEREST CREDIT</Data></Cell><Cell ss:Index="4"><Data ss:Type="Number">88</Data></Cell></Row>
+ </Table></Worksheet></Workbook>`;
+    const result = await parser.parse(csv(xml, 'OpTransactionHistory.xls'));
+    expect(result.rows.map((r) => [r.amountPaise, r.flow])).toEqual([
+      [412_50, 'OUT'],
+      [88_00, 'IN'],
+    ]);
+  });
+
+  it("reads Paytm's columns, keeping only a UPI ID from the other-party column", async () => {
+    const text = [
+      'Date,Time,Transaction Details,Other Transaction Details (UPI ID or A/c No),Your Account,Amount,UPI Ref No.,Order ID,Remarks,Tags,Comment',
+      '15/10/2026,10:30:12,Paid to Swiggy,swiggy@paytm,HDFC Bank - 34,"-450",424512345678,,,#Food,',
+      '16/10/2026,18:02:40,Received from Meera,XXXXXX1234,HDFC Bank - 34,"+2,000",424612345678,,,,',
+    ].join('\n');
+    const result = await parser.parse(csv(text, 'Paytm_UPI_Statement.csv'));
+    expect(result.rows.map((r) => [r.amountPaise, r.flow, r.upiId, r.reference])).toEqual([
+      [450_00, 'OUT', 'swiggy@paytm', '424512345678'],
+      [2_000_00, 'IN', null, '424612345678'],
+    ]);
+  });
+});

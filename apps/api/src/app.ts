@@ -13,6 +13,8 @@ import { AIService } from './modules/ai/ai.service';
 import { aiRoutes } from './modules/ai/ai.routes';
 import { createAIProvider, type AIProvider } from './modules/ai/providers';
 import { authenticate } from './middleware/authenticate';
+import { BackupService } from './modules/backup/backup.service';
+import { backupRoutes } from './modules/backup/backup.routes';
 import { errorHandler, notFoundHandler } from './middleware/error-handler';
 import { apiRateLimit } from './middleware/rate-limit';
 import { AuthService } from './modules/auth/auth.service';
@@ -155,6 +157,11 @@ export function createApp({ env, prisma, logger, aiProvider, webApp, mailer }: A
     importRoutes(new ImportsService(prisma, onChange, env.PARSE_TIMEOUT_MS), {
       maxUploadMb: env.MAX_UPLOAD_MB,
     }),
+  );
+  api.use(
+    '/backup',
+    requireAuth,
+    backupRoutes(new BackupService(prisma, onChange), { maxUploadMb: env.MAX_UPLOAD_MB }),
   );
   api.use('/merchants', requireAuth, merchantRoutes(new MerchantsService(prisma, onChange)));
   api.use(

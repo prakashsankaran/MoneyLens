@@ -86,6 +86,7 @@ export function ImportsScreen() {
         'text/csv',
         'text/comma-separated-values',
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel',
         // Some Android file managers report CSV files as plain text.
         ...(Platform.OS === 'android' ? ['text/plain'] : []),
       ],
@@ -112,7 +113,7 @@ export function ImportsScreen() {
     <Screen edges={[]} refreshing={history.isRefetching} onRefresh={() => void history.refetch()}>
       <Card
         title="Import a statement"
-        subtitle="Google Pay PDF, or a CSV or Excel (.xlsx) statement from your bank. You review every row before anything is saved."
+        subtitle="A statement PDF from Google Pay, PhonePe, Paytm or your bank, or a CSV or Excel file from your bank. You review every row before anything is saved."
       >
         <Button
           label={upload.isPending ? 'Reading your statement…' : 'Choose a file'}

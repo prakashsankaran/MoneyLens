@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import type { TransactionDetail } from '@moneylens/types';
+import { dayKeyOf, PAYMENT_METHOD_LABELS, toRupeeInput } from '@moneylens/shared';
+import type { PaymentMethod, TransactionDetail } from '@moneylens/types';
 import type { UpdateTransactionInput } from '@moneylens/validation';
 import { Button } from '../../components/Button';
 import { Dialog } from '../../components/Dialog';
@@ -36,6 +37,21 @@ interface EditValues {
   merchantName: string;
   notes: string;
   applyToMerchant: boolean;
+  paymentMethod: string;
+  // Only for payments added by hand.
+  amount: string;
+  date: string;
+  time: string;
+  flow: 'IN' | 'OUT';
+}
+
+const METHODS: PaymentMethod[] = ['CASH', 'UPI', 'CARD', 'NETBANKING', 'WALLET', 'OTHER'];
+const fieldClass =
+  'mt-1.5 block h-11 w-full rounded-xl border border-ink-200 bg-surface px-3 text-sm transition-all duration-200 hover:border-ink-300 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100';
+
+/** "HH:MM" in India Standard Time. */
+function istTime(iso: string): string {
+  return new Date(Date.parse(iso) + 330 * 60_000).toISOString().slice(11, 16);
 }
 
 function TransactionDetailBody({ tx, onClose }: { tx: TransactionDetail; onClose: () => void }) {
@@ -46,12 +62,21 @@ function TransactionDetailBody({ tx, onClose }: { tx: TransactionDetail; onClose
   const [message, setMessage] = useState<string | null>(null);
 
   const currentCategory = tx.subcategory?.id ?? tx.category?.id ?? '';
+  const manual = tx.source === 'MANUAL';
+  const original = {
+    amount: toRupeeInput(tx.amountPaise),
+    date: dayKeyOf(new Date(tx.date)),
+    time: istTime(tx.date),
+  };
   const { register, handleSubmit, control, formState } = useForm<EditValues>({
     defaultValues: {
       categoryId: currentCategory,
       merchantName: tx.merchantName ?? '',
       notes: tx.notes ?? '',
       applyToMerchant: false,
+      paymentMethod: tx.paymentMethod ?? '',
+      ...original,
+      flow: tx.flow,
     },
   });
   const [watchedCategory, applyChecked] = useWatch({
@@ -70,6 +95,15 @@ function TransactionDetailBody({ tx, onClose }: { tx: TransactionDetail; onClose
     if (merchantName && merchantName !== (tx.merchantName ?? '')) input.merchantName = merchantName;
     if (values.notes.trim() !== (tx.notes ?? '')) input.notes = values.notes.trim() || null;
     if (values.applyToMerchant && input.categoryId !== undefined) input.applyToMerchant = true;
+    if (values.paymentMethod !== (tx.paymentMethod ?? '')) {
+      input.paymentMethod = (values.paymentMethod || null) as PaymentMethod | null;
+    }
+    if (manual) {
+      if (values.amount.trim() !== original.amount) input.amount = values.amount.trim();
+      if (values.date !== original.date) input.date = values.date;
+      if (values.time && values.time !== original.time) input.time = values.time;
+      if (values.flow !== tx.flow) input.flow = values.flow;
+    }
     if (Object.keys(input).length === 0) {
       setMessage('Nothing changed.');
       return;
@@ -163,10 +197,52 @@ function TransactionDetailBody({ tx, onClose }: { tx: TransactionDetail; onClose
           </label>
         )}
         <FormField
-          label="Merchant name"
+          label={manual ? (tx.flow === 'OUT' ? 'Paid to' : 'Received from') : 'Merchant name'}
           error={errors.merchantName}
           {...register('merchantName')}
         />
+        {manual && (
+          <fieldset className="space-y-4 rounded-2xl border border-ink-200 p-4">
+            {/* Floated so the legend sits inside the box instead of on its border. */}
+            <legend className="float-left w-full text-xs font-semibold text-ink-700">
+              You added this payment, so you can change its figures
+            </legend>
+            <div className="clear-both grid grid-cols-2 gap-3">
+              <FormField
+                label="Amount (₹)"
+                inputMode="decimal"
+                error={errors.amount}
+                {...register('amount')}
+              />
+              <label className="block text-xs font-semibold text-ink-700">
+                Money in or out
+                <select className={`${fieldClass} font-normal`} {...register('flow')}>
+                  <option value="OUT">Money out</option>
+                  <option value="IN">Money in</option>
+                </select>
+              </label>
+              <FormField
+                label="Date"
+                type="date"
+                max={dayKeyOf(new Date())}
+                error={errors.date}
+                {...register('date')}
+              />
+              <FormField label="Time" type="time" error={errors.time} {...register('time')} />
+            </div>
+          </fieldset>
+        )}
+        <label className="block text-sm">
+          <span className="font-medium text-ink-700">Paid by</span>
+          <select className={fieldClass} {...register('paymentMethod')}>
+            <option value="">Not recorded</option>
+            {METHODS.map((m) => (
+              <option key={m} value={m}>
+                {PAYMENT_METHOD_LABELS[m]}
+              </option>
+            ))}
+          </select>
+        </label>
         <label className="block text-sm">
           <span className="font-medium text-ink-700">Notes</span>
           <textarea

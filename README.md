@@ -144,6 +144,7 @@ drop data. See [docs/DATABASE.md](docs/DATABASE.md).
 | Production build   | `npm run build` then `npm start -w @moneylens/api` and serve `apps/web/dist`                   |
 | Mobile (Expo)      | `npm run dev:mobile`, then scan the QR code with Expo Go. See `apps/mobile/README.md`          |
 | Forgotten password | `npm run reset-password` (asks for the email and a new password). See `docs/PASSWORD_RESET.md` |
+| Move data          | `npm run move-data` (copies every transaction, category and rule from one account to another)  |
 
 ### On your iPhone, away from home
 

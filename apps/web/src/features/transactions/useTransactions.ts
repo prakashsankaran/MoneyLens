@@ -1,11 +1,12 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   MerchantOption,
+  TransactionCsvExport,
   TransactionDetail,
   TransactionList,
   TransactionUpdateResult,
 } from '@moneylens/types';
-import type { UpdateTransactionInput } from '@moneylens/validation';
+import type { CreateTransactionInput, UpdateTransactionInput } from '@moneylens/validation';
 import { api, send } from '../../lib/api-client';
 import { invalidateFinancialData } from '../categories/useCategories';
 
@@ -51,4 +52,25 @@ export function useDeleteTransaction() {
     mutationFn: (id: string) => send('DELETE', `/transactions/${id}`),
     onSuccess: () => invalidateFinancialData(client),
   });
+}
+
+export function useCreateTransaction() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CreateTransactionInput) =>
+      send<TransactionDetail>('POST', '/transactions', input),
+    onSuccess: (tx) => {
+      client.setQueryData(['transaction', tx.id], tx);
+      invalidateFinancialData(client);
+    },
+  });
+}
+
+/** Every transaction matching the page's filters, as a CSV file. */
+export function exportTransactionsCsv(query: string) {
+  const params = new URLSearchParams(query);
+  params.delete('page');
+  params.delete('pageSize');
+  const qs = params.toString();
+  return api<TransactionCsvExport>(`/transactions/export${qs ? `?${qs}` : ''}`);
 }
