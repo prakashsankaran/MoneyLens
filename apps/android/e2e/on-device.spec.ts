@@ -97,6 +97,8 @@ test('an account, its imports and insights stay on the device across restarts', 
   await page.goto('/settings');
   await page.getByRole('button', { name: 'Sign out on all devices' }).click();
   await expect(page).toHaveURL(/\/login/);
+  // The version is shown on the sign-in page, so friends can say which one they have.
+  await expect(page.getByText(/^MoneyLens for Android 1\.0\.\d+$/)).toBeVisible();
   await page.getByLabel('Email').fill('asha@example.test');
   await page.getByLabel('Password').fill('correct horse battery');
   await page.getByRole('button', { name: /sign in/i }).click();
@@ -117,7 +119,7 @@ test('with their own key, only the question and calculated figures go to Gemini'
   await page.goto('/settings');
   await page.getByLabel('Google Gemini API key').fill('test-key-123');
   await page.getByRole('button', { name: 'Turn on AI' }).click();
-  await expect(page.getByText('Written answers are on')).toBeVisible();
+  await expect(page.getByText('Written answers and category suggestions are on')).toBeVisible();
 
   const reply = await askTopMerchants(page);
   await expect(reply).toContainText('Most of your spending went to a handful of merchants.');

@@ -20,12 +20,17 @@ export interface DeviceFiles {
 
 declare global {
   interface Window {
-    moneylensDevice?: { ai: DeviceAI; files?: DeviceFiles };
+    moneylensDevice?: { ai: DeviceAI; files?: DeviceFiles; version?: string };
   }
 }
 
 export function deviceAI(): DeviceAI | undefined {
   return typeof window === 'undefined' ? undefined : window.moneylensDevice?.ai;
+}
+
+/** The Android app's version, e.g. "1.0.33". Absent in the browser. */
+export function deviceVersion(): string | undefined {
+  return typeof window === 'undefined' ? undefined : window.moneylensDevice?.version;
 }
 
 /**

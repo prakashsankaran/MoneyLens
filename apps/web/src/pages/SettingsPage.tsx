@@ -20,11 +20,12 @@ import { RecoveryKeyCard } from '../features/account/RecoveryKeyCard';
 import { DeviceAICard } from '../features/account/DeviceAICard';
 import { MonthlyEmailCard } from '../features/preferences/MonthlyEmailCard';
 import { PeopleCategoriesCard } from '../features/preferences/PeopleCategoriesCard';
-import { deviceAI } from '../lib/device';
+import { deviceAI, deviceVersion } from '../lib/device';
 
 export function SettingsPage() {
   const { user, logout } = useAuth();
   const ai = deviceAI();
+  const version = deviceVersion();
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-5 md:px-6 lg:px-8 lg:py-8">
       <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
@@ -54,6 +55,9 @@ export function SettingsPage() {
       {!ai && <MonthlyEmailCard />}
       <BackupCard />
       <DataCard />
+      {version && (
+        <p className="text-center text-xs text-ink-500">MoneyLens for Android {version}</p>
+      )}
     </div>
   );
 }

@@ -38,17 +38,19 @@ export function DeviceAICard({ ai }: { ai: DeviceAI }) {
       icon={LuSparkles}
       description={
         on
-          ? `Written answers are on, using your ${ai.service} key.`
+          ? `Written answers and category suggestions are on, using your ${ai.service} key.`
           : 'Off. The assistant answers with calculated figures, and nothing leaves this phone.'
       }
     >
       <div className="space-y-3 text-sm text-ink-700">
         <p>
-          To get written answers, add your own {ai.service} key. When you ask the assistant a
-          question or open the dashboard brief, MoneyLens sends {ai.service} the question and that
-          month&apos;s calculated figures, such as totals, category totals and top merchant names.
-          Your statements, transactions, account and password always stay on this phone. The key is
-          saved only on this phone.
+          To get written answers and category suggestions, add your own {ai.service} key. When you
+          ask the assistant a question or open the dashboard brief, MoneyLens sends {ai.service} the
+          question and that month&apos;s calculated figures, such as totals, category totals and top
+          merchant names. When you ask for category suggestions while reviewing an import, it sends
+          the uncategorised merchant names and one statement line for each, with UPI IDs and account
+          numbers hidden, and never amounts or dates. Your statements, transactions, account and
+          password always stay on this phone. The key is saved only on this phone.
         </p>
         {on ? (
           <Button variant="secondary" onClick={onRemove}>

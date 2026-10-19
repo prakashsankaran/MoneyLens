@@ -26,7 +26,9 @@ statements, transactions and analysis stay on their own phone.
   their own free Google Gemini key (stored only on their phone,
   `src/backend/device-ai.ts`); the assistant and the dashboard brief then send
   Gemini the question and that month's calculated figures (totals, category
-  totals, top merchant names). Statements, transactions, the account and the
+  totals, top merchant names), and category suggestions during import review
+  send the uncategorised merchant names with one masked statement line each
+  (no amounts or dates). Statements, transactions, the account and the
   password are never sent. Removing the key turns it off again.
 
 Because nothing is stored elsewhere, uninstalling the app or clearing its

@@ -45,4 +45,16 @@ describe('LoginPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Email or password is incorrect');
   });
+
+  it('does not show a version in the browser', async () => {
+    renderLogin(async () => unauthenticated());
+    await screen.findByRole('button', { name: 'Sign in' });
+    expect(screen.queryByText(/MoneyLens for Android/)).not.toBeInTheDocument();
+  });
+
+  it('shows the Android app version when running in the Android app', async () => {
+    vi.stubGlobal('moneylensDevice', { ai: {}, version: '1.0.33' });
+    renderLogin(async () => unauthenticated());
+    expect(await screen.findByText('MoneyLens for Android 1.0.33')).toBeInTheDocument();
+  });
 });
