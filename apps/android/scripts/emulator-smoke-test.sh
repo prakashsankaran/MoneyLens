@@ -46,3 +46,18 @@ if [ -z "$found" ]; then
   exit 1
 fi
 echo "MoneyLens opened on the emulator and showed the sign-in screen."
+
+# The signed release is the file friends download, so check that it installs
+# and opens too, as a fresh install the way a phone does it.
+RELEASE_APK=${RELEASE_APK:-}
+if [ -n "$RELEASE_APK" ] && [ -f "$RELEASE_APK" ]; then
+  adb uninstall app.moneylens.android >/dev/null 2>&1 || true
+  adb install "$RELEASE_APK"
+  adb shell am start -W -n "app.moneylens.android/.MainActivity"
+  sleep 5
+  if ! adb shell pidof app.moneylens.android >/dev/null; then
+    echo "The release APK installed but did not stay open" >&2
+    exit 1
+  fi
+  echo "The signed release APK installed and opened on the emulator."
+fi
