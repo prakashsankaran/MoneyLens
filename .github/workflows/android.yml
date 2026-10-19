@@ -75,7 +75,7 @@ jobs:
         run: |
           gh release create "android-v1.0.${BUILD_NUMBER}" apk/MoneyLens.apk \
             --title "MoneyLens for Android 1.0.${BUILD_NUMBER}" \
-            --notes "Install MoneyLens.apk on an Android phone (allow installing from your browser or messaging app when asked). Everything stays on the phone: the app has no internet permission. Installing a newer version keeps your data." \
+            --notes-file apps/android/RELEASE_NOTES.md \
             --latest
 
   emulator:
@@ -104,7 +104,7 @@ jobs:
           target: google_apis
           arch: x86_64
           disable-animations: true
-          script: ./apps/android/scripts/emulator-smoke-test.sh
+          script: RELEASE_APK="$PWD/apk/MoneyLens.apk" ./apps/android/scripts/emulator-smoke-test.sh
       - uses: actions/upload-artifact@v6
         if: always()
         with:
