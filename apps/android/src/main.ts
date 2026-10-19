@@ -11,6 +11,6 @@ import { deviceAI } from './backend/device-ai';
 import { deviceFiles } from './backend/device-files';
 import { installLocalApi } from './backend/local-api';
 
-window.moneylensDevice = { ai: deviceAI, files: deviceFiles };
+window.moneylensDevice = { ai: deviceAI, files: deviceFiles, version: __APP_VERSION__ };
 installLocalApi();
 await import('../../web/src/main');

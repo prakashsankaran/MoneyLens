@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { LuShieldCheck, LuTrendingDown } from 'react-icons/lu';
 import { Logo } from '../../components/Logo';
+import { deviceVersion } from '../../lib/device';
 
 /** Decorative preview: shapes only, no figures before sign-in. */
 function PreviewArt() {
@@ -112,6 +113,7 @@ export function AuthLayout({
   subtitle: string;
   children: ReactNode;
 }) {
+  const version = deviceVersion();
   return (
     <div className="relative min-h-dvh overflow-hidden bg-canvas">
       {/* Soft colour field and dot grid */}
@@ -141,6 +143,9 @@ export function AuthLayout({
             <p className="mt-1 text-sm text-ink-500">{subtitle}</p>
             <div className="mt-7">{children}</div>
           </div>
+          {version && (
+            <p className="mt-4 text-center text-xs text-ink-500">MoneyLens for Android {version}</p>
+          )}
         </main>
       </div>
     </div>

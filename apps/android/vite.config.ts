@@ -49,8 +49,13 @@ function androidEntry(): Plugin {
   };
 }
 
+// The same number as versionName in android/app/build.gradle, so the version
+// shown in the app matches the release it came from.
+const APP_VERSION = `1.0.${process.env.BUILD_NUMBER ?? '0'}`;
+
 export default defineConfig({
   root: here('../web'),
+  define: { __APP_VERSION__: JSON.stringify(APP_VERSION) },
   publicDir: here('../web/public'),
   plugins: [androidEntry(), react(), tailwindcss()],
   resolve: {
