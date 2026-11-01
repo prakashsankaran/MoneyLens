@@ -63,7 +63,7 @@ jobs:
             cp apps/android/android/app/build/outputs/apk/release/app-release.apk apk/MoneyLens.apk
           fi
           ls -l apk
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: moneylens-android-${{ github.run_number }}
           path: apk/
@@ -105,7 +105,7 @@ jobs:
           arch: x86_64
           disable-animations: true
           script: RELEASE_APK="$PWD/apk/MoneyLens.apk" ./apps/android/scripts/emulator-smoke-test.sh
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: emulator-smoke-${{ github.run_number }}
